@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Practical Exam Submission - DentaNet LMS</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#6366f1",
+            "background-light": "#f8fafc",
+            "background-dark": "#0f172a",
+            "sidebar-light": "#818cf8",
+            "sidebar-dark": "#1e1b4b",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.75rem" },
+        },
+      },
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- HEADER (same as Grades page) -->
+  <header class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+      </div>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
+        <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
+        <a class="hover:text-primary transition-colors" href="study-materials.html">Courses</a>
+        <a class="hover:text-primary transition-colors" href="#">Support</a>
+        <button class="bg-white dark:bg-slate-800 px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200" onclick="window.location.href='login.html'">
+          Log Out
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="flex-grow flex max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-8 gap-8">
+
+    <!-- SIDEBAR (same style as Grades page) -->
+    <aside class="w-72 hidden lg:block shrink-0">
+      <div class="bg-indigo-500 dark:bg-indigo-950 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200 dark:shadow-none min-h-[600px] flex flex-col">
+        <div class="mb-10">
+          <p class="text-xs uppercase tracking-widest text-indigo-100 opacity-80 font-bold">LMS</p>
+          <p class="text-sm font-medium">University of Peradeniya</p>
+        </div>
+
+        <nav class="space-y-2 flex-grow">
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="student-dashboard.html">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </a>
+
+          <!-- ACTIVE ITEM -->
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary shadow-lg font-semibold" href="#">
+            <span class="material-symbols-outlined">upload_file</span>
+            <span>Practical Exam Submission</span>
+          </a>
+
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="lab-slot-booking.html">
+            <span class="material-symbols-outlined">event_seat</span>
+            <span>Lab Slot Timetable</span>
+          </a>
+
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="study-materials.html">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span>Study Materials</span>
+          </a>
+
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="grades-feedback.html">
+            <span class="material-symbols-outlined">grade</span>
+            <span>Grades &amp; Feedback</span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
+          <img
+            alt="Student Profile"
+            class="w-10 h-10 rounded-full border-2 border-white/50 object-cover"
+            src="public/images/stu.jpg"
+          />
+          <div>
+            <p class="text-xs text-indigo-100">Welcome back,</p>
+            <p class="text-sm font-bold">Senara</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-grow">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Practical Exam Submission</h1>
+          <p class="text-slate-500 dark:text-slate-400">Upload your cavity preparation images for evaluation.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+
+        <!-- LEFT: FORM -->
+        <section class="xl:col-span-8 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Student ID</label>
+              <input class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm"
+                     readonly type="text" value="DENT/2022/002"/>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exam Category</label>
+              <select class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm">
+                <option>Restorative Dentistry - Class I</option>
+                <option>Restorative Dentistry - Class II</option>
+                <option>Endodontics - Access Cavity</option>
+                <option>Prosthodontics - Crown Prep</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-2 mb-6">
+            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Case Description</label>
+            <textarea class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm"
+                      placeholder="Describe the procedure steps and any challenges encountered..." rows="3"></textarea>
+          </div>
+
+          <div class="space-y-2 mb-8">
+            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Image Uploads (Up to 5)</label>
+
+            <div class="border-2 border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all">
+              <div class="w-16 h-16 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700">
+                <span class="material-symbols-outlined text-primary text-4xl">cloud_upload</span>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Drag &amp; Drop Images</h3>
+              <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                or <span class="text-primary font-semibold underline">browse files</span> on your computer
+              </p>
+              <p class="text-xs text-slate-400 mt-4 uppercase tracking-widest font-bold">
+                Supports: PNG, JPG (Max 10MB each)
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-4">
+            <button class="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+              Save Draft
+            </button>
+            <button class="px-8 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-shadow shadow-lg shadow-indigo-100 dark:shadow-none">
+              Submit for Evaluation
+            </button>
+          </div>
+        </section>
+
+        <!-- RIGHT: GUIDELINES -->
+        <aside class="xl:col-span-4 space-y-6">
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-primary">info</span>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Submission Guidelines</h3>
+            </div>
+
+            <ul class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+              <li class="flex gap-3">
+                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                <p>Ensure clear lighting for all cavity preparation images.</p>
+              </li>
+              <li class="flex gap-3">
+                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                <p>Capture all four angles (Occlusal, Mesial, Distal, and Facial).</p>
+              </li>
+              <li class="flex gap-3">
+                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                <p>Images must be taken immediately after preparation.</p>
+              </li>
+            </ul>
+
+            <hr class="my-6 border-slate-100 dark:border-slate-700"/>
+
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4">File Requirements</h4>
+            <div class="space-y-4">
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Max File Size</p>
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">10MB per image</p>
+              </div>
+
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Accepted Formats</p>
+                <div class="flex gap-2 mt-1">
+                  <span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-primary">JPG</span>
+                  <span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-primary">PNG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-100 dark:shadow-none">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="material-symbols-outlined p-2 bg-white/20 rounded-xl">tips_and_updates</span>
+              <h3 class="font-bold text-xl">Need help?</h3>
+            </div>
+            <p class="text-indigo-100 leading-relaxed mb-6">
+              Check our clinical photography guide to submit clear images and avoid rejections.
+            </p>
+            <button class="w-full py-4 bg-white text-indigo-600 text-sm font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
+              Read Guide
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- HISTORY -->
+      <section class="mt-10 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Submission History</h2>
+          <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+            View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden overflow-x-auto">
+          <table class="w-full text-left min-w-[700px]">
+            <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
+              <tr>
+                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Exam Name</th>
+                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Date Submitted</th>
+                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Score</th>
+                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Action</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium">Class II Amalgam Prep</td>
+                <td class="px-6 py-4 text-sm text-slate-500">Jan 12, 2026</td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    Evaluated
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-sm font-bold">88/100</td>
+                <td class="px-6 py-4">
+                  <button class="text-primary font-bold text-sm hover:underline">View Results</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium">Indirect Restoration Prep</td>
+                <td class="px-6 py-4 text-sm text-slate-500">Jan 18, 2026</td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    Pending
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-sm font-medium text-slate-400">--</td>
+                <td class="px-6 py-4">
+                  <button class="text-primary font-bold text-sm hover:underline">Edit</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium">Access Cavity - Molars</td>
+                <td class="px-6 py-4 text-sm text-slate-500">Jan 07, 2026</td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    Evaluated
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-sm font-bold">92/100</td>
+                <td class="px-6 py-4">
+                  <button class="text-primary font-bold text-sm hover:underline">View Results</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- FOOTER (same as Grades page) -->
+  <footer class="bg-indigo-50 dark:bg-slate-900 border-t border-indigo-100 dark:border-slate-800 py-12 mt-12">
+    <div class="max-w-screen-2xl mx-auto px-6">
+      <div class="flex flex-wrap justify-center gap-8 md:gap-16 mb-8 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <a class="hover:text-primary" href="#">Privacy Policy</a>
+        <a class="hover:text-primary" href="#">Terms of Service</a>
+        <a class="hover:text-primary" href="#">Contact Us</a>
+        <a class="hover:text-primary" href="#">For Students</a>
+        <a class="hover:text-primary" href="#">For Lecturers</a>
+        <a class="hover:text-primary" href="#">Lab Services</a>
+      </div>
+
+      <p class="text-center text-slate-400 text-xs font-medium">© 2026 DentaNet. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

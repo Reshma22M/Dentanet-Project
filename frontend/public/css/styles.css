@@ -1,0 +1,43 @@
+.glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-card {
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dental-bg {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuDi441cOPtN3gP9eScQLl_DRtKfWUzHaoWUaWniC7w8ihAucO0jmaYxsruPwMabxjv3ZOD3fy_T5eK5mbrqe9-3tVmwghXqLu0iGPU6sLXSS8_-HwE8Ah_ImwRSAdNYWyJaAbtU5aAMMRgJ3_hE6S3w_uJWxY8y7Yt0I0bJtXSXOu7CUBLBoj1eE7Z3Pcu47Kd3f-cJilb7LEfvNkQE9UceR2h4ue9_N5wsNiVfDLOBCUrJ07kmiKl4GDiPUDLjqsHuc5aYa4u93JU);
+    background-size: cover;
+    background-position: center;
+}
+
+.dark .dental-bg {
+    background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuD2tpGbgfjKrDLJV4WATfw_cOStufi3yL2T7vujzDkdFOgxL-FpLfY0C28cQwi3dBgtgC9MO13CDSKBB7Te87d-tYAZswb8KMzIOtOzgHSkfeMU02taQWFZeD5JdcS7zY-y2MyM-2AFu4VM-jpOnAUTHZydvd9OknEh1Jipw2ybnZlPLWBya3gLYpZl6yiHTX7hXK_Q39Vzrz5esxxKnKHANkGPU3fpHxFGSBn9_JOgv_0wIBuWDOenrpJtiZNI9YIPgYs9w9ZEE2U);
+}
+
+.bg-dental {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDaAAWC0vXolU8G5VtrcIuZL6bzbQH_8mI3CBLDi7PnkmdfhCjvJIPwfmoZFXgYd7ZcHieYAV7CkSfl32bOzQjamxVCiotpotsHtknUxRBVUhBLYfTYY84D3Yx-2KUzqfiCgavG1jnD_UxTnaRcAL0Tsw2cOiHgVLp-HdevDuLbCSm1SZdrFaLaS6cQMKNlxp6UuVuXGryHAHuBq_RY26n6eNCwJZCaTQLZ9fto6rksa4Lv3TPHGsCjinLmLy1bdPd7i-Qdq75aOw8);
+    background-size: cover;
+    background-position: center;
+}
+
+.role-button {
+    transition: all 0.2s ease;
+}
+
+.role-button:hover {
+    transform: translateY(-2px);
+}
+
+.role-button.active {
+    border-color: #1d76d2;
+    background-color: rgba(29, 118, 210, 0.05);
+}
+

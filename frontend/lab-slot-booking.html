@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DentaNet - Lab Slot Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script src="assets/js/api.js"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#1d72d2",
+        "background-light": "#f3f4f9",
+        "background-dark": "#0f172a",
+        "nav-light": "#bfdbfe",
+        "nav-dark": "#1e293b",
+      },
+      fontFamily: {
+        display: ["Inter", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+      },
+      borderRadius: {
+        DEFAULT: "0.5rem",
+        xl: "1rem",
+      },
+    },
+  },
+};
+</script>
+<style>
+body { font-family: 'Inter', sans-serif; }
+.sidebar-active { background-color: rgba(255, 255, 255, 0.9); color: #471dd2; }
+.nav-active { background-color: white; border-radius: 9999px; padding: 4px 12px; }
+</style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col">
+<header class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
+  <div class="max-w-screen-2xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+    </div>
+    <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
+      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Dashboard</a>
+      <a class="hover:text-primary transition-colors" href="practical-exam-submission.html">Submissions</a>
+      <a class="hover:text-primary transition-colors text-primary font-bold" href="lab-slot-booking.html">Lab Booking</a>
+      <a class="hover:text-primary transition-colors" href="study-materials.html">Study Materials</a>
+      <a class="hover:text-primary transition-colors" href="grades-feedback.html">Grades</a>
+      <button id="logoutBtn" class="bg-white dark:bg-slate-800 px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200">Log Out</button>
+    </nav>
+  </div>
+</header>
+
+<div class="flex flex-row flex-1 min-h-0">
+  <aside class="w-72 hidden lg:flex flex-col bg-indigo-500 dark:bg-indigo-950 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200 dark:shadow-none min-h-[600px] my-8 ml-6">
+    <div class="mb-10">
+      <p class="text-xs uppercase tracking-widest text-indigo-100 opacity-80 font-bold">LMS</p>
+      <p class="text-sm font-medium">University of Peradeniya</p>
+    </div>
+
+    <nav class="space-y-2 flex-grow">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="student-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="practical-exam-submission.html">
+        <span class="material-symbols-outlined">upload_file</span>
+        <span>Practical Exam Submission</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary shadow-lg font-semibold" href="lab-slot-booking.html">
+        <span class="material-symbols-outlined">event_seat</span>
+        <span>Lab Slot Booking</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="study-materials.html">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span>Study Materials</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="grades-feedback.html">
+        <span class="material-symbols-outlined">grade</span>
+        <span>Grades & Feedback</span>
+      </a>
+    </nav>
+
+    <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
+      <img alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50" src="public/images/stu.jpg"/>
+      <div>
+        <p class="text-xs text-indigo-100">Welcome back,</p>
+        <p id="studentName" class="text-sm font-bold">Student</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Lab Slot Booking</h1>
+        <p class="text-slate-600 dark:text-slate-400">Book your exam slot or reserve practice sessions</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="bg-white dark:bg-slate-800 rounded-t-2xl shadow-lg border-b-2 border-slate-200 dark:border-slate-700">
+        <div class="flex gap-1 p-2">
+          <button onclick="switchTab('exam')" id="examTab" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-primary text-white shadow-sm">
+            <span class="flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-xl">assignment</span>
+              Exam Slot Booking
+            </span>
+          </button>
+          <button onclick="switchTab('practice')" id="practiceTab" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+            <span class="flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-xl">science</span>
+              Practice Sessions
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Exam Content -->
+      <div id="examContent" class="bg-white dark:bg-slate-800 rounded-b-2xl shadow-lg p-8">
+        <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
+            <div>
+              <h3 class="font-bold text-amber-900 dark:text-amber-200 mb-1">Important Information</h3>
+              <p class="text-sm text-amber-800 dark:text-amber-300">Exam Date: <strong>February 15, 2026</strong> • Duration: <strong>1 hour</strong> • Machines per slot: <strong>20</strong></p>
+              <p class="text-sm text-amber-800 dark:text-amber-300 mt-1">You can book <strong>ONE</strong> exam slot only. Choose carefully.</p>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">schedule</span>
+          Available Exam Slots - February 15, 2026
+        </h2>
+
+        <div id="examSlotsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
+
+        <div id="examBookingStatus" class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600">event_note</span>
+            Your Exam Slot
+          </h3>
+          <div id="examStatusContent" class="text-slate-600 dark:text-slate-400 text-sm">
+            You haven't booked an exam slot yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- Practice Content -->
+      <div id="practiceContent" class="bg-white dark:bg-slate-800 rounded-b-2xl shadow-lg p-8 hidden">
+        <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-lg">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">lightbulb</span>
+            <div>
+              <h3 class="font-bold text-blue-900 dark:text-blue-200 mb-1">Practice Before Your Exam</h3>
+              <p class="text-sm text-blue-800 dark:text-blue-300">Book practice sessions to prepare.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6 mb-6">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Book Practice Session</h2>
+          <form class="space-y-4" id="practiceBookingForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Date</label>
+                <input id="practiceDate" class="w-full px-4 py-3 rounded-lg border-2 border-slate-400 bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" type="date" required/>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Time Slot</label>
+                <select id="practiceTimeSlot" class="w-full px-4 py-3 rounded-lg border-2 border-slate-400 bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required>
+                  <option value="">Choose a time...</option>
+                  <option value="08:00:00|09:00:00">8:00 AM - 9:00 AM</option>
+                  <option value="09:00:00|10:00:00">9:00 AM - 10:00 AM</option>
+                  <option value="10:00:00|11:00:00">10:00 AM - 11:00 AM</option>
+                  <option value="11:00:00|12:00:00">11:00 AM - 12:00 PM</option>
+                  <option value="13:00:00|14:00:00">1:00 PM - 2:00 PM</option>
+                  <option value="14:00:00|15:00:00">2:00 PM - 3:00 PM</option>
+                  <option value="15:00:00|16:00:00">3:00 PM - 4:00 PM</option>
+                  <option value="16:00:00|17:00:00">4:00 PM - 5:00 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Practice Focus (Optional)</label>
+              <textarea id="practicePurpose" class="w-full px-4 py-3 rounded-lg border-2 border-slate-400 bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors resize-none" placeholder="What do you want to practice?" rows="2"></textarea>
+            </div>
+
+            <button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-4 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-[0.98]" type="submit">
+              <span class="flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">add_circle</span>
+                Book Practice Session
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">history</span>
+            My Practice Sessions
+          </h2>
+
+          <div id="practiceSessionsList" class="space-y-3">
+            <p class="text-slate-500 dark:text-slate-400">No practice sessions yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-8 px-6 mt-auto">
+  <div class="max-w-7xl mx-auto text-center">
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">© 2026 University of Peradeniya - Faculty of Dental Sciences</p>
+    <p class="text-xs text-slate-400">DentaNet Learning Management System. All rights reserved.</p>
+  </div>
+</footer>
+
+<button class="fixed bottom-4 right-4 bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
+  <span class="material-symbols-outlined dark:text-white">dark_mode</span>
+</button>
+
+<script>
+const EXAM_DATE = "2026-02-15";
+
+const examSlots = [
+  { start: "08:00:00", end: "09:00:00", label: "8:00 AM - 9:00 AM", session: "Morning Session" },
+  { start: "09:00:00", end: "10:00:00", label: "9:00 AM - 10:00 AM", session: "Morning Session" },
+  { start: "10:00:00", end: "11:00:00", label: "10:00 AM - 11:00 AM", session: "Morning Session" },
+  { start: "11:00:00", end: "12:00:00", label: "11:00 AM - 12:00 PM", session: "Morning Session" },
+  { start: "13:00:00", end: "14:00:00", label: "1:00 PM - 2:00 PM", session: "Afternoon Session" },
+  { start: "14:00:00", end: "15:00:00", label: "2:00 PM - 3:00 PM", session: "Afternoon Session" }
+];
+
+function switchTab(tab) {
+  const examTab = document.getElementById('examTab');
+  const practiceTab = document.getElementById('practiceTab');
+  const examContent = document.getElementById('examContent');
+  const practiceContent = document.getElementById('practiceContent');
+
+  if (tab === 'exam') {
+    examTab.classList.add('bg-primary', 'text-white', 'shadow-sm');
+    examTab.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+    practiceTab.classList.remove('bg-primary', 'text-white', 'shadow-sm');
+    practiceTab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+    examContent.classList.remove('hidden');
+    practiceContent.classList.add('hidden');
+  } else {
+    practiceTab.classList.add('bg-primary', 'text-white', 'shadow-sm');
+    practiceTab.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+    examTab.classList.remove('bg-primary', 'text-white', 'shadow-sm');
+    examTab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+    practiceContent.classList.remove('hidden');
+    examContent.classList.add('hidden');
+  }
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":");
+  const hour = parseInt(h, 10);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${m} ${suffix}`;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+
+async function bookExamSlot(startTime, endTime) {
+  const result = await API.bookings.create({
+    slotType: "EXAM",
+    bookingDate: EXAM_DATE,
+    startTime,
+    endTime,
+    purpose: "Exam Slot Booking"
+  });
+
+  if (!result.ok) {
+    alert(result.error || "Failed to book exam slot");
+    return;
+  }
+
+  alert("Exam slot request submitted successfully.");
+  await loadBookings();
+}
+
+async function cancelBooking(requestId) {
+  const confirmed = confirm("Are you sure you want to cancel this booking?");
+  if (!confirmed) return;
+
+  const result = await API.bookings.cancel(requestId);
+
+  if (!result.ok) {
+    alert(result.error || "Failed to cancel booking");
+    return;
+  }
+
+  alert("Booking cancelled successfully.");
+  await loadBookings();
+}
+
+async function loadBookings() {
+  const result = await API.bookings.getAll();
+
+  if (!result.ok) {
+    document.getElementById("examStatusContent").innerHTML = `<p class="text-red-600">${result.error || "Failed to load bookings"}</p>`;
+    document.getElementById("practiceSessionsList").innerHTML = `<p class="text-red-600">${result.error || "Failed to load practice sessions"}</p>`;
+    return;
+  }
+
+  const bookings = result.bookings || [];
+  const examBookings = bookings.filter(b => b.slot_type === "EXAM");
+  const practiceBookings = bookings.filter(b => b.slot_type === "PRACTICE");
+
+  renderExamSlots(examBookings);
+  renderExamStatus(examBookings);
+  renderPracticeSessions(practiceBookings);
+}
+
+function renderExamSlots(examBookings) {
+  const grid = document.getElementById("examSlotsGrid");
+
+  grid.innerHTML = examSlots.map(slot => {
+    const bookedCount = examBookings.filter(
+      b => b.booking_date === EXAM_DATE && b.start_time === slot.start && b.status === "APPROVED"
+    ).length;
+
+    const isFull = bookedCount >= 20;
+    const userOwn = examBookings.find(b => b.status !== "CANCELLED");
+    const canBook = !isFull && !userOwn;
+
+    let statusIcon = "check_circle";
+    let statusColor = "text-emerald-500";
+    let progressColor = "bg-emerald-500";
+
+    if (isFull) {
+      statusIcon = "cancel";
+      statusColor = "text-red-500";
+      progressColor = "bg-red-500";
+    } else if (bookedCount >= 15) {
+      statusIcon = "schedule";
+      statusColor = "text-amber-500";
+      progressColor = "bg-amber-500";
+    }
+
+    const width = Math.min((bookedCount / 20) * 100, 100);
+
+    return `
+      <div class="border-2 border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-all">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-lg text-slate-900 dark:text-white">${slot.label}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">${slot.session}</p>
+          </div>
+          <span class="material-symbols-outlined ${statusColor}">${statusIcon}</span>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Capacity</span>
+          <span class="text-sm font-bold ${isFull ? "text-red-600 dark:text-red-400" : bookedCount >= 15 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}">${bookedCount}/20 booked</span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+          <div class="${progressColor} h-2 rounded-full" style="width: ${width}%"></div>
+        </div>
+        ${
+          isFull
+            ? `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Fully Booked</button>`
+            : canBook
+              ? `<button onclick="bookExamSlot('${slot.start}','${slot.end}')" class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-2.5 rounded-lg transition-all">Book This Slot</button>`
+              : `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Already Requested</button>`
+        }
+      </div>
+    `;
+  }).join("");
+}
+
+function renderExamStatus(examBookings) {
+  const container = document.getElementById("examStatusContent");
+  const myExam = examBookings.find(b => b.status !== "CANCELLED");
+
+  if (!myExam) {
+    container.innerHTML = `You haven't booked an exam slot yet. Select a slot above to confirm your booking.`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="space-y-2">
+      <p><strong>Date:</strong> ${formatDate(myExam.booking_date)}</p>
+      <p><strong>Time:</strong> ${formatTime(myExam.start_time)} - ${formatTime(myExam.end_time)}</p>
+      <p><strong>Status:</strong> ${myExam.status}</p>
+      <p><strong>Machine:</strong> ${myExam.machine_code || "Not assigned yet"}</p>
+      ${
+        myExam.status === "PENDING" || myExam.status === "APPROVED"
+          ? `<button onclick="cancelBooking(${myExam.request_id})" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">Cancel Request</button>`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderPracticeSessions(practiceBookings) {
+  const container = document.getElementById("practiceSessionsList");
+
+  if (practiceBookings.length === 0) {
+    container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No practice sessions yet.</p>`;
+    return;
+  }
+
+  container.innerHTML = practiceBookings.map(b => {
+    const badgeClass =
+      b.status === "APPROVED"
+        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+        : b.status === "PENDING"
+          ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+          : b.status === "COMPLETED"
+            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+            : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
+
+    return `
+      <div class="bg-white dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white">${formatDate(b.booking_date)} - ${formatTime(b.start_time)} - ${formatTime(b.end_time)}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Practice Focus: ${b.purpose || "-"}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Machine: ${b.machine_code || "Not assigned yet"}</p>
+          </div>
+          <span class="px-3 py-1 ${badgeClass} text-xs font-bold rounded-full">${b.status}</span>
+        </div>
+        ${
+          b.status === "PENDING" || b.status === "APPROVED"
+            ? `<div class="flex gap-2">
+                <button onclick="cancelBooking(${b.request_id})" class="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-500 transition-all">
+                  Cancel
+                </button>
+              </div>`
+            : ""
+        }
+      </div>
+    `;
+  }).join("");
+}
+
+document.getElementById('practiceBookingForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const bookingDate = document.getElementById("practiceDate").value;
+  const timeSlot = document.getElementById("practiceTimeSlot").value;
+  const purpose = document.getElementById("practicePurpose").value.trim();
+
+  if (!bookingDate || !timeSlot) {
+    alert("Please select date and time slot.");
+    return;
+  }
+
+  const [startTime, endTime] = timeSlot.split("|");
+
+  const result = await API.bookings.create({
+    slotType: "PRACTICE",
+    bookingDate,
+    startTime,
+    endTime,
+    purpose
+  });
+
+  if (!result.ok) {
+    alert(result.error || "Failed to book practice session");
+    return;
+  }
+
+  alert("Practice session request submitted successfully.");
+  this.reset();
+  await loadBookings();
+});
+
+document.addEventListener("DOMContentLoaded", async function () {
+  const student = await requireAuth("student");
+  if (!student) return;
+
+  const nameEl = document.getElementById("studentName");
+  if (nameEl) {
+    nameEl.textContent = student.firstName || student.fullName || "Student";
+  }
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      API.auth.logout();
+    });
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("practiceDate").min = today;
+
+  await loadBookings();
+});
+</script>
+</body>
+</html>

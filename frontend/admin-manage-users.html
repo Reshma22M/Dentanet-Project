@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manage User Accounts - DentaNet LMS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="assets/js/api.js"></script>
+<script>
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                primary: "#1e3a8a",
+                accent: "#3b82f6",
+                "dark-bg": "#020617",
+                "dark-card": "#0f172a",
+                "dark-border": "#1e293b",
+            }
+        }
+    }
+};
+</script>
+<style type="text/tailwindcss">
+:root {
+    --primary-blue: #1e3a8a;
+    --nav-blue: #1e40af;
+    --sidebar-blue: #172554;
+    --accent-blue: #3b82f6;
+    --footer-blue: #0f172a;
+}
+body {
+    font-family: 'Inter', sans-serif;
+}
+.sidebar-active {
+    background-color: rgba(255, 255, 255, 1);
+    color: var(--sidebar-blue);
+}
+.dark .sidebar-active {
+    background-color: #3b82f6;
+    color: white;
+}
+.dark ::-webkit-scrollbar {
+    width: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+    background: #020617;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+}
+.modal-backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+</style>
+</head>
+
+<body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+<header class="bg-[var(--nav-blue)] dark:bg-[#0a0f1d] text-white shadow-md border-b dark:border-slate-800">
+<nav class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
+<div class="max-w-7xl mx-auto pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8">
+    <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center space-x-2 h-full">
+            <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto object-contain"/>
+        </div>
+        <div class="hidden md:flex items-center space-x-8">
+            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="index.html">Home</a>
+            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="index.html#about">About</a>
+            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="#">Contact</a>
+            <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-md shadow-indigo-400 dark:shadow-none">Log Out</button>
+        </div>
+    </div>
+</div>
+</nav>
+</header>
+
+<div class="flex flex-1 max-w-[1440px] mx-auto w-full">
+<aside class="w-72 bg-[#0F172A] p-6 flex flex-col space-y-8 text-slate-300 hidden lg:flex border-r border-slate-800">
+    <div class="mb-8">
+        <h2 class="text-lg font-bold">LMS</h2>
+        <p class="text-xs opacity-70">University of Peradeniya</p>
+    </div>
+    <nav class="space-y-2">
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-dashboard.html">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+        </a>
+        <a class="sidebar-active flex items-center gap-3 p-3 rounded-lg font-semibold shadow-sm" href="admin-manage-users.html">
+            <span class="material-symbols-outlined">group</span>
+            <span>Manage Users</span>
+        </a>
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="master-schedule.html">
+            <span class="material-symbols-outlined">event_note</span>
+            <span>Calendar</span>
+        </a>
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
+            <span class="material-symbols-outlined">monitoring</span>
+            <span>API Monitor</span>
+        </a>
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-settings.html">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+    <div class="pt-6 border-t border-white/10">
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="#">
+            <span class="material-symbols-outlined">help</span>
+            <span>Help and Support</span>
+        </a>
+    </div>
+</aside>
+
+<main class="flex-1 p-8">
+    <div class="flex justify-between items-start mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Manage User Accounts</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">View registered users, filter them, and create lecturer accounts.</p>
+        </div>
+        <div class="flex flex-col items-center">
+            <img alt="Admin Profile" class="w-14 h-14 rounded-full border-2 border-[var(--primary-blue)] dark:border-blue-500 object-cover mb-1 shadow-md" src="public/images/admin.jpg"/>
+            <span id="adminProfileName" class="text-xs font-semibold text-slate-500 dark:text-slate-400">Admin</span>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-card p-6 rounded-xl shadow-sm mb-6 border border-slate-200 dark:border-dark-border">
+        <div class="flex flex-col lg:flex-row gap-4 lg:items-end lg:justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
+                <div class="relative col-span-1 md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Search</label>
+                    <span class="material-symbols-outlined absolute left-3 top-[42px] -translate-y-1/2 text-slate-400 dark:text-slate-500">search</span>
+                    <input id="searchInput" class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent dark:focus:ring-blue-500 text-sm dark:text-white" placeholder="Search users by name, email, or ID" type="text"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Role</label>
+                    <select id="roleFilter" class="w-full py-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent dark:focus:ring-blue-500 text-sm dark:text-white">
+                        <option value="">All Roles</option>
+                        <option value="student">Student</option>
+                        <option value="lecturer">Lecturer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Batch</label>
+                    <select id="batchFilter" class="w-full py-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent dark:focus:ring-blue-500 text-sm dark:text-white">
+                        <option value="">All Batches</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="openCreateLecturerModal" class="px-5 py-2.5 bg-primary hover:bg-accent text-white rounded-lg text-sm font-semibold transition-all shadow-md">
+                    Create Lecturer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-dark-border">
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID / Batch</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-dark-border">
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading users...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</div>
+
+<footer class="bg-[var(--footer-blue)] dark:bg-[#020617] text-slate-200 mt-12 py-12 px-6 rounded-t-[2.5rem] border-t dark:border-dark-border">
+<div class="max-w-[1440px] mx-auto">
+    <div class="flex flex-wrap justify-center gap-x-12 gap-y-4 mb-8 text-sm font-medium">
+        <a class="hover:text-blue-400 transition-colors" href="#">Privacy Policy</a>
+        <a class="hover:text-blue-400 transition-colors" href="#">Terms of Service</a>
+        <a class="hover:text-blue-400 transition-colors" href="#">Contact Us</a>
+        <a class="hover:text-blue-400 transition-colors" href="#">For Students</a>
+        <a class="hover:text-blue-400 transition-colors" href="#">For Lecturers</a>
+        <a class="hover:text-blue-400 transition-colors" href="#">Lab Services</a>
+    </div>
+    <p class="text-center text-xs opacity-60">© 2025 DentaNet LMS Admin Portal. All rights reserved.</p>
+</div>
+</footer>
+
+<!-- Create Lecturer Modal -->
+<div id="lecturerModal" class="fixed inset-0 z-[100] hidden items-center justify-center modal-backdrop p-4">
+    <div class="w-full max-w-3xl bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-dark-border">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Create Lecturer Account</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Enter lecturer details. A temporary password will be generated or you can provide one.</p>
+            </div>
+            <button id="closeLecturerModal" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="createLecturerForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+                <input id="lecFirstName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Nimal" required />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+                <input id="lecLastName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Perera" required />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input id="lecEmail" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="email" placeholder="lecturer@dentanet.lk" required />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Staff ID</label>
+                <input id="lecStaffId" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="LEC/001" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select id="lecDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" required>
+                    <option value="">Select Department</option>
+                    <option value="Basic Sciences">Basic Sciences</option>
+                    <option value="Community Dental Health">Community Dental Health</option>
+                    <option value="Oral Medicine & Periodontology">Oral Medicine & Periodontology</option>
+                    <option value="Oral & Maxillofacial Surgery">Oral & Maxillofacial Surgery</option>
+                    <option value="Oral Pathology">Oral Pathology</option>
+                    <option value="Prosthetic Dentistry">Prosthetic Dentistry</option>
+                    <option value="Restorative Dentistry">Restorative Dentistry</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Temporary Password (optional)</label>
+                <input id="lecPassword" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Leave blank to auto-generate" />
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-between gap-4 mt-2">
+                <div id="createResult" class="text-sm"></div>
+                <div class="flex gap-3">
+                    <button id="cancelCreateLecturer" type="button" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200">Cancel</button>
+                    <button id="createLecturerBtn" type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Create Lecturer</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let allUsers = [];
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function getBatchFromUser(user) {
+    if (user.account_type !== "student" || !user.identifier) return "";
+    const parts = String(user.identifier).split("/");
+    return parts.length >= 2 ? parts[1] : "";
+}
+
+function buildBatchOptions(users) {
+    const batchFilter = document.getElementById("batchFilter");
+    const batches = [...new Set(
+        users
+            .map(getBatchFromUser)
+            .filter(Boolean)
+    )].sort();
+
+    batchFilter.innerHTML = `<option value="">All Batches</option>` +
+        batches.map(batch => `<option value="${escapeHtml(batch)}">${escapeHtml(batch)}</option>`).join("");
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById("usersTableBody");
+
+    if (!users.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                    No users found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+        const name = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "N/A";
+        const roleLabel = user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1) : "N/A";
+        const batch = getBatchFromUser(user);
+        const idOrBatch = user.account_type === "student"
+            ? `${escapeHtml(user.identifier || "-")}${batch ? ` <span class="text-xs text-slate-400 block mt-1">Batch ${escapeHtml(batch)}</span>` : ""}`
+            : escapeHtml(user.identifier || "-");
+
+        const statusBadge = user.is_active
+            ? `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>`
+            : `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Inactive</span>`;
+
+        return `
+            <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium dark:text-slate-200">${escapeHtml(name)}</td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(roleLabel)}</td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(user.email || "-")}</td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${idOrBatch}</td>
+                <td class="px-6 py-4 text-sm">${statusBadge}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function applyFilters() {
+    const search = document.getElementById("searchInput").value.trim().toLowerCase();
+    const role = document.getElementById("roleFilter").value;
+    const batch = document.getElementById("batchFilter").value;
+
+    const filtered = allUsers.filter(user => {
+        const name = `${user.first_name || ""} ${user.last_name || ""}`.trim().toLowerCase();
+        const email = String(user.email || "").toLowerCase();
+        const identifier = String(user.identifier || "").toLowerCase();
+        const userBatch = getBatchFromUser(user);
+
+        const matchesSearch =
+            !search ||
+            name.includes(search) ||
+            email.includes(search) ||
+            identifier.includes(search);
+
+        const matchesRole = !role || user.account_type === role;
+        const matchesBatch = !batch || userBatch === batch;
+
+        return matchesSearch && matchesRole && matchesBatch;
+    });
+
+    renderUsers(filtered);
+}
+
+async function loadUsers() {
+    const result = await API.users.getAll();
+    if (!result.ok) {
+        document.getElementById("usersTableBody").innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-sm text-red-600">
+                    ${escapeHtml(result.error || "Failed to load users")}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    allUsers = result.users || [];
+    buildBatchOptions(allUsers);
+    applyFilters();
+}
+
+function openLecturerModal() {
+    const modal = document.getElementById("lecturerModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function closeLecturerModal() {
+    const modal = document.getElementById("lecturerModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+
+    document.getElementById("createLecturerForm").reset();
+    const resultDiv = document.getElementById("createResult");
+    resultDiv.textContent = "";
+    resultDiv.className = "text-sm";
+}
+
+document.addEventListener("DOMContentLoaded", async function () {
+    const admin = await requireAuth("admin");
+    if (!admin) return;
+
+    const adminProfileName = document.getElementById("adminProfileName");
+    if (adminProfileName) {
+        adminProfileName.textContent =
+            admin.fullName ||
+            `${admin.firstName || ""} ${admin.lastName || ""}`.trim() ||
+            "Admin";
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+            API.auth.logout();
+        });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", applyFilters);
+    document.getElementById("roleFilter").addEventListener("change", applyFilters);
+    document.getElementById("batchFilter").addEventListener("change", applyFilters);
+
+    document.getElementById("openCreateLecturerModal").addEventListener("click", openLecturerModal);
+    document.getElementById("closeLecturerModal").addEventListener("click", closeLecturerModal);
+    document.getElementById("cancelCreateLecturer").addEventListener("click", closeLecturerModal);
+
+    document.getElementById("lecturerModal").addEventListener("click", function (e) {
+        if (e.target.id === "lecturerModal") {
+            closeLecturerModal();
+        }
+    });
+
+    document.getElementById("createLecturerForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const firstName = document.getElementById("lecFirstName").value.trim();
+        const lastName = document.getElementById("lecLastName").value.trim();
+        const email = document.getElementById("lecEmail").value.trim().toLowerCase();
+        const staffId = document.getElementById("lecStaffId").value.trim().toUpperCase();
+        const department = document.getElementById("lecDepartment").value;
+        const password = document.getElementById("lecPassword").value.trim();
+
+        const resultDiv = document.getElementById("createResult");
+        resultDiv.textContent = "";
+        resultDiv.className = "text-sm";
+
+        if (!firstName || !lastName || !email || !department) {
+            resultDiv.textContent = "First name, last name, email, and department are required.";
+            resultDiv.classList.add("text-red-600");
+            return;
+        }
+
+        resultDiv.textContent = "Creating lecturer account...";
+        resultDiv.classList.add("text-slate-500");
+
+        const payload = {
+            firstName,
+            lastName,
+            email,
+            department,
+            ...(staffId ? { staffId } : {}),
+            ...(password ? { password } : {})
+        };
+
+        const result = await API.registration.createLecturer(payload);
+
+        if (!result.ok) {
+            resultDiv.textContent = result.error || "Failed to create lecturer account.";
+            resultDiv.className = "text-sm text-red-600";
+            return;
+        }
+
+        let successText = result.message || "Lecturer account created successfully.";
+        if (result.tempPassword) {
+            successText += ` Temporary password: ${result.tempPassword}`;
+        }
+
+        resultDiv.textContent = successText;
+        resultDiv.className = "text-sm text-green-600";
+
+        await loadUsers();
+
+        setTimeout(() => {
+            closeLecturerModal();
+        }, 1800);
+    });
+
+    await loadUsers();
+});
+</script>
+</body>
+</html>

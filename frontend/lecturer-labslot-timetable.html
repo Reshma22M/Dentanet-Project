@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>DentaNet | Lecturer Lab Slot Timetable</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
+  <!-- TOP NAV -->
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" aria-label="Notifications">
+            <span class="material-icons-round">notifications</span>
+          </button>
+
+          <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
+            <img alt="Lecturer Profile Small" src="public/images/lec.jpeg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex pt-16 min-h-screen">
+    <!-- SIDEBAR -->
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
+          Dashboard
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-4 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined">event_available</span>
+          Schedule an Exam
+        </a>
+
+        <div class="pt-4 pb-2 px-4">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
+        </div>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">assignment</span>
+          Student Submissions
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-primary rounded-xl shadow-lg shadow-primary/20" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
+          Upload Study Materials
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-reports.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">monitoring</span>
+          Performance Report
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 lg:ml-64 bg-slate-50 dark:bg-slate-950">
+      <div class="p-8 max-w-7xl mx-auto">
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Lab Slot Monitoring</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">View exam and practice slot occupancy, recent requests, and machine deployment.</p>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl mb-8 shadow-sm flex gap-4 items-start">
+          <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined">info</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Lab Slot Overview</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              Practical exam date: <span class="font-bold">February 15, 2026</span> • Session capacity: <span class="font-bold">20 students per slot</span>
+            </p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 italic">
+              Read-only monitoring for lecturer view.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slot cards -->
+        <div class="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold">
+          <span class="material-symbols-outlined text-primary">analytics</span>
+          <h2>Exam Slot Capacity Monitoring</h2>
+        </div>
+
+        <div id="slotCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <p class="text-slate-500">Loading slot data...</p>
+        </div>
+
+        <!-- Recent booking requests -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm mb-10">
+          <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">event_note</span>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Recent Slot Requests</h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider">
+                  <th class="px-6 py-4">Student</th>
+                  <th class="px-6 py-4">Type</th>
+                  <th class="px-6 py-4">Date</th>
+                  <th class="px-6 py-4">Time</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4">Machine</th>
+                </tr>
+              </thead>
+              <tbody id="bookingTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                <tr>
+                  <td colspan="6" class="px-6 py-4 text-slate-500">Loading bookings...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Machine deployment -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-2xl">precision_manufacturing</span>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Machine Deployment Status</h2>
+            </div>
+            <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-xl">Live View</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider">
+                  <th class="px-6 py-4">Machine</th>
+                  <th class="px-6 py-4">Current Status</th>
+                  <th class="px-6 py-4">Assigned Student</th>
+                  <th class="px-6 py-4">Current Active Slot</th>
+                </tr>
+              </thead>
+              <tbody id="machineTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                <tr>
+                  <td colspan="4" class="px-6 py-4 text-slate-500">Loading machine deployment...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <button
+    class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]"
+    onclick="document.documentElement.classList.toggle('dark')"
+    aria-label="Toggle dark mode"
+  >
+    <span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
+    <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
+  </button>
+
+  <footer class="lg:ml-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 px-8">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-sm text-slate-500 dark:text-slate-400">© 2026 DentaNet LMS. All rights reserved.</p>
+      <div class="flex items-center gap-6">
+        <a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+        <a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Terms of Service</a>
+        <a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Contact Support</a>
+      </div>
+    </div>
+  </footer>
+
+<script>
+const EXAM_DATE = "2026-02-15";
+
+const examSlots = [
+  { start: "08:00:00", end: "09:00:00", label: "8:00 AM - 9:00 AM", session: "Morning Session" },
+  { start: "09:00:00", end: "10:00:00", label: "9:00 AM - 10:00 AM", session: "Morning Session" },
+  { start: "10:00:00", end: "11:00:00", label: "10:00 AM - 11:00 AM", session: "Morning Session" },
+  { start: "11:00:00", end: "12:00:00", label: "11:00 AM - 12:00 PM", session: "Morning Session" },
+  { start: "13:00:00", end: "14:00:00", label: "1:00 PM - 2:00 PM", session: "Afternoon Session" },
+  { start: "14:00:00", end: "15:00:00", label: "2:00 PM - 3:00 PM", session: "Afternoon Session" }
+];
+
+function formatTime(timeStr) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":");
+  const hour = parseInt(h, 10);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${m} ${suffix}`;
+}
+
+function renderSlotCards(bookings) {
+  const container = document.getElementById("slotCardsContainer");
+  const examBookings = bookings.filter(b => b.slot_type === "EXAM" && b.status === "APPROVED");
+
+  container.innerHTML = examSlots.map(slot => {
+    const bookedCount = examBookings.filter(
+      b => b.booking_date === EXAM_DATE && b.start_time === slot.start
+    ).length;
+
+    const isFull = bookedCount >= 20;
+    let badge = "Scheduled";
+    let badgeClass = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+    let barClass = "bg-green-500";
+
+    if (isFull) {
+      badge = "Full";
+      badgeClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      barClass = "bg-red-500";
+    } else if (bookedCount >= 15) {
+      badgeClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+      barClass = "bg-amber-500";
+    }
+
+    const width = Math.min((bookedCount / 20) * 100, 100);
+
+    return `
+      <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border ${isFull ? "border-red-200 dark:border-red-900/30" : "border-slate-200 dark:border-slate-800"} hover:shadow-lg hover:shadow-primary/5 transition-all">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${slot.label}</h3>
+            <p class="text-slate-500 text-sm">${slot.session}</p>
+          </div>
+          <span class="px-2 py-1 ${badgeClass} rounded text-xs font-bold uppercase tracking-wider">${badge}</span>
+        </div>
+
+        <div class="mb-6">
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-500">Current Occupancy</span>
+            <span class="font-bold ${isFull ? "text-red-600" : bookedCount >= 15 ? "text-amber-600" : "text-green-600"}">${bookedCount}/20 Students</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div class="${barClass} h-full" style="width:${width}%"></div>
+          </div>
+        </div>
+
+        <div class="w-full py-2.5 border border-primary text-primary font-semibold rounded-xl flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-lg">info</span>
+          View Only
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderBookingTable(bookings) {
+  const tbody = document.getElementById("bookingTableBody");
+
+  if (!bookings.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-slate-500">No booking requests found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = bookings.map(b => `
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${b.first_name || ""} ${b.last_name || ""}</td>
+      <td class="px-6 py-4">${b.slot_type}</td>
+      <td class="px-6 py-4">${b.booking_date}</td>
+      <td class="px-6 py-4">${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
+      <td class="px-6 py-4">${b.status}</td>
+      <td class="px-6 py-4">${b.machine_code || "-"}</td>
+    </tr>
+  `).join("");
+}
+
+function renderMachineTable(bookings) {
+  const tbody = document.getElementById("machineTableBody");
+  const approved = bookings.filter(b => b.status === "APPROVED" && b.machine_code);
+
+  if (!approved.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-slate-500">No active machine allocations found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = approved.map(b => `
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${b.machine_code}</td>
+      <td class="px-6 py-4">
+        <span class="px-3 py-1 ${
+          b.machine_status === "maintenance"
+            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+            : b.machine_status === "unavailable"
+              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+        } rounded-full text-xs font-bold">
+          ${b.machine_status || "ready"}
+        </span>
+      </td>
+      <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">${b.first_name || ""} ${b.last_name || ""}</td>
+      <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
+    </tr>
+  `).join("");
+}
+
+async function loadBookings() {
+  const result = await API.bookings.getAll();
+
+  if (!result.ok) {
+    document.getElementById("slotCardsContainer").innerHTML = `<p class="text-red-600">${result.error || "Failed to load booking data"}</p>`;
+    document.getElementById("bookingTableBody").innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-red-600">Failed to load bookings</td></tr>`;
+    document.getElementById("machineTableBody").innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-red-600">Failed to load machine deployment</td></tr>`;
+    return;
+  }
+
+  const bookings = result.bookings || [];
+  renderSlotCards(bookings);
+  renderBookingTable(bookings);
+  renderMachineTable(bookings);
+}
+
+document.addEventListener("DOMContentLoaded", async function() {
+  const user = await requireAuth("lecturer");
+  if (!user) return;
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function() {
+      API.auth.logout();
+    });
+  }
+
+  loadBookings();
+});
+</script>
+</body>
+</html> 

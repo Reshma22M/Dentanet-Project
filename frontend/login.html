@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Login - DentaNet LMS</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <link href="public/css/styles.css" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script src="assets/js/api.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#7f13ec",
+              accent: "#00f2fe",
+              "background-light": "#faf5ff",
+              "background-dark": "#0f172a",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+</head>
+<body class="font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col bg-background-light dark:bg-background-dark">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <img src="blue-logo.svg" alt="DentaNet Logo" class="h-24 w-auto" />
+                </div>
+                <nav class="hidden md:flex items-center gap-8">
+                    <a class="text-sm font-medium hover:text-primary transition-colors" href="index.html">Home</a>
+                    <a class="text-sm font-medium hover:text-primary transition-colors" href="index.html#about">About</a>
+                    <a class="bg-primary/10 text-primary hover:bg-primary hover:text-white px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200" href="signup.html">Register</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-16 flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-50 dark:from-slate-900 dark:to-slate-800"></div>
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+            <div class="absolute top-40 right-10 w-72 h-72 bg-accent rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+            <div class="absolute bottom-20 left-1/2 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-md px-4 py-12">
+            <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl rounded-3xl p-8 md:p-10 border border-slate-200 dark:border-slate-700">
+                <div class="text-center mb-8">
+                    <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto mx-auto mb-4" />
+                    <h1 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">Welcome Back</h1>
+                    <p class="text-slate-500 dark:text-slate-400">Login to DentaNet LMS</p>
+                </div>
+
+                <form id="loginForm" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email / Registration Number / Staff ID</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+                            <input
+                                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white transition-all"
+                                id="identifier"
+                                type="text"
+                                placeholder="email@example.com or DENT/2023/001 or LEC/001"
+                                required
+                            />
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Enter your registered email, registration number, or staff ID</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+                            <input
+                                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white transition-all"
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="rounded border-slate-300 text-primary focus:ring-primary"/>
+                            <span class="text-slate-600 dark:text-slate-400">Remember me</span>
+                        </label>
+                        <a class="text-primary font-semibold hover:underline" href="reset-password.html">Forgot password?</a>
+                    </div>
+
+                    <button class="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0" type="submit">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        Don't have an account?
+                        <a class="text-primary font-bold hover:underline" href="signup.html">Create Account</a>
+                    </p>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <p class="text-xs text-center text-slate-500 dark:text-slate-400">
+                        University of Peradeniya<br/>
+                        Faculty of Dental Sciences
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <button class="fixed bottom-6 right-6 p-3 rounded-full bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 z-50" onclick="document.documentElement.classList.toggle('dark')">
+        <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+        <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+    </button>
+
+    <style>
+        @keyframes blob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+    </style>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const identifier = document.getElementById("identifier").value.trim();
+            const password = document.getElementById("password").value;
+
+            if (!identifier || !password) {
+                alert("Please enter your identifier and password");
+                return;
+            }
+
+            try {
+                const result = await API.auth.login(identifier, password);
+                console.log("Login result:", result);
+
+                if (!result.ok) {
+                    alert(result.error || "Login failed");
+                    return;
+                }
+
+                if (result.requiresPasswordChange) {
+                    localStorage.setItem("pendingPasswordChangeEmail", result.email);
+                    alert("You must change your temporary password before continuing.");
+                    window.location.href = "change-password.html";
+                    return;
+                }
+
+                if (!result.user || !result.token) {
+                    alert("Login failed. User details were not returned by the server.");
+                    return;
+                }
+
+                if (result.user.role === "student") {
+                    window.location.href = "student-dashboard.html";
+                } else if (result.user.role === "lecturer") {
+                    window.location.href = "lecturer-dashboard.html";
+                } else if (result.user.role === "admin") {
+                    window.location.href = "admin-dashboard.html";
+                } else {
+                    window.location.href = "index.html";
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Connection error. Please make sure the backend server is running on port 3000.");
+            }
+        });
+    </script>
+</body>
+</html>
