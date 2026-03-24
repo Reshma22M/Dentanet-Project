@@ -247,15 +247,24 @@ const API = {
     },
 
     materials: {
-        getAll: async (moduleId = null, type = null) => {
+        getAll: async (moduleId = null, materialType = null, category = null) => {
             const params = new URLSearchParams();
 
             if (moduleId) params.append("module_id", moduleId);
-            if (type) params.append("type", type);
+            if (materialType) params.append("material_type", materialType);
+            if (category) params.append("category", category);
 
             const url = `${API_BASE_URL}/materials${params.toString() ? `?${params.toString()}` : ""}`;
 
             const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        },
+
+        getById: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/materials/${id}`, {
                 headers: getAuthHeaders()
             });
 
@@ -274,8 +283,78 @@ const API = {
             });
 
             return await parseResponse(response);
+        },
+
+        update: async (id, formData) => {
+            const token = getAuthToken();
+
+            const response = await fetch(`${API_BASE_URL}/materials/${id}`, {
+                method: "PUT",
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` })
+                },
+                body: formData
+            });
+
+            return await parseResponse(response);
+        },
+
+        delete: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/materials/${id}`, {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
         }
     },
+
+modules: {
+    getAll: async () => {
+        const response = await fetch(`${API_BASE_URL}/modules`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    getById: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    create: async (moduleData) => {
+        const response = await fetch(`${API_BASE_URL}/modules`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(moduleData)
+        });
+
+        return await parseResponse(response);
+    },
+
+    update: async (id, moduleData) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(moduleData)
+        });
+
+        return await parseResponse(response);
+    },
+
+    delete: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    }
+},
 
     notifications: {
         getByUser: async (userId) => {

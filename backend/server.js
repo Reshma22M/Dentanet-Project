@@ -21,6 +21,8 @@ const evaluationRoutes = require("./routes/evaluations");
 const materialRoutes = require("./routes/materials");
 const notificationRoutes = require("./routes/notifications");
 const registrationRoutes = require("./routes/registration");
+const moduleRoutes = require("./routes/modules");
+
 
 // -----------------------------
 // Middleware
@@ -61,6 +63,7 @@ app.use("/api/evaluations", evaluationRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/registration", registrationRoutes);
+app.use("/api/modules", moduleRoutes);
 
 // -----------------------------
 // Root Route

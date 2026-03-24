@@ -4,10 +4,12 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Admin Dashboard - DentaNet</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
 <script src="assets/js/api.js"></script>
+
 <script>
 tailwind.config = {
     darkMode: "class",
@@ -26,20 +28,21 @@ tailwind.config = {
             },
             borderRadius: {
                 DEFAULT: "0.5rem",
-                xl: "1rem"
+                xl: "1rem",
+                "2xl": "1.25rem"
             },
         },
     },
 };
 </script>
+
 <style type="text/tailwindcss">
 @layer base {
     body { @apply font-sans; }
 }
 .sidebar-active { background-color: #3B82F6; color: white; }
-.glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-.tab-active { @apply border-primary text-primary border-b-2; }
-.tab-inactive { @apply border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300; }
+.card { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm; }
+.stat-card { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm; }
 </style>
 </head>
 
@@ -83,6 +86,10 @@ tailwind.config = {
                 <span class="material-symbols-outlined">event_note</span>
                 <span>Calendar</span>
             </a>
+            <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="Admin-labslot-timetable.html">
+                <span class="material-symbols-outlined">calendar_view_week</span>
+                <span>Lab Timetable</span>
+            </a>
             <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
                 <span class="material-symbols-outlined">monitoring</span>
                 <span>API Monitor</span>
@@ -95,119 +102,185 @@ tailwind.config = {
     </aside>
 
     <main class="flex-1 p-6 md:p-10">
-        <div class="flex flex-col md:flex-row justify-between items-start mb-10 gap-4">
+        <!-- Header -->
+        <div class="flex flex-col xl:flex-row justify-between items-start gap-6 mb-10">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">Admin Dashboard</h1>
-                <p class="text-slate-500 dark:text-slate-400 font-medium">System Control & Lab Slot Overview</p>
+                <p class="text-sm font-semibold uppercase tracking-widest text-primary mb-2">Administration</p>
+                <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Admin Dashboard</h1>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">System control, user management, and lab operations overview.</p>
             </div>
 
-            <div class="flex items-center gap-4 bg-white dark:bg-slate-800 p-2 pr-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <div class="relative">
-                <a href="admin-profile.html">
-                <img ... src="public/images/admin.jpg"/>
-                </a>                    
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
-                </div>
-                <div>
-                    <p id="adminName" class="text-xs font-bold text-slate-800 dark:text-white leading-none">Admin User</p>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Admin</p>
+            <div class="card p-4 flex items-center gap-4 min-w-[300px]">
+                <a href="admin-profile.html" class="shrink-0">
+                    <img id="adminProfileImage" alt="Admin Profile" class="w-16 h-16 rounded-2xl border-2 border-primary object-cover" src="public/images/admin.jpg"/>
+                </a>
+                <div class="flex-1">
+                    <p id="adminName" class="text-sm font-bold text-slate-900 dark:text-white">Admin User</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase mt-1">Main Admin</p>
+                    <div class="mt-3">
+                        <a href="admin-profile.html" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit Profile
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <section class="mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400">Manage Users</h2>
-                        <span class="material-symbols-outlined text-primary">group</span>
-                    </div>
-                    <p class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Users</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Create lecturer accounts and manage active users.</p>
-                    <a href="admin-manage-users.html" class="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
-                        Go to Manage Users
-                        <span class="material-symbols-outlined text-base">arrow_forward</span>
-                    </a>
+        <!-- Stats -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="material-symbols-outlined text-primary text-3xl">group</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase">Users</span>
                 </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Total registered users</p>
+                <h2 id="totalUsersCount" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">0</h2>
+            </div>
 
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400">Lab Slots</h2>
-                        <span class="material-symbols-outlined text-primary">event_note</span>
-                    </div>
-                    <p class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Overview</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Monitor practical exam slots and booking requests.</p>
-                    <a href="Admin-labslot-timetable.html" class="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
-                        View Lab Timetable
-                        <span class="material-symbols-outlined text-base">arrow_forward</span>
-                    </a>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="material-symbols-outlined text-emerald-500 text-3xl">school</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase">Students</span>
                 </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Active student accounts</p>
+                <h2 id="studentCount" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">0</h2>
+            </div>
 
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400">Calendar</h2>
-                        <span class="material-symbols-outlined text-primary">calendar_month</span>
-                    </div>
-                    <p class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Schedule</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Manage academic and lab schedules from one place.</p>
-                    <a href="master-schedule.html" class="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
-                        Open Calendar
-                        <span class="material-symbols-outlined text-base">arrow_forward</span>
-                    </a>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="material-symbols-outlined text-amber-500 text-3xl">badge</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase">Lecturers</span>
                 </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Academic staff accounts</p>
+                <h2 id="lecturerCount" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">0</h2>
+            </div>
 
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400">System</h2>
-                        <span class="material-symbols-outlined text-primary">monitoring</span>
-                    </div>
-                    <p class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">API Monitor</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Track system health and backend API activity.</p>
-                    <a href="admin-api-monitor.html" class="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
-                        Open Monitor
-                        <span class="material-symbols-outlined text-base">arrow_forward</span>
-                    </a>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="material-symbols-outlined text-rose-500 text-3xl">pending_actions</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase">Requests</span>
                 </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Pending lab requests</p>
+                <h2 id="pendingCount" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">0</h2>
             </div>
         </section>
 
-        <section class="mb-10">
-            <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-10">
-                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">New Slot Requests</h2>
-                    <div class="flex space-x-8 h-full items-center translate-y-[1px]">
-                        <button class="tab-active px-1 pb-4 text-sm font-bold flex items-center gap-2">
-                            Practice Sessions
-                            <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full">3</span>
-                        </button>
-                        <button id="practicalExamsTab" class="tab-inactive px-1 pb-4 text-sm font-semibold flex items-center gap-2 relative group">
-                            Practical Exams
-                            <span class="bg-slate-200 dark:bg-slate-700 text-slate-500 text-[10px] px-2 py-0.5 rounded-full">Auto</span>
-                        </button>
+        <!-- Main content -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <!-- Left -->
+            <section class="xl:col-span-2 space-y-8">
+                <div class="card overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage important admin tasks quickly.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a href="admin-manage-users.html" class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 hover:border-primary hover:shadow-md transition-all bg-slate-50 dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-primary">person_add</span>
+                                <h3 class="font-bold text-slate-900 dark:text-white">Manage Users</h3>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">View users, create lecturer accounts, and maintain account access.</p>
+                        </a>
+
+                        <a href="Admin-labslot-timetable.html" class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 hover:border-primary hover:shadow-md transition-all bg-slate-50 dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-primary">calendar_view_week</span>
+                                <h3 class="font-bold text-slate-900 dark:text-white">Lab Timetable</h3>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Check slot usage, scheduling status, and machine allocation.</p>
+                        </a>
+
+                        <a href="master-schedule.html" class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 hover:border-primary hover:shadow-md transition-all bg-slate-50 dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-primary">event</span>
+                                <h3 class="font-bold text-slate-900 dark:text-white">Calendar</h3>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Review upcoming academic and lab-related schedules.</p>
+                        </a>
+
+                        <a href="admin-api-monitor.html" class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 hover:border-primary hover:shadow-md transition-all bg-slate-50 dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-primary">monitoring</span>
+                                <h3 class="font-bold text-slate-900 dark:text-white">API Monitor</h3>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Track backend health and monitor system activity.</p>
+                        </a>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 mb-4">
-                    <span class="text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full border border-amber-100 dark:border-amber-800">Manual Approval Required</span>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 class="font-bold text-slate-900 dark:text-white text-lg mb-3">Practice Session Requests</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">This section can later be connected to real booking request data.</p>
+                <div class="card overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recent User Accounts</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Latest registered accounts in the system.</p>
+                        </div>
+                        <a href="admin-manage-users.html" class="text-sm font-semibold text-primary hover:underline">View all</a>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 dark:bg-slate-800/50">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email / ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentUsersTable" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tr>
+                                    <td colspan="3" class="px-6 py-6 text-sm text-slate-500">Loading users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 class="font-bold text-slate-900 dark:text-white text-lg mb-3">Practical Exam Allocations</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">This section can later be connected to real slot allocation data.</p>
+            </section>
+
+            <!-- Right -->
+            <aside class="space-y-8">
+                <div class="card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Admin Summary</h2>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between gap-4">
+                            <span class="text-slate-500 dark:text-slate-400">Role</span>
+                            <span class="font-semibold text-slate-900 dark:text-white">Admin</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <span class="text-slate-500 dark:text-slate-400">Name</span>
+                            <span id="adminSummaryName" class="font-semibold text-slate-900 dark:text-white text-right">-</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <span class="text-slate-500 dark:text-slate-400">Email</span>
+                            <span id="adminSummaryEmail" class="font-semibold text-slate-900 dark:text-white text-right break-all">-</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </section>
+
+                <div class="card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-outlined text-amber-500">pending</span>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pending Requests</h2>
+                    </div>
+                    <div id="pendingRequestsBox" class="space-y-3 text-sm">
+                        <p class="text-slate-500 dark:text-slate-400">No pending requests loaded yet.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </main>
 </div>
 
-<footer class="bg-slate-900 text-slate-400 pt-16 pb-8 border-t border-slate-800">
+<footer class="bg-slate-900 text-slate-400 pt-10 pb-8 border-t border-slate-800">
     <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center text-[10px] text-slate-600 border-t border-slate-800 pt-8">
+        <div class="text-center text-[10px] text-slate-600 pt-4">
             <p>© 2026 DentaNet Admin Hub. Clinical Excellence Through Data Management.</p>
         </div>
     </div>
@@ -222,13 +295,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     const admin = await requireAuth("admin");
     if (!admin) return;
 
+    const fullName =
+        admin.fullName ||
+        `${admin.firstName || ""} ${admin.lastName || ""}`.trim() ||
+        "Admin";
+
     const adminName = document.getElementById("adminName");
-    if (adminName) {
-        adminName.textContent =
-            admin.fullName ||
-            `${admin.firstName || ""} ${admin.lastName || ""}`.trim() ||
-            "Admin";
-    }
+    const adminSummaryName = document.getElementById("adminSummaryName");
+    const adminSummaryEmail = document.getElementById("adminSummaryEmail");
+
+    if (adminName) adminName.textContent = fullName;
+    if (adminSummaryName) adminSummaryName.textContent = fullName;
+    if (adminSummaryEmail) adminSummaryEmail.textContent = admin.email || "-";
 
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
@@ -237,11 +315,68 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    const practicalExamsTab = document.getElementById("practicalExamsTab");
-    if (practicalExamsTab) {
-        practicalExamsTab.addEventListener("click", function () {
-            window.location.href = "Admin-labslot-timetable.html";
-        });
+    try {
+        const usersResult = await API.users.getAll();
+
+        if (usersResult.ok && usersResult.users) {
+            const users = usersResult.users;
+            const totalUsers = users.length;
+            const students = users.filter(u => u.account_type === "student").length;
+            const lecturers = users.filter(u => u.account_type === "lecturer").length;
+
+            document.getElementById("totalUsersCount").textContent = totalUsers;
+            document.getElementById("studentCount").textContent = students;
+            document.getElementById("lecturerCount").textContent = lecturers;
+
+            const recentUsers = users.slice(0, 5);
+            const tbody = document.getElementById("recentUsersTable");
+
+            if (recentUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-6 text-sm text-slate-500">No users found.</td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = recentUsers.map(user => `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                            ${(user.first_name || "")} ${(user.last_name || "")}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 capitalize">
+                            ${user.account_type || "-"}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                            ${user.email || user.identifier || "-"}
+                        </td>
+                    </tr>
+                `).join("");
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load users:", error);
+    }
+
+    try {
+        const bookingsResult = await API.bookings.getAll();
+        if (bookingsResult.ok && bookingsResult.bookings) {
+            const pending = bookingsResult.bookings.filter(b => b.status === "pending");
+            document.getElementById("pendingCount").textContent = pending.length;
+
+            const pendingBox = document.getElementById("pendingRequestsBox");
+            if (pending.length === 0) {
+                pendingBox.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No pending requests right now.</p>`;
+            } else {
+                pendingBox.innerHTML = pending.slice(0, 4).map(b => `
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/40">
+                        <p class="font-semibold text-slate-900 dark:text-white">${b.booking_type || "Booking Request"}</p>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">${b.booking_date || "-"} • ${b.start_time || "-"} - ${b.end_time || "-"}</p>
+                    </div>
+                `).join("");
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load bookings:", error);
     }
 });
 </script>
