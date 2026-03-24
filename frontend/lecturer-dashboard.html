@@ -1,292 +1,384 @@
 ﻿<!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>DentaNet | Lecturer Profile</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#3B82F6",
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-<style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
-</head>
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
-<nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-<div class="px-4 sm:px-6 lg:px-8">
-<div class="flex justify-between items-center h-16">
-<div class="flex items-center gap-2">
-<img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-</div>
-<div class="flex items-center space-x-4">
-<button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
-<span class="material-icons-round">notifications</span>
-<span class="absolute top-2 right-2 flex h-2 w-2">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-</span>
-</button>
-<div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
-<img alt="Lecturer Profile Small" src="public/images/lec.jpeg"/>
-</div>
-</div>
-</div>
-</div>
-</nav>
-<div class="flex pt-16 min-h-screen">
-<aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
-<div class="p-4 space-y-2 flex-1 overflow-y-auto">
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html" id="dashboardBtn">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
-                Dashboard
-            </a>
-<a class="flex items-center gap-3 px-4 py-4 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all" href="lecturer-evaluate-submission.html" id="scheduleExamBtn">
-<span class="material-symbols-outlined">event_available</span>
-                Schedule an Exam
-            </a>
-<div class="pt-4 pb-2 px-4">
-<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
-</div>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-eva-submissions1.html" id="submissionsBtn">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">assignment</span>
-                Student Submissions
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-labslot-timetable.html" id="labSlotBtn">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">calendar_view_week</span>
-                Lab Slot Timetable
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-upload-materials.html" id="uploadBtn">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
-                Upload Study Materials
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-reports.html" id="reportsBtn">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">monitoring</span>
-                Performance Report
-            </a>
-</div>
-<div class="p-4 border-t border-slate-100 dark:border-slate-800">
-<button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
-<span class="material-symbols-outlined">logout</span>
-                Logout
-            </button>
-<script>
-    // Auth check
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        window.location.href = 'login.html';
-    }
-    // Sidebar nav handlers
-    document.getElementById('dashboardBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-dashboard.html';
-    };
-    document.getElementById('scheduleExamBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-schedule-exam.html';
-    };
-    document.getElementById('submissionsBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-eva-submissions1.html';
-    };
-    document.getElementById('labSlotBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-labslot-timetable.html';
-    };
-    document.getElementById('uploadBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-upload-materials.html';
-    };
-    document.getElementById('reportsBtn').onclick = function(e) {
-        e.preventDefault();
-        window.location.href = 'lecturer-reports.html';
-    };
-    // Logout
-    document.getElementById('logoutBtn').onclick = function() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = 'login.html';
-    };
-</script>
-</div>
-</aside>
-<main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
-<div class="max-w-6xl mx-auto">
-<div class="flex flex-col xl:flex-row gap-8">
-<div class="flex-1 space-y-10">
-<div class="flex flex-col md:flex-row items-center md:items-start gap-6 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-<div class="relative group">
-<div class="absolute -inset-1 bg-gradient-to-r from-primary to-blue-400 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-<img alt="Dr. Kasun Perera" class="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-xl" src="public/images/lec.jpeg"/>
-</div>
-<div class="text-center md:text-left space-y-1">
-<h1 class="text-3xl font-extrabold text-slate-900 dark:text-white">Dr. Kasun Perera</h1>
-<p class="text-primary font-medium">Professor in Oral Pathology</p>
-<div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-<span class="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300">
-<span class="material-icons-round text-sm">badge</span> DIM123456789
-                                </span>
-<span class="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300">
-<span class="material-icons-round text-sm">school</span> Faculty of Dental Sciences
-                                </span>
-</div>
-</div>
-</div>
-<section>
-<div class="flex items-center gap-2 mb-6">
-<span class="material-icons-round text-primary">info</span>
-<h2 class="text-xl font-bold dark:text-white">Lecturer Profile Information</h2>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-slate-200 dark:bg-slate-700 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow">
-<p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Department</p>
-<p class="text-lg font-semibold text-slate-800 dark:text-slate-200">Oral Pathology</p>
-<p class="text-sm text-slate-500 mt-2">University of Peradeniya, SL</p>
-</div>
-<div class="bg-slate-200 dark:bg-slate-700 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow">
-<p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email</p>
-<p class="text-lg font-semibold text-slate-800 dark:text-slate-200">samadaras@pdn.ac.lk</p>
-<a class="text-xs font-medium text-primary mt-2 inline-block hover:underline" href="mailto:samadaras@pdn.ac.lk">Send email</a>
-</div>
-<div class="bg-slate-200 dark:bg-slate-700 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow">
-<p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Office Hours</p>
-<p class="text-lg font-semibold text-slate-800 dark:text-slate-200">Tue, Wed &amp; Fri</p>
-<p class="text-sm text-slate-500 mt-2">08:00 AM - 02:00 PM</p>
-</div>
-</div>
-</section>
-<section>
-<div class="flex items-center justify-between mb-6">
-<div class="flex items-center gap-2">
-<span class="material-icons-round text-orange-500">pending_actions</span>
-<h2 class="text-xl font-bold dark:text-white">Pending Work</h2>
-</div>
-<a class="text-sm font-medium text-primary hover:underline" href="#">View All</a>
-</div>
-<div class="grid gap-4">
-<div class="bg-slate-100 dark:bg-slate-700 p-5 rounded-xl flex items-center justify-between border-l-4 border-orange-500 shadow-sm">
-<div class="space-y-1">
-<p class="font-semibold dark:text-white">Drafted student submission check</p>
-<p class="text-sm text-slate-500">Submission ID - IM098273</p>
-</div>
-<div class="text-right">
-<p class="text-sm font-medium text-slate-700 dark:text-slate-300">09-11-2025</p>
-<span class="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">Draft</span>
-</div>
-</div>
-<div class="bg-slate-100 dark:bg-slate-700 p-5 rounded-xl flex items-center justify-between border-l-4 border-orange-500 shadow-sm">
-<div class="space-y-1">
-<p class="font-semibold dark:text-white">Drafted student submission check</p>
-<p class="text-sm text-slate-500">Submission ID - IM058840</p>
-</div>
-<div class="text-right">
-<p class="text-sm font-medium text-slate-700 dark:text-slate-300">12-12-2025</p>
-<span class="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">Draft</span>
-</div>
-</div>
-</div>
-</section>
-<section>
-<div class="flex items-center gap-2 mb-6">
-<span class="material-icons-round text-indigo-500">event</span>
-<h2 class="text-xl font-bold dark:text-white">Upcoming Activities</h2>
-</div>
-<div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-slate-800/50">
-<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Time</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Details</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-<tr class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-<td class="px-6 py-5 text-sm font-medium text-slate-900 dark:text-white">2024-04-10</td>
-<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">10:00 AM - 12:00 PM</td>
-<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">IM/2022/091, Submission Review</td>
-</tr>
-<tr class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-<td class="px-6 py-5 text-sm font-medium text-slate-900 dark:text-white">2024-04-17</td>
-<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">02:00 PM - 04:00 PM</td>
-<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">IM/2022/012, Lab Practical Submission</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-</div>
-<aside class="w-full xl:w-80 shrink-0">
-<div class="sticky top-24 bg-slate-100 dark:bg-slate-700 rounded-2xl border border-slate-200 dark:border-slate-600 shadow-xl overflow-hidden">
-<div class="p-6 bg-primary">
-<div class="flex items-center justify-between text-white">
-<h3 class="text-lg font-bold">Notifications</h3>
-<span class="bg-white/20 px-2 py-0.5 rounded text-xs">4 New</span>
-</div>
-</div>
-<div class="p-4 space-y-3">
-<div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-<span class="material-icons-round text-blue-500 text-lg">file_upload</span>
-</div>
-<div class="space-y-1">
-<p class="text-sm font-medium dark:text-white">IM/2022/034 uploaded a Test</p>
-<p class="text-xs text-slate-400">2 minutes ago</p>
-</div>
-</div>
-<div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-<div class="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
-<span class="material-icons-round text-yellow-500 text-lg">science</span>
-</div>
-<div class="space-y-1">
-<p class="text-sm font-medium dark:text-white">Upcoming lab test</p>
-<p class="text-xs text-slate-400">Tomorrow at 9:00 AM</p>
-</div>
-</div>
-<div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-<div class="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-<span class="material-icons-round text-green-500 text-lg">assignment_turned_in</span>
-</div>
-<div class="space-y-1">
-<p class="text-sm font-medium dark:text-white">Complete Evaluation of Test 1</p>
-<p class="text-xs text-slate-400">5 hours ago</p>
-</div>
-</div>
-<button class="w-full py-2.5 mt-4 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary border border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary transition-all">
-                                Mark all as read
-                            </button>
-</div>
-</div>
-</aside>
-</div>
-</div>
-</main>
-</div>
-<button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
-<span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
-</button>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>DentaNet | Lecturer Dashboard</title>
 
-</body></html>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+  <!-- TOP NAV -->
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
+            <span class="material-icons-round">notifications</span>
+            <span class="absolute top-2 right-2 flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+          </button>
+
+          <a href="lecturer-profile.html" class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 block">
+            <img id="topProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex pt-16 min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined">dashboard</span>
+          Dashboard
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined text-slate-400">event_available</span>
+          Schedule an Exam
+        </a>
+
+        <div class="pt-4 pb-2 px-4">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
+        </div>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined text-slate-400">assignment</span>
+          Student Submissions
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined text-slate-400">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400">upload_file</span>
+          Upload Study Materials
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-reports.html">
+          <span class="material-symbols-outlined text-slate-400">monitoring</span>
+          Performance Report
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-profile.html">
+          <span class="material-symbols-outlined text-slate-400">person</span>
+          My Profile
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
+      <div class="max-w-7xl mx-auto space-y-8">
+
+        <!-- HERO -->
+        <section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-8 shadow-lg">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p class="text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">Lecturer Dashboard</p>
+              <h1 id="lecturerWelcomeName" class="text-3xl md:text-4xl font-extrabold">Welcome back</h1>
+              <p class="mt-2 text-blue-100 max-w-2xl">
+                Manage exams, review submissions, monitor lab activity, and upload study materials from one place.
+              </p>
+            </div>
+
+            <div class="flex gap-3 flex-wrap">
+              <a href="lecturer-schedule-exam.html" class="px-5 py-3 bg-white text-primary rounded-xl font-semibold shadow">
+                Schedule Exam
+              </a>
+              <a href="lecturer-upload-materials.html" class="px-5 py-3 bg-blue-500/30 border border-white/20 text-white rounded-xl font-semibold">
+                Upload Material
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUICK STATS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="material-symbols-outlined text-primary">assignment</span>
+              <span class="text-xs font-semibold text-slate-400">This Week</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Pending Submissions</p>
+            <h2 class="text-3xl font-bold mt-1">12</h2>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="material-symbols-outlined text-emerald-500">task_alt</span>
+              <span class="text-xs font-semibold text-slate-400">This Week</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Reviewed</p>
+            <h2 class="text-3xl font-bold mt-1">28</h2>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="material-symbols-outlined text-amber-500">event</span>
+              <span class="text-xs font-semibold text-slate-400">Upcoming</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Scheduled Exams</p>
+            <h2 class="text-3xl font-bold mt-1">4</h2>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="material-symbols-outlined text-purple-500">menu_book</span>
+              <span class="text-xs font-semibold text-slate-400">Library</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Uploaded Materials</p>
+            <h2 class="text-3xl font-bold mt-1">9</h2>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+          <!-- LEFT -->
+          <div class="xl:col-span-2 space-y-8">
+
+            <!-- PENDING WORK -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-orange-500">pending_actions</span>
+                  <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pending Work</h2>
+                </div>
+                <a href="lecturer-eva-submissions1.html" class="text-sm font-medium text-primary hover:underline">View All</a>
+              </div>
+
+              <div class="p-6 space-y-4">
+                <div class="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl flex items-center justify-between border-l-4 border-orange-500">
+                  <div>
+                    <p class="font-semibold dark:text-white">Submission awaiting review</p>
+                    <p class="text-sm text-slate-500">Submission ID - SUB/2026/014</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Due today</p>
+                    <span class="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">Pending</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl flex items-center justify-between border-l-4 border-orange-500">
+                  <div>
+                    <p class="font-semibold dark:text-white">AI-evaluated submission needs lecturer confirmation</p>
+                    <p class="text-sm text-slate-500">Submission ID - SUB/2026/011</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Tomorrow</p>
+                    <span class="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">Review</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- UPCOMING ACTIVITIES -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                <span class="material-icons-round text-indigo-500">event</span>
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Upcoming Activities</h2>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-800/50">
+                      <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
+                      <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Time</th>
+                      <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Activity</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td class="px-6 py-5 text-sm font-medium text-slate-900 dark:text-white">2026-03-22</td>
+                      <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">10:00 AM - 12:00 PM</td>
+                      <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">Practical exam supervision</td>
+                    </tr>
+                    <tr class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td class="px-6 py-5 text-sm font-medium text-slate-900 dark:text-white">2026-03-24</td>
+                      <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">02:00 PM - 04:00 PM</td>
+                      <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">Student submission review session</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <!-- RIGHT -->
+          <aside class="space-y-8">
+
+            <!-- PROFILE SUMMARY -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="p-6 flex items-center gap-4">
+                <img id="lecturerProfileImage" src="public/images/lec.jpeg" alt="Lecturer Profile" class="w-16 h-16 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"/>
+                <div>
+                  <p id="lecturerCardName" class="font-bold text-slate-900 dark:text-white">Lecturer Name</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">Lecturer</p>
+                  <a href="lecturer-profile.html" class="text-sm text-primary font-medium hover:underline mt-1 inline-block">View profile</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- NOTIFICATIONS -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="p-6 bg-primary">
+                <div class="flex items-center justify-between text-white">
+                  <h3 class="text-lg font-bold">Notifications</h3>
+                  <span class="bg-white/20 px-2 py-0.5 rounded text-xs">4 New</span>
+                </div>
+              </div>
+
+              <div class="p-4 space-y-3">
+                <div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <span class="material-icons-round text-blue-500 text-lg">file_upload</span>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium dark:text-white">A student uploaded a submission</p>
+                    <p class="text-xs text-slate-400">2 minutes ago</p>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <div class="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                    <span class="material-icons-round text-yellow-500 text-lg">science</span>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium dark:text-white">Upcoming lab session reminder</p>
+                    <p class="text-xs text-slate-400">Tomorrow at 9:00 AM</p>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <div class="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <span class="material-icons-round text-green-500 text-lg">assignment_turned_in</span>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium dark:text-white">Material upload completed</p>
+                    <p class="text-xs text-slate-400">5 hours ago</p>
+                  </div>
+                </div>
+
+                <button class="w-full py-2.5 mt-4 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary border border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary transition-all">
+                  Mark all as read
+                </button>
+              </div>
+            </section>
+
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
+    <span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
+    <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
+  </button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const result = await API.auth.verify();
+
+      if (!result.ok || !result.user) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (result.user.role !== "lecturer") {
+        alert("Access denied");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const fullName =
+        result.user.fullName ||
+        `${result.user.firstName || ""} ${result.user.lastName || ""}`.trim() ||
+        "Lecturer";
+
+      const welcomeName = document.getElementById("lecturerWelcomeName");
+      const cardName = document.getElementById("lecturerCardName");
+
+      if (welcomeName) {
+        welcomeName.textContent = `Welcome back, ${result.user.firstName || fullName}`;
+      }
+
+      if (cardName) {
+        cardName.textContent = fullName;
+      }
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+          API.auth.logout();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -37,6 +37,49 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const result = await API.auth.verify();
+    if (!result.ok || !result.user) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+        return;
+    }
+
+    if (result.user.role !== "student") {
+        alert("Access denied");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const fullName =
+        result.user.fullName ||
+        `${result.user.firstName || ""} ${result.user.lastName || ""}`.trim() ||
+        "Student";
+
+    const nameEl = document.getElementById("studentProfileName");
+    const welcomeEl = document.getElementById("studentWelcomeText");
+
+    if (nameEl) nameEl.textContent = fullName;
+    if (welcomeEl) welcomeEl.textContent = `Welcome back, ${result.user.firstName || fullName}! Here's what's happening today.`;
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.onclick = function () {
+            API.auth.logout();
+        };
+    }
+});
+</script>
+
 <body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
 <nav class="sticky top-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-purple-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
   <div class="flex items-center gap-2">
@@ -85,15 +128,15 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
 <div>
 <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Student Dashboard</h1>
-<p class="text-gray-500 dark:text-gray-400">Welcome back, Senara! Here's what's happening today.</p>
+<p id="studentWelcomeText" class="text-gray-500 dark:text-gray-400">Welcome back! Here's what's happening today.</p>
 </div>
-<div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
-<img alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50" src="public/images/stu.jpg"/>
-<div>
-<p class="text-sm font-bold text-gray-900 dark:text-white">Senara Perera</p>
-<p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
-</div>
-</div>
+<a href="student-profile.html" class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3 hover:opacity-90 transition">
+  <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
+  <div>
+    <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
+    <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
+  </div>
+</a>
 </div>
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
 <div class="xl:col-span-2 space-y-8">

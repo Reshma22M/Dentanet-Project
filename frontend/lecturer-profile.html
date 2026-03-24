@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>DentaNet | Lecturer Profile</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <a href="lecturer-profile.html" class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 block">
+            <img id="topProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex pt-16 min-h-screen">
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined text-slate-400">dashboard</span>
+          Dashboard
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined text-slate-400">event_available</span>
+          Schedule an Exam
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined text-slate-400">assignment</span>
+          Student Submissions
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined text-slate-400">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400">upload_file</span>
+          Upload Study Materials
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" href="lecturer-reports.html">
+          <span class="material-symbols-outlined text-slate-400">monitoring</span>
+          Performance Report
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20" href="lecturer-profile.html">
+          <span class="material-symbols-outlined">person</span>
+          My Profile
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
+      <div class="max-w-5xl mx-auto space-y-8">
+
+        <section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-8 shadow-lg">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p class="text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">My Profile</p>
+              <h1 id="profileHeroName" class="text-3xl md:text-4xl font-extrabold">Lecturer Profile</h1>
+              <p class="mt-2 text-blue-100 max-w-2xl">
+                View and update your lecturer profile details.
+              </p>
+            </div>
+
+            <a href="lecturer-dashboard.html" class="px-5 py-3 bg-white text-primary rounded-xl font-semibold shadow">
+              Back to Dashboard
+            </a>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <section class="xl:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Profile Details</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Update your personal information here.</p>
+            </div>
+
+            <form id="lecturerProfileForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <input type="hidden" id="profileUserId" />
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">First Name</label>
+                <input id="firstName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Last Name</label>
+                <input id="lastName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required />
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-2">Email</label>
+                <input id="email" type="email" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Staff ID</label>
+                <input id="staffId" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Department</label>
+                <input id="departmentName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly />
+              </div>
+
+              <div class="md:col-span-2 flex items-center gap-3">
+                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold">
+                  Save Changes
+                </button>
+                <span id="profileStatus" class="text-sm"></span>
+              </div>
+            </form>
+          </section>
+
+          <aside class="space-y-8">
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="p-6 flex flex-col items-center text-center">
+                <img id="profilePreview" src="public/images/lec.jpeg" alt="Lecturer Profile" class="w-28 h-28 rounded-3xl object-cover border border-slate-200 dark:border-slate-700 mb-4"/>
+                <p id="profileCardName" class="font-bold text-lg text-slate-900 dark:text-white">Lecturer Name</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Lecturer</p>
+
+                <div class="w-full mt-5">
+                  <label class="block text-sm font-semibold mb-2 text-left">Profile Picture</label>
+                  <input id="profileImage" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700">
+                  <p class="text-xs text-slate-500 mt-2 text-left">
+                    Image preview is ready. Backend image save can be connected next.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Account Summary</h3>
+              </div>
+              <div class="p-6 space-y-4 text-sm">
+                <div class="flex justify-between gap-4">
+                  <span class="text-slate-500 dark:text-slate-400">Role</span>
+                  <span class="font-medium text-slate-900 dark:text-white">Lecturer</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <span class="text-slate-500 dark:text-slate-400">Email</span>
+                  <span id="summaryEmail" class="font-medium text-slate-900 dark:text-white text-right break-all"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <span class="text-slate-500 dark:text-slate-400">Staff ID</span>
+                  <span id="summaryStaffId" class="font-medium text-slate-900 dark:text-white"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <span class="text-slate-500 dark:text-slate-400">Department</span>
+                  <span id="summaryDepartment" class="font-medium text-slate-900 dark:text-white text-right"></span>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
+    <span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
+    <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
+  </button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const auth = await API.auth.verify();
+      if (!auth.ok || !auth.user || auth.user.role !== "lecturer") {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const meResponse = await fetch(`${API_BASE_URL}/users/me`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const me = await meResponse.json();
+
+      if (!meResponse.ok || !me.user) {
+        alert(me.error || "Failed to load profile");
+        return;
+      }
+
+      const firstName = me.user.first_name || "";
+      const lastName = me.user.last_name || "";
+      const fullName = `${firstName} ${lastName}`.trim() || "Lecturer";
+
+      document.getElementById("profileUserId").value = me.user.id || "";
+      document.getElementById("firstName").value = firstName;
+      document.getElementById("lastName").value = lastName;
+      document.getElementById("email").value = me.user.email || "";
+      document.getElementById("staffId").value = me.user.staff_id || "";
+      document.getElementById("departmentName").value = me.user.department_name || "";
+
+      document.getElementById("profileHeroName").textContent = fullName;
+      document.getElementById("profileCardName").textContent = fullName;
+      document.getElementById("summaryEmail").textContent = me.user.email || "-";
+      document.getElementById("summaryStaffId").textContent = me.user.staff_id || "-";
+      document.getElementById("summaryDepartment").textContent = me.user.department_name || "-";
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+          API.auth.logout();
+        });
+      }
+
+      document.getElementById("lecturerProfileForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("profileUserId").value;
+        const firstName = document.getElementById("firstName").value.trim();
+        const lastName = document.getElementById("lastName").value.trim();
+        const statusEl = document.getElementById("profileStatus");
+
+        statusEl.textContent = "";
+
+        const result = await API.users.update(id, { firstName, lastName });
+
+        if (!result.ok) {
+          statusEl.textContent = result.error || "Failed to update profile";
+          statusEl.className = "text-sm text-red-600";
+          return;
+        }
+
+        statusEl.textContent = "Profile updated successfully";
+        statusEl.className = "text-sm text-green-600";
+
+        const newFullName = `${firstName} ${lastName}`.trim();
+        document.getElementById("profileHeroName").textContent = newFullName;
+        document.getElementById("profileCardName").textContent = newFullName;
+      });
+
+      document.getElementById("profileImage").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          document.getElementById("profilePreview").src = event.target.result;
+          document.getElementById("topProfileImage").src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  </script>
+</body>
+</html>
