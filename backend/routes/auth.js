@@ -2,12 +2,42 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const { promisePool } = require("../config/database");
 const { validatePassword } = require("../middleware/validators");
 
 // -----------------------------
 // Helpers
 // -----------------------------
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: String(process.env.SMTP_SECURE || "false") === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+async function sendOtpEmail(toEmail, otp) {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: "DentaNet Password Reset OTP",
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>DentaNet Password Reset</h2>
+        <p>Your OTP code is:</p>
+        <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; margin: 12px 0;">
+          ${otp}
+        </div>
+        <p>This OTP will expire in 10 minutes.</p>
+        <p>If you did not request this, please ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
 function generateToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: "24h",
@@ -43,7 +73,7 @@ async function findAccountByIdentifier(identifier) {
   if (admins.length > 0) {
     return {
       user: admins[0],
-      role: "admin"
+      role: "admin",
     };
   }
 
@@ -69,7 +99,7 @@ async function findAccountByIdentifier(identifier) {
   if (students.length > 0) {
     return {
       user: students[0],
-      role: "student"
+      role: "student",
     };
   }
 
@@ -96,7 +126,7 @@ async function findAccountByIdentifier(identifier) {
   if (lecturers.length > 0) {
     return {
       user: lecturers[0],
-      role: "lecturer"
+      role: "lecturer",
     };
   }
 
@@ -322,6 +352,7 @@ router.get("/verify", async (req, res) => {
 // -----------------------------
 router.post("/first-time-change-password", async (req, res) => {
   console.log("FIRST TIME CHANGE BODY:", req.body);
+
   try {
     const { email, currentPassword, newPassword } = req.body;
 
@@ -332,21 +363,22 @@ router.post("/first-time-change-password", async (req, res) => {
       });
     }
 
-const passwordValidation = validatePassword(
-  newPassword,
-  email,
-  "",
-  currentPassword
-);
+    const passwordValidation = validatePassword(
+      newPassword,
+      email,
+      "",
+      currentPassword
+    );
 
-if (!passwordValidation.valid) {
-  return res.status(400).json({
-    success: false,
-    error: passwordValidation.error,
-  });
-}
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: passwordValidation.error,
+      });
+    }
 
-const account = await findAccountByIdentifier(email);
+    const account = await findAccountByIdentifier(email);
+
     if (!account) {
       return res.status(404).json({
         success: false,
@@ -449,28 +481,28 @@ router.post("/change-password", async (req, res) => {
       });
     }
 
-const user = await getFullUserProfile(decoded.role, decoded.id);
+    const user = await getFullUserProfile(decoded.role, decoded.id);
 
-if (!user) {
-  return res.status(404).json({
-    success: false,
-    error: "Account not found",
-  });
-}
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Account not found",
+      });
+    }
 
-const passwordValidation = validatePassword(
-  newPassword,
-  user.email,
-  "",
-  currentPassword
-);
+    const passwordValidation = validatePassword(
+      newPassword,
+      user.email,
+      "",
+      currentPassword
+    );
 
-if (!passwordValidation.valid) {
-  return res.status(400).json({
-    success: false,
-    error: passwordValidation.error,
-  });
-}
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: passwordValidation.error,
+      });
+    }
 
     let currentHash = null;
 
@@ -575,7 +607,6 @@ router.post("/forgot-password", async (req, res) => {
     const { user, role } = account;
     const otp = generateOTP();
 
-    // remove old unused OTPs for this email
     await promisePool.query(
       `DELETE FROM password_reset_tokens
        WHERE email = ? AND is_used = FALSE`,
@@ -589,12 +620,11 @@ router.post("/forgot-password", async (req, res) => {
       [role, user.id, otp, user.email]
     );
 
-    console.log(`📧 Password Reset OTP for ${user.email}: ${otp}`);
+    await sendOtpEmail(user.email, otp);
 
     return res.json({
       success: true,
-      message: "OTP sent successfully",
-      devOtp: otp,
+      message: "OTP sent successfully to your email",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -604,7 +634,6 @@ router.post("/forgot-password", async (req, res) => {
     });
   }
 });
-
 
 // -----------------------------
 // RESET PASSWORD WITH OTP

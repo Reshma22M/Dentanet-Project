@@ -22,7 +22,7 @@ const materialRoutes = require("./routes/materials");
 const notificationRoutes = require("./routes/notifications");
 const registrationRoutes = require("./routes/registration");
 const moduleRoutes = require("./routes/modules");
-
+const materialTypeRoutes = require("./routes/materialTypes");
 
 // -----------------------------
 // Middleware
@@ -37,7 +37,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static uploads (if used later)
+// Static uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // -----------------------------
@@ -64,6 +64,7 @@ app.use("/api/materials", materialRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/registration", registrationRoutes);
 app.use("/api/modules", moduleRoutes);
+app.use("/api/material-types", materialTypeRoutes);
 
 // -----------------------------
 // Root Route
@@ -165,5 +166,4 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   console.error("💥 Unhandled Rejection:", reason);
 });
-
-module.exports = app;
+module.exports = app; 

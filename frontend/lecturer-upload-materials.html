@@ -36,9 +36,7 @@
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-    .upload-area {
-      transition: all 0.3s ease;
-    }
+    .upload-area { transition: all 0.3s ease; }
     .upload-area.dragover {
       border-color: #3B82F6;
       background-color: rgba(59, 130, 246, 0.05);
@@ -112,318 +110,252 @@
     </aside>
 
     <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-8">
-          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Upload Study Materials</h1>
-          <p class="text-slate-600 dark:text-slate-400">Create modules and upload files, videos, and external learning resources.</p>
+          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Study Materials Management</h1>
+          <p class="text-slate-600 dark:text-slate-400">Create modules and upload study materials through a clean, production-style workflow.</p>
         </div>
 
         <div id="statusMessage" class="hidden mb-6 rounded-xl px-4 py-3 text-sm font-medium"></div>
 
-        <!-- CREATE MODULE -->
-        <div class="mb-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-          <div class="flex items-center gap-2 mb-6">
-            <span class="material-icons-round text-primary">library_add</span>
-            <h2 class="text-2xl font-bold dark:text-white">Create New Module</h2>
-          </div>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+          <section class="xl:col-span-2 space-y-8">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+              <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <div>
+                  <h2 class="text-2xl font-bold dark:text-white">Upload New Material</h2>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Select a module, choose the correct material format, and upload or attach the resource.</p>
+                </div>
+              </div>
 
-          <form id="createModuleForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module Code</label>
-              <input id="moduleCode" type="text" placeholder="e.g., DEN101" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-            </div>
-
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module Name</label>
-              <input id="moduleName" type="text" placeholder="e.g., Oral Anatomy" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-            </div>
-
-            <div class="md:col-span-2">
-              <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
-              <textarea id="moduleDescription" rows="3" placeholder="Brief description of the module..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors resize-none"></textarea>
-            </div>
-
-            <div class="md:col-span-2 flex gap-4">
-              <button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                <span class="material-symbols-outlined">add</span>
-                Create Module
-              </button>
-
-              <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <div class="mb-8 border-b border-slate-200 dark:border-slate-700">
-          <div class="flex gap-1 overflow-x-auto">
-            <button onclick="switchMaterialType('file')" id="fileTab" class="px-6 py-3 font-semibold text-primary border-b-2 border-primary whitespace-nowrap">
-              <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-xl">upload_file</span>
-                File Upload
-              </span>
-            </button>
-
-            <button onclick="switchMaterialType('youtube')" id="youtubeTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent whitespace-nowrap">
-              <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-xl">smart_display</span>
-                YouTube Links
-              </span>
-            </button>
-
-            <button onclick="switchMaterialType('link')" id="linkTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent whitespace-nowrap">
-              <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-xl">link</span>
-                External Links
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <!-- FILE FORM -->
-        <div id="fileContent">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-            <div class="flex items-center gap-2 mb-6">
-              <span class="material-icons-round text-primary">cloud_upload</span>
-              <h2 class="text-2xl font-bold dark:text-white">Upload File Material</h2>
-            </div>
-
-            <form id="fileUploadForm" class="space-y-6">
-              <div class="upload-area border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-12 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-all" id="dropZone">
-                <div class="flex flex-col items-center gap-4">
-                  <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                    <span class="material-symbols-outlined text-primary text-4xl">upload</span>
-                  </div>
-
-                  <div>
-                    <p class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-1">Drag and drop a file here</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">or click to browse from your computer</p>
-                  </div>
-
-                  <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.mp4,.webm" />
-                  <button type="button" onclick="document.getElementById('fileInput').click()" class="px-6 py-2.5 bg-primary hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
-                    Select File
+              <div class="mb-8 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex gap-1 overflow-x-auto">
+                  <button type="button" onclick="switchMaterialType('file')" id="fileTab" class="px-6 py-3 font-semibold text-primary border-b-2 border-primary whitespace-nowrap">
+                    <span class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-xl">upload_file</span>
+                      File Upload
+                    </span>
                   </button>
 
-                  <p class="text-xs text-slate-400 mt-2">Supported: PDF, DOC, DOCX, MP4, WEBM • Max 10MB</p>
+                  <button type="button" onclick="switchMaterialType('youtube')" id="youtubeTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent whitespace-nowrap">
+                    <span class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-xl">smart_display</span>
+                      YouTube
+                    </span>
+                  </button>
+
+                  <button type="button" onclick="switchMaterialType('link')" id="linkTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent whitespace-nowrap">
+                    <span class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-xl">link</span>
+                      External Link
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              <div id="filePreview" class="hidden space-y-2">
-                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Selected File</h3>
-                <div id="fileList"></div>
+              <!-- FILE FORM -->
+              <div id="fileContent">
+                <form id="fileUploadForm" class="space-y-6">
+                  <div class="upload-area border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-10 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-all" id="dropZone">
+                    <div class="flex flex-col items-center gap-4">
+                      <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-3xl">upload</span>
+                      </div>
+
+                      <div>
+                        <p class="text-base font-bold text-slate-700 dark:text-slate-300 mb-1">Drag and drop a file here</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">or click below to browse</p>
+                      </div>
+
+                      <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.mp4,.webm" />
+                      <button type="button" onclick="document.getElementById('fileInput').click()" class="px-6 py-2.5 bg-primary hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
+                        Select File
+                      </button>
+
+                      <p class="text-xs text-slate-400">PDF, DOC, DOCX, MP4, WEBM • Max 10MB</p>
+                    </div>
+                  </div>
+
+                  <div id="filePreview" class="hidden space-y-2">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Selected File</h3>
+                    <div id="fileList"></div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
+                      <select id="fileModuleId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+                        <option value="">Select Module</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Material Type</label>
+                      <select id="fileMaterialTypeId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+                        <option value="">Select Type</option>
+                      </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+                      <input id="fileTitle" type="text" placeholder="Enter material title" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
+                    </div>
+                  </div>
+
+                  <div class="flex gap-4 pt-2">
+                    <button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                      <span class="material-symbols-outlined">cloud_upload</span>
+                      Upload Material
+                    </button>
+
+                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all" onclick="resetFilePreview()">
+                      Clear Form
+                    </button>
+                  </div>
+
+                  <div id="uploadProgressContainer" class="hidden">
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-lg h-3 overflow-hidden">
+                      <div id="uploadProgressBar" class="bg-blue-500 h-3 rounded-lg transition-all" style="width: 0%"></div>
+                    </div>
+                    <p id="uploadProgressText" class="text-sm text-slate-500 dark:text-slate-400 mt-2">Uploading... 0%</p>
+                  </div>
+                </form>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              <!-- YOUTUBE FORM -->
+              <div id="youtubeContent" class="hidden">
+                <form id="youtubeForm" class="space-y-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">YouTube URL</label>
+                      <input id="youtubeExternalUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
+                      <select id="youtubeModuleId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+                        <option value="">Select Module</option>
+                      </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+                      <input id="youtubeTitle" type="text" placeholder="Video title" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
+                    </div>
+                  </div>
+
+                  <div class="flex gap-4 pt-2">
+                    <button type="submit" class="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                      <span class="material-symbols-outlined">add_circle</span>
+                      Add YouTube Video
+                    </button>
+
+                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
+                      Clear Form
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- LINK FORM -->
+              <div id="linkContent" class="hidden">
+                <form id="linkForm" class="space-y-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource URL</label>
+                      <input id="linkExternalUrl" type="url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
+                      <select id="linkModuleId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+                        <option value="">Select Module</option>
+                      </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+                      <input id="linkTitle" type="text" placeholder="Resource title" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
+                    </div>
+                  </div>
+
+                  <div class="flex gap-4 pt-2">
+                    <button type="submit" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                      <span class="material-symbols-outlined">add_link</span>
+                      Add External Link
+                    </button>
+
+                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
+                      Clear Form
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+              <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
-                  <select id="fileModuleId" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-                    <option value="">Select Module</option>
+                  <h2 class="text-xl font-bold dark:text-white">Uploaded Materials</h2>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review existing materials and manage uploaded resources.</p>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <select id="filterModuleId" class="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+                    <option value="">All Modules</option>
                   </select>
-                </div>
 
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Material Type</label>
-                  <select id="fileMaterialType" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required>
-                    <option value="">Select Type</option>
-                    <option value="pdf">PDF</option>
-                    <option value="document">Document</option>
-                    <option value="video">Video</option>
+                  <select id="filterMaterialType" class="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+                    <option value="">All Types</option>
                   </select>
+
+                  <button id="refreshMaterialsBtn" class="px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-600">
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div id="materialsLoading" class="hidden text-sm text-slate-500 dark:text-slate-400 mb-4">Loading materials...</div>
+
+              <div id="materialsList" class="space-y-3">
+                <div class="text-sm text-slate-500 dark:text-slate-400">No materials loaded yet.</div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm sticky top-24">
+              <div class="flex items-center gap-2 mb-4">
+                <span class="material-icons-round text-primary">library_add</span>
+                <h2 class="text-lg font-bold dark:text-white">Create Module</h2>
+              </div>
+
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                Add a module first, then attach materials to it.
+              </p>
+
+              <form id="createModuleForm" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module Code</label>
+                  <input id="moduleCode" type="text" placeholder="e.g., DEN101" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category</label>
-                  <input id="fileCategory" type="text" placeholder="e.g., lecture-notes" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
+                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module Name</label>
+                  <input id="moduleName" type="text" placeholder="e.g., Oral Anatomy" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" required />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Duration (optional)</label>
-                  <input id="fileDuration" type="text" placeholder="e.g., 15:30" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
-                  <input id="fileTitle" type="text" placeholder="Enter material title" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-                </div>
-
-                <div class="md:col-span-2">
                   <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
-                  <textarea id="fileDescription" rows="3" placeholder="Brief description..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors resize-none"></textarea>
+                  <textarea id="moduleDescription" rows="3" placeholder="Optional module description" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none resize-none"></textarea>
                 </div>
 
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Thumbnail URL (optional)</label>
-                  <input id="fileThumbnailUrl" type="url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-              </div>
-
-              <div class="flex gap-4 pt-4">
-                <button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                  <span class="material-symbols-outlined">cloud_upload</span>
-                  Upload Material
+                <button type="submit" class="w-full px-5 py-3 bg-slate-900 dark:bg-primary hover:opacity-90 text-white font-semibold rounded-lg transition-all">
+                  Create Module
                 </button>
-
-                <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                  Clear Form
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- YOUTUBE FORM -->
-        <div id="youtubeContent" class="hidden">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-            <div class="flex items-center gap-2 mb-6">
-              <span class="material-icons-round text-red-500">smart_display</span>
-              <h2 class="text-2xl font-bold dark:text-white">Add YouTube Video</h2>
+              </form>
             </div>
-
-            <form id="youtubeForm" class="space-y-6">
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">YouTube URL</label>
-                <input id="youtubeExternalUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
-                  <select id="youtubeModuleId" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-                    <option value="">Select Module</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category</label>
-                  <input id="youtubeCategory" type="text" placeholder="e.g., tutorial-video" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
-                  <input id="youtubeTitle" type="text" placeholder="Video title" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
-                  <textarea id="youtubeDescription" rows="3" placeholder="Brief description..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors resize-none"></textarea>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Duration (optional)</label>
-                  <input id="youtubeDuration" type="text" placeholder="e.g., 15:30" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Thumbnail URL (optional)</label>
-                  <input id="youtubeThumbnailUrl" type="url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-              </div>
-
-              <div class="flex gap-4 pt-4">
-                <button type="submit" class="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                  <span class="material-symbols-outlined">add_circle</span>
-                  Add YouTube Video
-                </button>
-
-                <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                  Clear Form
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- LINK FORM -->
-        <div id="linkContent" class="hidden">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-            <div class="flex items-center gap-2 mb-6">
-              <span class="material-icons-round text-indigo-500">link</span>
-              <h2 class="text-2xl font-bold dark:text-white">Add External Resource</h2>
-            </div>
-
-            <form id="linkForm" class="space-y-6">
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource URL</label>
-                <input id="linkExternalUrl" type="url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
-                  <select id="linkModuleId" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-                    <option value="">Select Module</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category</label>
-                  <input id="linkCategory" type="text" placeholder="e.g., reference-material" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
-                  <input id="linkTitle" type="text" placeholder="Resource title" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required />
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
-                  <textarea id="linkDescription" rows="3" placeholder="Brief description..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors resize-none"></textarea>
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Thumbnail URL (optional)</label>
-                  <input id="linkThumbnailUrl" type="url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" />
-                </div>
-              </div>
-
-              <div class="flex gap-4 pt-4">
-                <button type="submit" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                  <span class="material-symbols-outlined">add_link</span>
-                  Add External Link
-                </button>
-
-                <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                  Clear Form
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- MATERIALS LIST -->
-        <div class="mt-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-          <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
-            <div class="flex items-center gap-2">
-              <span class="material-icons-round text-primary">history</span>
-              <h2 class="text-xl font-bold dark:text-white">Uploaded Materials</h2>
-            </div>
-
-            <div class="flex gap-3 flex-wrap">
-              <select id="filterMaterialType" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
-                <option value="">All Types</option>
-                <option value="pdf">PDF</option>
-                <option value="document">Document</option>
-                <option value="video">Video</option>
-                <option value="youtube">YouTube</option>
-                <option value="link">Link</option>
-                <option value="other">Other</option>
-              </select>
-
-              <input id="filterCategory" type="text" placeholder="Filter by category" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm" />
-
-              <button id="refreshMaterialsBtn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-600">
-                Refresh
-              </button>
-            </div>
-          </div>
-
-          <div id="materialsLoading" class="hidden text-sm text-slate-500 dark:text-slate-400 mb-4">Loading materials...</div>
-
-          <div id="materialsList" class="space-y-3">
-            <div class="text-sm text-slate-500 dark:text-slate-400">No materials loaded yet.</div>
-          </div>
+          </aside>
         </div>
       </div>
     </main>
@@ -434,14 +366,26 @@
     <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
   </button>
 
-  <script src="api.js"></script>
+  <script src="assets/js/api.js"></script>
   <script>
     let selectedFile = null;
+    let materialTypeMap = {};
+    let backendBaseUrl = "";
+
+    function initBackendBaseUrl() {
+      backendBaseUrl = typeof API_BASE_URL === "string"
+        ? API_BASE_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:3000";
+    }
 
     function showStatus(message, type = "success") {
       const statusBox = document.getElementById("statusMessage");
       statusBox.textContent = message;
-      statusBox.classList.remove("hidden", "bg-green-100", "text-green-700", "border-green-200", "bg-red-100", "text-red-700", "border-red-200");
+      statusBox.classList.remove(
+        "hidden",
+        "bg-green-100", "text-green-700", "border-green-200",
+        "bg-red-100", "text-red-700", "border-red-200"
+      );
       statusBox.classList.add("border");
 
       if (type === "error") {
@@ -471,22 +415,6 @@
       });
     }
 
-    function getMaterialIcon(type) {
-      if (type === "pdf") return "picture_as_pdf";
-      if (type === "video") return "play_circle";
-      if (type === "document") return "description";
-      if (type === "youtube") return "smart_display";
-      return "link";
-    }
-
-    function getMaterialIconBg(type) {
-      if (type === "pdf") return "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400";
-      if (type === "video") return "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400";
-      if (type === "document") return "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400";
-      if (type === "youtube") return "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400";
-      return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400";
-    }
-
     function escapeHtml(value) {
       return String(value || "")
         .replace(/&/g, "&amp;")
@@ -496,19 +424,40 @@
         .replace(/'/g, "&#039;");
     }
 
+    function getTypeVisual(name) {
+      const type = String(name || "").toLowerCase();
+      if (type === "pdf") return { icon: "picture_as_pdf", classes: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" };
+      if (type === "video") return { icon: "play_circle", classes: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" };
+      if (type === "document") return { icon: "description", classes: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" };
+      if (type === "youtube") return { icon: "smart_display", classes: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" };
+      return { icon: "link", classes: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" };
+    }
+
+    function buildMaterialUrl(material) {
+      if (material.external_url) return material.external_url;
+      if (material.file_url) return `${backendBaseUrl}${material.file_url}`;
+      return "#";
+    }
+
+    function getMaterialTypeIdByName(name) {
+      return materialTypeMap[String(name || "").toLowerCase()] || null;
+    }
+
     async function loadModulesIntoSelects() {
       const selects = [
         document.getElementById("fileModuleId"),
         document.getElementById("youtubeModuleId"),
-        document.getElementById("linkModuleId")
+        document.getElementById("linkModuleId"),
+        document.getElementById("filterModuleId")
       ];
 
       try {
         const result = await API.modules.getAll();
-        const modules = Array.isArray(result) ? result : (result.modules || result.data || []);
+        const modules = Array.isArray(result) ? result : (result.modules || []);
 
         selects.forEach(select => {
-          select.innerHTML = `<option value="">Select Module</option>`;
+          const firstLabel = select.id === "filterModuleId" ? "All Modules" : "Select Module";
+          select.innerHTML = `<option value="">${firstLabel}</option>`;
         });
 
         if (Array.isArray(modules)) {
@@ -523,53 +472,84 @@
         }
       } catch (error) {
         console.error("Failed to load modules:", error);
+        showStatus("Failed to load modules", "error");
+      }
+    }
+
+    async function loadMaterialTypes() {
+      const fileTypeSelect = document.getElementById("fileMaterialTypeId");
+      const filterTypeSelect = document.getElementById("filterMaterialType");
+
+      try {
+        const result = await API.materialTypes.getAll();
+        const types = Array.isArray(result) ? result : (result.materialTypes || []);
+
+        materialTypeMap = {};
+        fileTypeSelect.innerHTML = `<option value="">Select Type</option>`;
+        filterTypeSelect.innerHTML = `<option value="">All Types</option>`;
+
+        if (Array.isArray(types)) {
+          types.forEach(type => {
+            const lowerName = String(type.name || "").toLowerCase();
+            materialTypeMap[lowerName] = Number(type.material_type_id);
+
+            const filterOption = document.createElement("option");
+            filterOption.value = type.material_type_id;
+            filterOption.textContent = type.name;
+            filterTypeSelect.appendChild(filterOption);
+
+            if (["pdf", "video", "document", "other"].includes(lowerName)) {
+              const fileOption = document.createElement("option");
+              fileOption.value = type.material_type_id;
+              fileOption.textContent = type.name;
+              fileTypeSelect.appendChild(fileOption);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load material types:", error);
+        showStatus("Failed to load material types", "error");
       }
     }
 
     async function loadMaterials() {
       const list = document.getElementById("materialsList");
       const loading = document.getElementById("materialsLoading");
-      const filterType = document.getElementById("filterMaterialType").value;
-      const filterCategory = document.getElementById("filterCategory").value.trim();
+      const filterModuleId = document.getElementById("filterModuleId").value;
+      const filterTypeId = document.getElementById("filterMaterialType").value;
 
       loading.classList.remove("hidden");
       list.innerHTML = "";
 
       try {
-        const result = await API.materials.getAll(null, filterType || null, filterCategory || null);
+        const result = await API.materials.getAll(filterModuleId || null, filterTypeId || null);
+        const materials = Array.isArray(result) ? result : (result.materials || []);
+
         loading.classList.add("hidden");
 
-        const materials = Array.isArray(result) ? result : (result.materials || result.data || []);
-
-        if (!Array.isArray(materials) || materials.length === 0) {
+        if (!materials.length) {
           list.innerHTML = `<div class="text-sm text-slate-500 dark:text-slate-400">No materials found.</div>`;
           return;
         }
 
         list.innerHTML = materials.map(material => {
-          const link = material.file_url || material.external_url || "#";
-          const subTextParts = [
-            material.module_name || (material.module_id ? `Module ID: ${material.module_id}` : "No module"),
-            material.category || "No category",
-            material.material_type || "Unknown type"
-          ];
-
-          if (material.file_size_mb) subTextParts.push(`${material.file_size_mb} MB`);
-          if (material.duration) subTextParts.push(material.duration);
+          const link = buildMaterialUrl(material);
+          const typeVisual = getTypeVisual(material.material_type_name);
 
           return `
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
               <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-lg flex items-center justify-center ${getMaterialIconBg(material.material_type)}">
-                  <span class="material-symbols-outlined">${getMaterialIcon(material.material_type)}</span>
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center ${typeVisual.classes}">
+                  <span class="material-symbols-outlined">${typeVisual.icon}</span>
                 </div>
 
                 <div>
                   <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Material")}</p>
-                  <p class="text-sm text-slate-500 dark:text-slate-400">${escapeHtml(subTextParts.join(" • "))}</p>
-                  ${material.description ? `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1">${escapeHtml(material.description)}</p>` : ""}
+                  <p class="text-sm text-slate-500 dark:text-slate-400">
+                    ${escapeHtml(material.module_name || "No module")} • ${escapeHtml(material.material_type_name || "Unknown type")}
+                  </p>
                   <div class="mt-2">
-                    <a href="${escapeHtml(link)}" target="_blank" class="text-sm text-primary hover:underline">
+                    <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="text-sm text-primary hover:underline">
                       Open Material
                     </a>
                   </div>
@@ -577,10 +557,6 @@
               </div>
 
               <div class="flex items-center gap-2">
-                <button onclick="editMaterial(${material.material_id})" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-all" title="Edit">
-                  <span class="material-symbols-outlined text-slate-600 dark:text-slate-400">edit</span>
-                </button>
-
                 <button onclick="deleteMaterial(${material.material_id})" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
                   <span class="material-symbols-outlined text-red-600 dark:text-red-400">delete</span>
                 </button>
@@ -603,8 +579,8 @@
 
     function handleFiles(files) {
       if (!files || files.length === 0) return;
-      selectedFile = files[0];
 
+      selectedFile = files[0];
       const filePreview = document.getElementById("filePreview");
       const fileList = document.getElementById("fileList");
 
@@ -634,6 +610,11 @@
         description: document.getElementById("moduleDescription").value.trim()
       };
 
+      if (!moduleData.module_code || !moduleData.module_name) {
+        showStatus("Module code and module name are required.", "error");
+        return;
+      }
+
       try {
         const result = await API.modules.create(moduleData);
 
@@ -650,50 +631,6 @@
       }
     }
 
-    async function editMaterial(id) {
-      try {
-        const result = await API.materials.getById(id);
-        const material = result.material_id ? result : result.material;
-
-        if (!material) {
-          showStatus("Material not found", "error");
-          return;
-        }
-
-        if (material.material_type === "youtube") {
-          switchMaterialType("youtube");
-          document.getElementById("youtubeModuleId").value = material.module_id || "";
-          document.getElementById("youtubeCategory").value = material.category || "";
-          document.getElementById("youtubeTitle").value = material.title || "";
-          document.getElementById("youtubeDescription").value = material.description || "";
-          document.getElementById("youtubeDuration").value = material.duration || "";
-          document.getElementById("youtubeThumbnailUrl").value = material.thumbnail_url || "";
-          document.getElementById("youtubeExternalUrl").value = material.external_url || "";
-        } else if (material.material_type === "link" || material.material_type === "other") {
-          switchMaterialType("link");
-          document.getElementById("linkModuleId").value = material.module_id || "";
-          document.getElementById("linkCategory").value = material.category || "";
-          document.getElementById("linkTitle").value = material.title || "";
-          document.getElementById("linkDescription").value = material.description || "";
-          document.getElementById("linkThumbnailUrl").value = material.thumbnail_url || "";
-          document.getElementById("linkExternalUrl").value = material.external_url || "";
-        } else {
-          switchMaterialType("file");
-          document.getElementById("fileModuleId").value = material.module_id || "";
-          document.getElementById("fileMaterialType").value = material.material_type || "";
-          document.getElementById("fileCategory").value = material.category || "";
-          document.getElementById("fileDuration").value = material.duration || "";
-          document.getElementById("fileTitle").value = material.title || "";
-          document.getElementById("fileDescription").value = material.description || "";
-          document.getElementById("fileThumbnailUrl").value = material.thumbnail_url || "";
-        }
-
-        showStatus("Material data loaded into the form. Update submit logic can be added next.", "success");
-      } catch (error) {
-        showStatus("Failed to load material for editing", "error");
-      }
-    }
-
     async function deleteMaterial(id) {
       const confirmed = confirm("Are you sure you want to delete this material?");
       if (!confirmed) return;
@@ -706,8 +643,8 @@
           return;
         }
 
-        showStatus("Material deleted successfully");
-        loadMaterials();
+        showStatus("Material deleted successfully.");
+        await loadMaterials();
       } catch (error) {
         showStatus("Failed to delete material", "error");
       }
@@ -717,49 +654,87 @@
       event.preventDefault();
 
       if (!selectedFile) {
-        showStatus("Please select a file to upload.", "error");
+        showStatus("Please select a file.", "error");
         return;
       }
 
+      const moduleId = document.getElementById("fileModuleId").value;
+      const materialTypeId = document.getElementById("fileMaterialTypeId").value;
+      const title = document.getElementById("fileTitle").value.trim();
+
+      if (!moduleId || !materialTypeId || !title) {
+        showStatus("Module, material type, title, and file are required.", "error");
+        return;
+      }
+
+      const progressContainer = document.getElementById("uploadProgressContainer");
+      const progressBar = document.getElementById("uploadProgressBar");
+      const progressText = document.getElementById("uploadProgressText");
+
+      progressBar.style.width = "0%";
+      progressText.textContent = "Uploading... 0%";
+      progressContainer.classList.remove("hidden");
+
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("module_id", document.getElementById("fileModuleId").value);
-      formData.append("title", document.getElementById("fileTitle").value.trim());
-      formData.append("description", document.getElementById("fileDescription").value.trim());
-      formData.append("material_type", document.getElementById("fileMaterialType").value);
-      formData.append("category", document.getElementById("fileCategory").value.trim());
-      formData.append("duration", document.getElementById("fileDuration").value.trim());
-      formData.append("thumbnail_url", document.getElementById("fileThumbnailUrl").value.trim());
+      formData.append("module_id", moduleId);
+      formData.append("material_type_id", materialTypeId);
+      formData.append("title", title);
 
       try {
-        const result = await API.materials.upload(formData);
+        const result = await API.materials.upload(formData, (percent) => {
+          progressBar.style.width = percent + "%";
+          progressText.textContent = `Uploading... ${percent}%`;
+        });
 
         if (!result.ok) {
-          showStatus(result.error || "Failed to upload material", "error");
+          progressContainer.classList.add("hidden");
+          showStatus(result.error || "Upload failed", "error");
           return;
         }
+
+        progressBar.style.width = "100%";
+        progressText.textContent = "Upload complete";
 
         showStatus("Material uploaded successfully.");
         event.target.reset();
         resetFilePreview();
-        loadMaterials();
+        await loadMaterials();
+
+        setTimeout(() => {
+          progressBar.style.width = "0%";
+          progressText.textContent = "Uploading... 0%";
+          progressContainer.classList.add("hidden");
+        }, 800);
       } catch (error) {
-        showStatus("Failed to upload material", "error");
+        progressContainer.classList.add("hidden");
+        showStatus("Upload failed", "error");
       }
     }
 
     async function submitYoutubeForm(event) {
       event.preventDefault();
 
+      const moduleId = document.getElementById("youtubeModuleId").value;
+      const title = document.getElementById("youtubeTitle").value.trim();
+      const externalUrl = document.getElementById("youtubeExternalUrl").value.trim();
+      const youtubeTypeId = getMaterialTypeIdByName("youtube");
+
+      if (!moduleId || !title || !externalUrl) {
+        showStatus("Module, title, and YouTube URL are required.", "error");
+        return;
+      }
+
+      if (!youtubeTypeId) {
+        showStatus("YouTube material type is not configured in the database.", "error");
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("module_id", document.getElementById("youtubeModuleId").value);
-      formData.append("title", document.getElementById("youtubeTitle").value.trim());
-      formData.append("description", document.getElementById("youtubeDescription").value.trim());
-      formData.append("material_type", "youtube");
-      formData.append("external_url", document.getElementById("youtubeExternalUrl").value.trim());
-      formData.append("thumbnail_url", document.getElementById("youtubeThumbnailUrl").value.trim());
-      formData.append("category", document.getElementById("youtubeCategory").value.trim());
-      formData.append("duration", document.getElementById("youtubeDuration").value.trim());
+      formData.append("module_id", moduleId);
+      formData.append("material_type_id", youtubeTypeId);
+      formData.append("title", title);
+      formData.append("external_url", externalUrl);
 
       try {
         const result = await API.materials.upload(formData);
@@ -771,7 +746,7 @@
 
         showStatus("YouTube material added successfully.");
         event.target.reset();
-        loadMaterials();
+        await loadMaterials();
       } catch (error) {
         showStatus("Failed to add YouTube material", "error");
       }
@@ -780,14 +755,26 @@
     async function submitLinkForm(event) {
       event.preventDefault();
 
+      const moduleId = document.getElementById("linkModuleId").value;
+      const title = document.getElementById("linkTitle").value.trim();
+      const externalUrl = document.getElementById("linkExternalUrl").value.trim();
+      const linkTypeId = getMaterialTypeIdByName("external link");
+
+      if (!moduleId || !title || !externalUrl) {
+        showStatus("Module, title, and external link are required.", "error");
+        return;
+      }
+
+      if (!linkTypeId) {
+        showStatus("External Link material type is not configured in the database.", "error");
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("module_id", document.getElementById("linkModuleId").value);
-      formData.append("title", document.getElementById("linkTitle").value.trim());
-      formData.append("description", document.getElementById("linkDescription").value.trim());
-      formData.append("material_type", "link");
-      formData.append("external_url", document.getElementById("linkExternalUrl").value.trim());
-      formData.append("thumbnail_url", document.getElementById("linkThumbnailUrl").value.trim());
-      formData.append("category", document.getElementById("linkCategory").value.trim());
+      formData.append("module_id", moduleId);
+      formData.append("material_type_id", linkTypeId);
+      formData.append("title", title);
+      formData.append("external_url", externalUrl);
 
       try {
         const result = await API.materials.upload(formData);
@@ -799,13 +786,15 @@
 
         showStatus("External resource added successfully.");
         event.target.reset();
-        loadMaterials();
+        await loadMaterials();
       } catch (error) {
         showStatus("Failed to add external link", "error");
       }
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
+      initBackendBaseUrl();
+
       const user = await requireAuth("lecturer");
       if (!user) return;
 
@@ -815,7 +804,7 @@
 
       document.getElementById("refreshMaterialsBtn").addEventListener("click", loadMaterials);
       document.getElementById("filterMaterialType").addEventListener("change", loadMaterials);
-      document.getElementById("filterCategory").addEventListener("input", loadMaterials);
+      document.getElementById("filterModuleId").addEventListener("change", loadMaterials);
 
       const dropZone = document.getElementById("dropZone");
       const fileInput = document.getElementById("fileInput");
@@ -845,6 +834,7 @@
       document.getElementById("linkForm").addEventListener("submit", submitLinkForm);
 
       await loadModulesIntoSelects();
+      await loadMaterialTypes();
       await loadMaterials();
     });
   </script>

@@ -20,7 +20,6 @@ CREATE TABLE admins (
   last_name VARCHAR(100) NOT NULL,
   must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  -- account control
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -34,7 +33,6 @@ CREATE TABLE students (
   registration_number VARCHAR(50) NOT NULL UNIQUE,
   department_id INT NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  -- account control
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -56,7 +54,6 @@ CREATE TABLE lecturers (
   department_id INT NOT NULL,
   must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  -- account control
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -69,7 +66,7 @@ CREATE TABLE lecturers (
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
--- 3) Password reset OTP (store HASHED OTP)
+-- 3) Password reset OTP
 -- ------------------------------------------------------------
 CREATE TABLE password_reset_tokens (
   token_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,10 +79,8 @@ CREATE TABLE password_reset_tokens (
   verified_at TIMESTAMP NULL,
   is_used BOOLEAN NOT NULL DEFAULT FALSE,
 
-  -- rate limiting + auditing
   attempts INT NOT NULL DEFAULT 0,
   last_sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   INDEX idx_prt_account (account_type, account_id),
@@ -95,11 +90,11 @@ CREATE TABLE password_reset_tokens (
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
--- 4) Lab Machines + Slot workflow (Request -> Allocation)
+-- 4) Lab Machines + Slot workflow
 -- ------------------------------------------------------------
 CREATE TABLE lab_machines (
   machine_id INT AUTO_INCREMENT PRIMARY KEY,
-  machine_code VARCHAR(20) NOT NULL UNIQUE, -- e.g., M5 or M-005
+  machine_code VARCHAR(20) NOT NULL UNIQUE,
   lab_number VARCHAR(20) NOT NULL,
 
   status ENUM('ready','maintenance','unavailable') NOT NULL DEFAULT 'ready',
@@ -113,7 +108,6 @@ CREATE TABLE lab_machines (
   INDEX idx_machine_lab (lab_number)
 ) ENGINE=InnoDB;
 
--- Slot request (student)
 CREATE TABLE slot_requests (
   request_id INT AUTO_INCREMENT PRIMARY KEY,
   student_user_id INT NOT NULL,
@@ -140,9 +134,6 @@ CREATE TABLE slot_requests (
   INDEX idx_slotreq_status (status)
 ) ENGINE=InnoDB;
 
--- Slot allocation (admin assigns machine) 
--- FIX: removed allocation_status to avoid duplicated/contradicting status.
--- Allocation row exists only when request is APPROVED.
 CREATE TABLE slot_allocations (
   allocation_id INT AUTO_INCREMENT PRIMARY KEY,
   request_id INT NOT NULL UNIQUE,
@@ -184,9 +175,8 @@ CREATE TABLE modules (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_modules_created_by
-    FOREIGN KEY (created_by) REFERENCES admins(admin_id)
-    ON DELETE SET NULL,
-
+    FOREIGN KEY (created_by) REFERENCES lecturers(lecturer_id)
+    ON DELETE CASCADE,
   INDEX idx_modules_active (is_active)
 ) ENGINE=InnoDB;
 
@@ -210,55 +200,63 @@ CREATE TABLE exams (
     FOREIGN KEY (module_id) REFERENCES modules(module_id)
     ON DELETE CASCADE,
   CONSTRAINT fk_exams_created_by
-    FOREIGN KEY (created_by) REFERENCES admins(admin_id)
-    ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES lecturers(lecturer_id)
+    ON DELETE CASCADE,
 
   INDEX idx_exams_module (module_id),
   INDEX idx_exams_active (is_active)
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
--- 6) Study materials (MUST feature)
+-- 6) Study materials
 -- ------------------------------------------------------------
+CREATE TABLE dentanet_lms.material_types (
+  material_type_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
 CREATE TABLE study_materials (
   material_id INT AUTO_INCREMENT PRIMARY KEY,
 
-  module_id INT NULL,
+  module_id INT NOT NULL,
   uploaded_by INT NOT NULL,
+  material_type_id INT NOT NULL,
 
   title VARCHAR(255) NOT NULL,
-  description TEXT NULL,
-
-  material_type ENUM('pdf','youtube','video','link','document','other') NOT NULL,
 
   file_url VARCHAR(500) NULL,
   external_url VARCHAR(500) NULL,
-  thumbnail_url VARCHAR(500) NULL,
 
-  category VARCHAR(100) NULL,
-  duration VARCHAR(20) NULL,
-  file_size_mb DECIMAL(10,2) NULL,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_materials_module
-    FOREIGN KEY (module_id) REFERENCES modules(module_id)
-    ON DELETE SET NULL,
-  CONSTRAINT fk_materials_uploader
-    FOREIGN KEY (uploaded_by) REFERENCES lecturers(lecturer_id)
+    FOREIGN KEY (module_id)
+    REFERENCES modules(module_id)
     ON DELETE CASCADE,
+
+  CONSTRAINT fk_materials_uploader
+    FOREIGN KEY (uploaded_by)
+    REFERENCES lecturers(lecturer_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_materials_type
+    FOREIGN KEY (material_type_id)
+    REFERENCES material_types(material_type_id)
+    ON DELETE RESTRICT,
 
   INDEX idx_materials_module (module_id),
   INDEX idx_materials_uploader (uploaded_by),
-  INDEX idx_materials_type (material_type),
+  INDEX idx_materials_type (material_type_id),
   INDEX idx_materials_active (is_active),
   INDEX idx_materials_created (created_at)
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
--- 7) Submissions (unified) with clearer status values
+-- 7) Submissions
 -- ------------------------------------------------------------
 CREATE TABLE submissions (
   submission_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -435,8 +433,6 @@ CREATE TABLE notifications (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  -- notifications.user_id may reference any account type; keep flexible (no FK)
-
   INDEX idx_notif_user (user_id),
   INDEX idx_notif_read (is_read),
   INDEX idx_notif_created (created_at)
@@ -456,8 +452,6 @@ CREATE TABLE email_outbox (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   sent_at TIMESTAMP NULL,
-
-  -- email_outbox.user_id may reference any account type; keep flexible (no FK)
 
   INDEX idx_email_status (status),
   INDEX idx_email_created (created_at),
@@ -479,8 +473,6 @@ CREATE TABLE audit_logs (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  -- audit_logs.actor_user_id: no FK to keep actor flexible across account tables
-
   INDEX idx_audit_action (action),
   INDEX idx_audit_created (created_at),
   INDEX idx_audit_actor (actor_user_id)
@@ -500,8 +492,6 @@ CREATE TABLE api_logs (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  -- api_logs.user_id: no FK (flexible)
-
   INDEX idx_api_logs_created (created_at),
   INDEX idx_api_logs_status (status_code),
   INDEX idx_api_logs_endpoint (endpoint)
@@ -519,62 +509,104 @@ INSERT INTO departments (department_name) VALUES
 ('Prosthetic Dentistry'),
 ('Restorative Dentistry');
 
--- Sample admin (APPROVED) - replace hash in real use
 INSERT INTO admins (email, password_hash, first_name, last_name, must_change_password, is_active)
 VALUES
 ('admin@dentanet.lk', '$2b$10$REPLACE_WITH_REAL_HASH', 'System', 'Admin', TRUE, TRUE);
 
--- Sample lecturer (active)
 INSERT INTO lecturers (email, password_hash, first_name, last_name, staff_id, department_id, must_change_password, is_active)
 SELECT 'lecturer1@dentanet.lk', '$2b$10$REPLACE_WITH_REAL_HASH', 'Nimal', 'Perera', 'LEC/001', d.department_id, TRUE, TRUE
 FROM departments d
 WHERE d.department_name = 'Restorative Dentistry'
 LIMIT 1;
 
--- Sample student (active)
 INSERT INTO students (email, password_hash, first_name, last_name, registration_number, department_id, is_active)
 SELECT 'student1@dentanet.lk', '$2b$10$REPLACE_WITH_REAL_HASH', 'Kumadi', 'Silva', 'DENT/2023/001', d.department_id, TRUE
 FROM departments d
 WHERE d.department_name = 'Restorative Dentistry'
 LIMIT 1;
 
--- Lab machines
 INSERT INTO lab_machines (machine_code, lab_number, status) VALUES
 ('M1', 'Lab 001', 'ready'),
 ('M2', 'Lab 001', 'ready'),
 ('M3', 'Lab 002', 'maintenance'),
 ('M4', 'Lab 002', 'ready');
 
--- Base module + exam
+-- material types first
+INSERT INTO dentanet_lms.material_types (name) VALUES
+('PDF'),
+('YouTube'),
+('Video'),
+('External Link'),
+('Document'),
+('Other');
+
+-- Base module + exam created by lecturer
 INSERT INTO modules (module_code, module_name, description, created_by)
-SELECT 'CAVITY101', 'Cavity Preparation', 'Core cavity preparation practical module.', a.admin_id
-FROM admins a WHERE a.email='admin@dentanet.lk' LIMIT 1;
+SELECT
+  'CAVITY101',
+  'Cavity Preparation',
+  'Core cavity preparation practical module.',
+  l.lecturer_id
+FROM lecturers l
+WHERE l.email = 'lecturer1@dentanet.lk'
+LIMIT 1;
 
 INSERT INTO exams (module_id, exam_name, max_attempts, passing_grade, created_by)
-SELECT m.module_id, 'Cavity Practical Exam', 2, 50.00, a.admin_id
+SELECT
+  m.module_id,
+  'Cavity Practical Exam',
+  2,
+  50.00,
+  l.lecturer_id
 FROM modules m
-JOIN admins a ON a.email='admin@dentanet.lk'
-WHERE m.module_code='CAVITY101'
+JOIN lecturers l
+  ON l.email = 'lecturer1@dentanet.lk'
+WHERE m.module_code = 'CAVITY101'
 LIMIT 1;
 
 -- Sample materials
-INSERT INTO study_materials (module_id, uploaded_by, title, description, material_type, external_url, category)
-SELECT m.module_id, l.lecturer_id, 'Cavity Prep Demo - YouTube', 'Watch the demo and follow steps.', 'youtube',
-       'https://www.youtube.com/watch?v=REPLACE_ME', 'Demo'
+INSERT INTO dentanet_lms.study_materials (
+  module_id,
+  uploaded_by,
+  material_type_id,
+  title,
+  file_url,
+  external_url
+)
+SELECT
+  m.module_id,
+  l.lecturer_id,
+  mt.material_type_id,
+  'Cavity Preparation Demo',
+  NULL,
+  'https://www.youtube.com/watch?v=example123'
 FROM modules m
 JOIN lecturers l ON l.email = 'lecturer1@dentanet.lk'
-WHERE m.module_code='CAVITY101'
+JOIN material_types mt ON mt.name = 'YouTube'
+WHERE m.module_code = 'CAVITY101'
 LIMIT 1;
 
-INSERT INTO study_materials (module_id, uploaded_by, title, description, material_type, file_url, category, file_size_mb)
-SELECT m.module_id, l.lecturer_id, 'Cavity Prep Guidelines (PDF)', 'Official guideline document.', 'pdf',
-       '/uploads/materials/cavity-guidelines.pdf', 'Guidelines', 2.40
+INSERT INTO study_materials (
+  module_id,
+  uploaded_by,
+  material_type_id,
+  title,
+  file_url,
+  external_url
+)
+SELECT
+  m.module_id,
+  l.lecturer_id,
+  mt.material_type_id,
+  'Cavity Prep Guidelines (PDF)',
+  '/uploads/materials/cavity-guidelines.pdf',
+  NULL
 FROM modules m
 JOIN lecturers l ON l.email = 'lecturer1@dentanet.lk'
-WHERE m.module_code='CAVITY101'
+JOIN material_types mt ON mt.name = 'PDF'
+WHERE m.module_code = 'CAVITY101'
 LIMIT 1;
 
--- Enforce registration number format on `students` table
 ALTER TABLE students
 ADD CONSTRAINT chk_reg_strict
 CHECK (
@@ -584,3 +616,5 @@ CHECK (
 ALTER TABLE students ADD COLUMN profile_image_url VARCHAR(500);
 ALTER TABLE lecturers ADD COLUMN profile_image_url VARCHAR(500);
 ALTER TABLE admins ADD COLUMN profile_image_url VARCHAR(500);
+
+SET FOREIGN_KEY_CHECKS = 1;

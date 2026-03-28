@@ -6,17 +6,29 @@ const multer = require("multer");
 const { promisePool } = require("../config/database");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
 
+// --------------------------------------------------
+// Upload folder setup
+// --------------------------------------------------
 const uploadDir = path.join(__dirname, "../uploads/materials");
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// --------------------------------------------------
+// Multer setup
+// --------------------------------------------------
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${Math.round(
+      Math.random() * 1e9
+    )}${path.extname(file.originalname)}`;
     cb(null, uniqueName);
   },
 });
@@ -32,43 +44,122 @@ const allowedMimeTypes = [
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024, // 10MB
   },
   fileFilter: (req, file, cb) => {
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only PDF, DOC, DOCX, MP4, WEBM allowed."));
+      cb(
+        new Error(
+          "Invalid file type. Only PDF, DOC, DOCX, MP4, WEBM allowed."
+        )
+      );
     }
   },
 });
 
-// Get all materials
+// --------------------------------------------------
+// Helpers
+// --------------------------------------------------
+function normalizeTypeName(name) {
+  return String(name || "").trim().toLowerCase();
+}
+
+function isFileBasedType(typeName) {
+  return ["pdf", "video", "document", "other"].includes(typeName);
+}
+
+function isLinkBasedType(typeName) {
+  return ["youtube", "external link"].includes(typeName);
+}
+
+async function getMaterialTypeById(materialTypeId) {
+  const [rows] = await promisePool.query(
+    `
+    SELECT material_type_id, name, is_active
+    FROM material_types
+    WHERE material_type_id = ? AND is_active = TRUE
+    LIMIT 1
+    `,
+    [materialTypeId]
+  );
+
+  return rows[0] || null;
+}
+
+async function getModuleById(moduleId) {
+  const [rows] = await promisePool.query(
+    `
+    SELECT module_id, module_code, module_name, is_active
+    FROM modules
+    WHERE module_id = ? AND is_active = TRUE
+    LIMIT 1
+    `,
+    [moduleId]
+  );
+
+  return rows[0] || null;
+}
+
+async function getMaterialById(materialId) {
+  const [rows] = await promisePool.query(
+    `
+    SELECT
+      sm.material_id,
+      sm.module_id,
+      sm.uploaded_by,
+      sm.material_type_id,
+      sm.title,
+      sm.file_url,
+      sm.external_url,
+      sm.is_active,
+      sm.created_at,
+      sm.updated_at,
+      m.module_code,
+      m.module_name,
+      mt.name AS material_type_name
+    FROM study_materials sm
+    LEFT JOIN modules m
+      ON sm.module_id = m.module_id
+    LEFT JOIN material_types mt
+      ON sm.material_type_id = mt.material_type_id
+    WHERE sm.material_id = ?
+    LIMIT 1
+    `,
+    [materialId]
+  );
+
+  return rows[0] || null;
+}
+
+// --------------------------------------------------
+// GET all materials
+// --------------------------------------------------
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const { module_id, material_type, category } = req.query;
+    const { module_id, material_type_id } = req.query;
 
     let query = `
       SELECT
         sm.material_id,
         sm.module_id,
         sm.uploaded_by,
+        sm.material_type_id,
         sm.title,
-        sm.description,
-        sm.material_type,
         sm.file_url,
         sm.external_url,
-        sm.thumbnail_url,
-        sm.category,
-        sm.duration,
-        sm.file_size_mb,
         sm.is_active,
         sm.created_at,
         sm.updated_at,
         m.module_code,
-        m.module_name
+        m.module_name,
+        mt.name AS material_type_name
       FROM study_materials sm
-      LEFT JOIN modules m ON sm.module_id = m.module_id
+      LEFT JOIN modules m
+        ON sm.module_id = m.module_id
+      LEFT JOIN material_types mt
+        ON sm.material_type_id = mt.material_type_id
       WHERE sm.is_active = TRUE
     `;
 
@@ -76,220 +167,301 @@ router.get("/", authenticateToken, async (req, res) => {
 
     if (module_id) {
       query += " AND sm.module_id = ?";
-      params.push(module_id);
+      params.push(Number(module_id));
     }
 
-    if (material_type) {
-      query += " AND sm.material_type = ?";
-      params.push(material_type);
-    }
-
-    if (category) {
-      query += " AND sm.category LIKE ?";
-      params.push(`%${category}%`);
+    if (material_type_id) {
+      query += " AND sm.material_type_id = ?";
+      params.push(Number(material_type_id));
     }
 
     query += " ORDER BY sm.created_at DESC";
 
     const [rows] = await promisePool.query(query, params);
-    res.json(rows);
+
+    return res.json({
+      ok: true,
+      materials: rows,
+    });
   } catch (error) {
     console.error("Get materials error:", error);
-    res.status(500).json({ error: "Failed to fetch materials" });
+    return res.status(500).json({
+      ok: false,
+      error: "Failed to fetch materials",
+    });
   }
 });
 
-// Get one material
+// --------------------------------------------------
+// GET one material
+// --------------------------------------------------
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
+    const material = await getMaterialById(Number(req.params.id));
 
-    const [rows] = await promisePool.query(
-      `
-      SELECT
-        sm.material_id,
-        sm.module_id,
-        sm.uploaded_by,
-        sm.title,
-        sm.description,
-        sm.material_type,
-        sm.file_url,
-        sm.external_url,
-        sm.thumbnail_url,
-        sm.category,
-        sm.duration,
-        sm.file_size_mb,
-        sm.is_active,
-        sm.created_at,
-        sm.updated_at,
-        m.module_code,
-        m.module_name
-      FROM study_materials sm
-      LEFT JOIN modules m ON sm.module_id = m.module_id
-      WHERE sm.material_id = ? AND sm.is_active = TRUE
-      LIMIT 1
-      `,
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Material not found" });
+    if (!material || material.is_active === 0 || material.is_active === false) {
+      return res.status(404).json({
+        ok: false,
+        error: "Material not found",
+      });
     }
 
-    res.json(rows[0]);
+    return res.json({
+      ok: true,
+      material,
+    });
   } catch (error) {
     console.error("Get material error:", error);
-    res.status(500).json({ error: "Failed to fetch material" });
+    return res.status(500).json({
+      ok: false,
+      error: "Failed to fetch material",
+    });
   }
 });
 
-// Upload material
+// --------------------------------------------------
+// POST upload material
+// --------------------------------------------------
 router.post(
   "/",
   authenticateToken,
   authorizeRole("lecturer"),
-  upload.single("file"),
+  (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({
+          ok: false,
+          error: err.message || "File upload failed",
+        });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     try {
-      const {
-        module_id,
-        title,
-        description,
-        material_type,
-        external_url,
-        thumbnail_url,
-        category,
-        duration,
-      } = req.body;
+      const { module_id, material_type_id, title, external_url } = req.body;
 
-      if (!title || !material_type) {
+      if (!module_id || !material_type_id || !title) {
         return res.status(400).json({
-          error: "title and material_type are required",
+          ok: false,
+          error: "module_id, material_type_id and title are required",
         });
       }
 
-      const validTypes = ["pdf", "youtube", "video", "link", "document", "other"];
-      if (!validTypes.includes(material_type)) {
-        return res.status(400).json({ error: "Invalid material_type" });
+      const numericModuleId = Number(module_id);
+      const numericMaterialTypeId = Number(material_type_id);
+      const uploaded_by = Number(req.user.id);
+
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      const fileTypes = ["pdf", "video", "document"];
-      const linkTypes = ["youtube", "link", "other"];
+      const module = await getModuleById(numericModuleId);
+      if (!module) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid module",
+        });
+      }
+
+      const materialType = await getMaterialTypeById(numericMaterialTypeId);
+      if (!materialType) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid material type",
+        });
+      }
+
+      const materialTypeName = normalizeTypeName(materialType.name);
 
       let file_url = null;
-      let file_size_mb = null;
+      let finalExternalUrl = null;
 
-      if (fileTypes.includes(material_type)) {
+      if (isFileBasedType(materialTypeName)) {
         if (!req.file) {
           return res.status(400).json({
-            error: `File is required for material_type '${material_type}'`,
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
           });
         }
 
         file_url = `/uploads/materials/${req.file.filename}`;
-        file_size_mb = (req.file.size / (1024 * 1024)).toFixed(2);
-      }
+        finalExternalUrl = null;
+      } else if (isLinkBasedType(materialTypeName)) {
+        if (!external_url || !String(external_url).trim()) {
+          return res.status(400).json({
+            ok: false,
+            error: `external_url is required for material type '${materialType.name}'`,
+          });
+        }
 
-      if (linkTypes.includes(material_type) && !external_url) {
+        file_url = null;
+        finalExternalUrl = String(external_url).trim();
+      } else {
         return res.status(400).json({
-          error: `external_url is required for material_type '${material_type}'`,
+          ok: false,
+          error: "Unsupported material type",
         });
       }
 
-      const uploaded_by = req.user.id;
+      console.log("Uploading material:", {
+        module_id: numericModuleId,
+        material_type_id: numericMaterialTypeId,
+        title: String(title).trim(),
+        uploaded_by,
+        file_url,
+        external_url: finalExternalUrl,
+      });
 
       const [result] = await promisePool.query(
         `
         INSERT INTO study_materials (
           module_id,
           uploaded_by,
+          material_type_id,
           title,
-          description,
-          material_type,
           file_url,
           external_url,
-          thumbnail_url,
-          category,
-          duration,
-          file_size_mb,
           is_active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+        VALUES (?, ?, ?, ?, ?, ?, TRUE)
         `,
         [
-          module_id || null,
+          numericModuleId,
           uploaded_by,
-          title,
-          description || null,
-          material_type,
+          numericMaterialTypeId,
+          String(title).trim(),
           file_url,
-          external_url || null,
-          thumbnail_url || null,
-          category || null,
-          duration || null,
-          file_size_mb,
+          finalExternalUrl,
         ]
       );
 
-      const [rows] = await promisePool.query(
-        `SELECT * FROM study_materials WHERE material_id = ?`,
-        [result.insertId]
-      );
+      const material = await getMaterialById(result.insertId);
 
-      res.status(201).json({
+      return res.status(201).json({
+        ok: true,
         message: "Material uploaded successfully",
-        material: rows[0],
+        material,
       });
     } catch (error) {
       console.error("Upload material error:", error);
-      res.status(500).json({ error: "Failed to upload material" });
+      return res.status(500).json({
+        ok: false,
+        error: error.message || "Failed to upload material",
+      });
     }
   }
 );
 
-// Update material
+// --------------------------------------------------
+// PUT update material
+// --------------------------------------------------
 router.put(
   "/:id",
   authenticateToken,
   authorizeRole("lecturer"),
-  upload.single("file"),
+  (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({
+          ok: false,
+          error: err.message || "File upload failed",
+        });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     try {
-      const { id } = req.params;
+      const materialId = Number(req.params.id);
 
       const [existingRows] = await promisePool.query(
-        `SELECT * FROM study_materials WHERE material_id = ?`,
-        [id]
+        `SELECT * FROM study_materials WHERE material_id = ? LIMIT 1`,
+        [materialId]
       );
 
       if (existingRows.length === 0) {
-        return res.status(404).json({ error: "Material not found" });
+        return res.status(404).json({
+          ok: false,
+          error: "Material not found",
+        });
       }
 
       const existing = existingRows[0];
 
-      if (existing.uploaded_by !== req.user.id) {
-        return res.status(403).json({ error: "You can only edit your own materials" });
+      if (Number(existing.uploaded_by) !== Number(req.user.id)) {
+        return res.status(403).json({
+          ok: false,
+          error: "You can only edit your own materials",
+        });
       }
 
-      const {
-        module_id,
-        title,
-        description,
-        material_type,
-        external_url,
-        thumbnail_url,
-        category,
-        duration,
-        is_active,
-      } = req.body;
+      const { module_id, material_type_id, title, external_url, is_active } = req.body;
+
+      const finalModuleId =
+        module_id !== undefined && module_id !== ""
+          ? Number(module_id)
+          : Number(existing.module_id);
+
+      const finalMaterialTypeId =
+        material_type_id !== undefined && material_type_id !== ""
+          ? Number(material_type_id)
+          : Number(existing.material_type_id);
+
+      const finalTitle =
+        title !== undefined && String(title).trim()
+          ? String(title).trim()
+          : existing.title;
+
+      const module = await getModuleById(finalModuleId);
+      if (!module) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid module",
+        });
+      }
+
+      const materialType = await getMaterialTypeById(finalMaterialTypeId);
+      if (!materialType) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid material type",
+        });
+      }
+
+      const materialTypeName = normalizeTypeName(materialType.name);
 
       let file_url = existing.file_url;
-      let file_size_mb = existing.file_size_mb;
+      let finalExternalUrl =
+        external_url !== undefined
+          ? String(external_url).trim()
+          : existing.external_url;
 
       if (req.file) {
         file_url = `/uploads/materials/${req.file.filename}`;
-        file_size_mb = (req.file.size / (1024 * 1024)).toFixed(2);
+      }
+
+      if (isFileBasedType(materialTypeName)) {
+        if (!file_url) {
+          return res.status(400).json({
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
+          });
+        }
+        finalExternalUrl = null;
+      } else if (isLinkBasedType(materialTypeName)) {
+        if (!finalExternalUrl) {
+          return res.status(400).json({
+            ok: false,
+            error: `external_url is required for material type '${materialType.name}'`,
+          });
+        }
+        file_url = null;
+      } else {
+        return res.status(400).json({
+          ok: false,
+          error: "Unsupported material type",
+        });
       }
 
       await promisePool.query(
@@ -297,80 +469,90 @@ router.put(
         UPDATE study_materials
         SET
           module_id = ?,
+          material_type_id = ?,
           title = ?,
-          description = ?,
-          material_type = ?,
           file_url = ?,
           external_url = ?,
-          thumbnail_url = ?,
-          category = ?,
-          duration = ?,
-          file_size_mb = ?,
           is_active = ?
         WHERE material_id = ?
         `,
         [
-          module_id || null,
-          title || existing.title,
-          description ?? existing.description,
-          material_type || existing.material_type,
+          finalModuleId,
+          finalMaterialTypeId,
+          finalTitle,
           file_url,
-          external_url ?? existing.external_url,
-          thumbnail_url ?? existing.thumbnail_url,
-          category ?? existing.category,
-          duration ?? existing.duration,
-          file_size_mb,
+          finalExternalUrl,
           is_active !== undefined ? is_active : existing.is_active,
-          id,
+          materialId,
         ]
       );
 
-      const [updatedRows] = await promisePool.query(
-        `SELECT * FROM study_materials WHERE material_id = ?`,
-        [id]
-      );
+      const material = await getMaterialById(materialId);
 
-      res.json({
+      return res.json({
+        ok: true,
         message: "Material updated successfully",
-        material: updatedRows[0],
+        material,
       });
     } catch (error) {
       console.error("Update material error:", error);
-      res.status(500).json({ error: "Failed to update material" });
+      return res.status(500).json({
+        ok: false,
+        error: error.message || "Failed to update material",
+      });
     }
   }
 );
 
-// Soft delete
-router.delete("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res) => {
-  try {
-    const { id } = req.params;
+// --------------------------------------------------
+// DELETE material (soft delete)
+// --------------------------------------------------
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole("lecturer"),
+  async (req, res) => {
+    try {
+      const materialId = Number(req.params.id);
 
-    const [existingRows] = await promisePool.query(
-      `SELECT * FROM study_materials WHERE material_id = ?`,
-      [id]
-    );
+      const [existingRows] = await promisePool.query(
+        `SELECT * FROM study_materials WHERE material_id = ? LIMIT 1`,
+        [materialId]
+      );
 
-    if (existingRows.length === 0) {
-      return res.status(404).json({ error: "Material not found" });
+      if (existingRows.length === 0) {
+        return res.status(404).json({
+          ok: false,
+          error: "Material not found",
+        });
+      }
+
+      const existing = existingRows[0];
+
+      if (Number(existing.uploaded_by) !== Number(req.user.id)) {
+        return res.status(403).json({
+          ok: false,
+          error: "You can only delete your own materials",
+        });
+      }
+
+      await promisePool.query(
+        `UPDATE study_materials SET is_active = FALSE WHERE material_id = ?`,
+        [materialId]
+      );
+
+      return res.json({
+        ok: true,
+        message: "Material deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete material error:", error);
+      return res.status(500).json({
+        ok: false,
+        error: "Failed to delete material",
+      });
     }
-
-    const existing = existingRows[0];
-
-    if (existing.uploaded_by !== req.user.id) {
-      return res.status(403).json({ error: "You can only delete your own materials" });
-    }
-
-    await promisePool.query(
-      `UPDATE study_materials SET is_active = FALSE WHERE material_id = ?`,
-      [id]
-    );
-
-    res.json({ message: "Material deleted successfully" });
-  } catch (error) {
-    console.error("Delete material error:", error);
-    res.status(500).json({ error: "Failed to delete material" });
   }
-});
+);
 
 module.exports = router;

@@ -246,13 +246,30 @@ const API = {
         }
     },
 
+    materialTypes: {
+        getAll: async () => {
+            const response = await fetch(`${API_BASE_URL}/material-types`, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        },
+
+        getById: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/material-types/${id}`, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        }
+    },
+
     materials: {
-        getAll: async (moduleId = null, materialType = null, category = null) => {
+        getAll: async (moduleId = null, materialTypeId = null) => {
             const params = new URLSearchParams();
 
             if (moduleId) params.append("module_id", moduleId);
-            if (materialType) params.append("material_type", materialType);
-            if (category) params.append("category", category);
+            if (materialTypeId) params.append("material_type_id", materialTypeId);
 
             const url = `${API_BASE_URL}/materials${params.toString() ? `?${params.toString()}` : ""}`;
 
@@ -271,20 +288,80 @@ const API = {
             return await parseResponse(response);
         },
 
-        upload: async (formData) => {
-            const token = getAuthToken();
+        upload: (formData, onProgress = null) => {
 
-            const response = await fetch(`${API_BASE_URL}/materials`, {
-                method: "POST",
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` })
-                },
-                body: formData
+            return new Promise((resolve, reject) => {
+
+                const token = getAuthToken();
+                const xhr = new XMLHttpRequest();
+
+                xhr.open("POST", `${API_BASE_URL}/materials`);
+
+                if (token) {
+                    xhr.setRequestHeader(
+                        "Authorization",
+                        `Bearer ${token}`
+                    );
+                }
+
+                // Upload progress
+                xhr.upload.addEventListener("progress", (event) => {
+
+                    if (event.lengthComputable && onProgress) {
+
+                        const percent =
+                            Math.round(
+                                (event.loaded / event.total) * 100
+                            );
+
+                        onProgress(percent);
+                    }
+
+                });
+
+                xhr.onload = () => {
+
+                    try {
+
+                        const data =
+                            JSON.parse(xhr.responseText);
+
+                        resolve({
+                            ok:
+                                xhr.status >= 200 &&
+                                xhr.status < 300,
+                            status: xhr.status,
+                            ...data
+                        });
+
+                    } catch (error) {
+
+                        resolve({
+                            ok: false,
+                            status: xhr.status,
+                            error: "Invalid server response"
+                        });
+
+                    }
+
+                };
+
+                xhr.onerror = () => {
+
+                    reject(
+                        new Error(
+                            "Network error during upload"
+                        )
+                    );
+
+                };
+
+                xhr.send(formData);
+
             });
 
-            return await parseResponse(response);
         },
-
+        
         update: async (id, formData) => {
             const token = getAuthToken();
 
@@ -309,52 +386,62 @@ const API = {
         }
     },
 
-modules: {
-    getAll: async () => {
-        const response = await fetch(`${API_BASE_URL}/modules`, {
-            headers: getAuthHeaders()
-        });
+    modules: {
+        getAll: async () => {
+            const response = await fetch(`${API_BASE_URL}/modules`, {
+                headers: getAuthHeaders()
+            });
 
-        return await parseResponse(response);
+            return await parseResponse(response);
+        },
+
+        getById: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        },
+
+        create: async (moduleData) => {
+
+            const user = getCurrentUser();
+
+            const payload = {
+                ...moduleData,
+                created_by: user?.id   // 🔥 REQUIRED FIX
+            };
+
+            const response = await fetch(`${API_BASE_URL}/modules`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            return await parseResponse(response);
+        },
+
+        update: async (id, moduleData) => {
+
+            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+                method: "PUT",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(moduleData)
+            });
+
+            return await parseResponse(response);
+        },
+
+        delete: async (id) => {
+
+            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        }
     },
-
-    getById: async (id) => {
-        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-            headers: getAuthHeaders()
-        });
-
-        return await parseResponse(response);
-    },
-
-    create: async (moduleData) => {
-        const response = await fetch(`${API_BASE_URL}/modules`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(moduleData)
-        });
-
-        return await parseResponse(response);
-    },
-
-    update: async (id, moduleData) => {
-        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(moduleData)
-        });
-
-        return await parseResponse(response);
-    },
-
-    delete: async (id) => {
-        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-            method: "DELETE",
-            headers: getAuthHeaders()
-        });
-
-        return await parseResponse(response);
-    }
-},
 
     notifications: {
         getByUser: async (userId) => {
