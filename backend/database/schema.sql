@@ -618,3 +618,302 @@ ALTER TABLE lecturers ADD COLUMN profile_image_url VARCHAR(500);
 ALTER TABLE admins ADD COLUMN profile_image_url VARCHAR(500);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+ALTER TABLE dentanet_lms.exams
+DROP COLUMN exam_type,
+ADD COLUMN description TEXT NULL AFTER exam_name,
+ADD COLUMN exam_date DATE NULL AFTER description,
+ADD COLUMN start_time TIME NULL AFTER exam_date,
+ADD COLUMN end_time TIME NULL AFTER start_time,
+ADD COLUMN status ENUM('DRAFT','SCHEDULED','OPEN','CLOSED') NOT NULL DEFAULT 'DRAFT' AFTER passing_grade;
+
+-- ------------------------------------------------------------
+-- New core tables for submission + evaluation workflow
+-- ------------------------------------------------------------
+
+CREATE TABLE submissions (
+  submission_id INT AUTO_INCREMENT PRIMARY KEY,
+
+  student_user_id INT NOT NULL,
+  exam_id INT NOT NULL,
+  allocation_id INT NULL,
+
+  submission_type ENUM('PRACTICE','EXAM') NOT NULL,
+  publish_mode ENUM('AUTO','LECTURER') NOT NULL,
+
+  attempt_number INT NOT NULL DEFAULT 1,
+  case_description TEXT NULL,
+
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  published_at TIMESTAMP NULL,
+  published_by INT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_sub_student
+    FOREIGN KEY (student_user_id) REFERENCES students(student_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_sub_exam
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_sub_allocation
+    FOREIGN KEY (allocation_id) REFERENCES slot_allocations(allocation_id)
+    ON DELETE SET NULL,
+
+  CONSTRAINT fk_sub_published_by
+    FOREIGN KEY (published_by) REFERENCES lecturers(lecturer_id)
+    ON DELETE SET NULL,
+
+  UNIQUE KEY uq_student_exam_attempt (student_user_id, exam_id, attempt_number),
+
+  INDEX idx_sub_student (student_user_id),
+  INDEX idx_sub_exam (exam_id),
+  INDEX idx_sub_type (submission_type),
+  INDEX idx_sub_published_at (published_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE submission_files (
+  file_id INT AUTO_INCREMENT PRIMARY KEY,
+  submission_id INT NOT NULL,
+
+  file_url VARCHAR(500) NOT NULL,
+  file_type VARCHAR(50) NOT NULL,
+  file_size_bytes BIGINT NULL,
+
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_subfile_submission
+    FOREIGN KEY (submission_id) REFERENCES submissions(submission_id)
+    ON DELETE CASCADE,
+
+  INDEX idx_subfile_submission (submission_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE api_evaluations (
+  api_evaluation_id INT AUTO_INCREMENT PRIMARY KEY,
+  submission_id INT NOT NULL UNIQUE,
+
+  api_status ENUM('SUCCESS','FAILED') NOT NULL DEFAULT 'SUCCESS',
+
+  api_score DECIMAL(5,2) NULL,
+  confidence DECIMAL(5,2) NULL,
+
+  smooth_outline_status ENUM('acceptable','non-acceptable') NULL,
+  flat_floor_status ENUM('acceptable','non-acceptable') NULL,
+  depth_status ENUM('acceptable','non-acceptable') NULL,
+  undercut_status ENUM('acceptable','non-acceptable') NULL,
+
+  raw_response_json JSON NULL,
+  evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_api_eval_submission
+    FOREIGN KEY (submission_id) REFERENCES submissions(submission_id)
+    ON DELETE CASCADE,
+
+  INDEX idx_api_eval_status (api_status),
+  INDEX idx_api_eval_time (evaluated_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE lecturer_reviews (
+  review_id INT AUTO_INCREMENT PRIMARY KEY,
+  submission_id INT NOT NULL UNIQUE,
+  lecturer_user_id INT NOT NULL,
+
+  final_grade DECIMAL(5,2) NOT NULL,
+  lecturer_feedback TEXT NULL,
+  decision ENUM('PASS','FAIL','RETAKE') NOT NULL,
+
+  override_reason TEXT NULL,
+  reviewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_review_submission
+    FOREIGN KEY (submission_id) REFERENCES submissions(submission_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_review_lecturer
+    FOREIGN KEY (lecturer_user_id) REFERENCES lecturers(lecturer_id)
+    ON DELETE CASCADE,
+
+  INDEX idx_review_lecturer (lecturer_user_id),
+  INDEX idx_review_time (reviewed_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE final_results (
+  result_id INT AUTO_INCREMENT PRIMARY KEY,
+  submission_id INT NOT NULL UNIQUE,
+
+  final_grade DECIMAL(5,2) NOT NULL,
+  final_feedback TEXT NULL,
+  pass_fail ENUM('PASS','FAIL') NOT NULL,
+
+  published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  published_by INT NULL,
+
+  CONSTRAINT fk_result_submission
+    FOREIGN KEY (submission_id) REFERENCES submissions(submission_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_result_publisher
+    FOREIGN KEY (published_by) REFERENCES lecturers(lecturer_id)
+    ON DELETE SET NULL,
+
+  INDEX idx_results_published_at (published_at),
+  INDEX idx_results_passfail (pass_fail)
+) ENGINE=InnoDB;
+
+CREATE TABLE retake_requests (
+  retake_id INT AUTO_INCREMENT PRIMARY KEY,
+  submission_id INT NOT NULL,
+  student_user_id INT NOT NULL,
+
+  status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  decided_by INT NULL,
+  decided_at TIMESTAMP NULL,
+  decision_reason VARCHAR(255) NULL,
+
+  CONSTRAINT fk_retake_submission
+    FOREIGN KEY (submission_id) REFERENCES submissions(submission_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_retake_student
+    FOREIGN KEY (student_user_id) REFERENCES students(student_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_retake_decider
+    FOREIGN KEY (decided_by) REFERENCES lecturers(lecturer_id)
+    ON DELETE SET NULL,
+
+  INDEX idx_retake_status (status),
+  INDEX idx_retake_student (student_user_id),
+  INDEX idx_retake_requested (requested_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE notifications (
+  notification_id INT AUTO_INCREMENT PRIMARY KEY,
+
+  recipient_role ENUM('student','lecturer','admin') NOT NULL,
+  recipient_id INT NOT NULL,
+
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+
+  notification_type ENUM(
+    'exam',
+    'material',
+    'slot_request',
+    'slot_approval',
+    'slot_rejection',
+    'submission',
+    'evaluation',
+    'result',
+    'system'
+  ) NOT NULL,
+
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+
+  related_entity_type VARCHAR(50) NULL,
+  related_entity_id INT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  INDEX idx_notifications_recipient (recipient_role, recipient_id),
+  INDEX idx_notifications_read (is_read),
+  INDEX idx_notifications_created (created_at),
+  INDEX idx_notifications_type (notification_type)
+) ENGINE=InnoDB;
+
+USE dentanet_lms;
+
+CREATE TABLE exam_slot_requests (
+  request_id INT PRIMARY KEY,
+  exam_id INT NOT NULL,
+  CONSTRAINT fk_exam_slot_request
+    FOREIGN KEY (request_id) REFERENCES slot_requests(request_id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_exam_slot_exam
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE practice_slot_requests (
+  request_id INT PRIMARY KEY,
+  purpose VARCHAR(255) NULL,
+  CONSTRAINT fk_practice_slot_request
+    FOREIGN KEY (request_id) REFERENCES slot_requests(request_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+INSERT INTO practice_slot_requests (request_id, purpose)
+SELECT request_id, purpose
+FROM slot_requests
+WHERE slot_type = 'PRACTICE';
+
+INSERT INTO exam_slot_requests (request_id, exam_id)
+SELECT sr.request_id, e.exam_id
+FROM slot_requests sr
+JOIN exams e ON e.exam_name = 'Cavity Practical Exam'
+WHERE sr.slot_type = 'EXAM';
+
+ALTER TABLE slot_requests
+DROP COLUMN purpose;
+
+CREATE TABLE exam_time_slots (
+  slot_id INT AUTO_INCREMENT PRIMARY KEY,
+  exam_id INT NOT NULL,
+  slot_date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  max_machines INT NOT NULL DEFAULT 1,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_exam_time_slots_exam
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_exam_time_slots_admin
+    FOREIGN KEY (created_by) REFERENCES admins(admin_id)
+    ON DELETE SET NULL,
+
+  INDEX idx_exam_slots_exam (exam_id),
+  INDEX idx_exam_slots_date (slot_date),
+  INDEX idx_exam_slots_active (is_active)
+) ENGINE=InnoDB;
+
+ALTER TABLE exam_slot_requests
+ADD COLUMN slot_id INT NULL;
+
+SELECT * FROM exam_slot_requests;
+SELECT * FROM exams;
+SELECT * FROM exam_time_slots;
+
+ALTER TABLE exam_slot_requests
+ADD CONSTRAINT fk_exam_slot_requests_slot
+FOREIGN KEY (slot_id) REFERENCES exam_time_slots(slot_id)
+ON DELETE CASCADE;
+
+INSERT INTO exam_time_slots (exam_id, slot_date, start_time, end_time, max_machines, is_active, created_by)
+VALUES
+(3, '2026-03-30', '14:00:00', '15:00:00', 10, TRUE, 1),
+(3, '2026-03-30', '15:00:00', '16:00:00', 10, TRUE, 1),
+(3, '2026-03-30', '16:00:00', '17:00:00', 10, TRUE, 1),
+(3, '2026-03-30', '17:00:00', '17:30:00', 10, TRUE, 1);
+
+UPDATE exam_slot_requests
+SET slot_id = 1
+WHERE request_id = 1;
+
+UPDATE exam_slot_requests
+SET slot_id = 1
+WHERE request_id = 1;
+
+ALTER TABLE lab_machines
+DROP COLUMN notes;

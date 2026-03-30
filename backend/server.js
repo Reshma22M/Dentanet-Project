@@ -23,6 +23,9 @@ const notificationRoutes = require("./routes/notifications");
 const registrationRoutes = require("./routes/registration");
 const moduleRoutes = require("./routes/modules");
 const materialTypeRoutes = require("./routes/materialTypes");
+const examRoutes = require("./routes/exams");
+const examSlotRoutes = require("./routes/examSlots");
+const machineRoutes = require("./routes/machines");
 
 // -----------------------------
 // Middleware
@@ -65,6 +68,9 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/registration", registrationRoutes);
 app.use("/api/modules", moduleRoutes);
 app.use("/api/material-types", materialTypeRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/exam-slots", examSlotRoutes);
+app.use("/api/machines", machineRoutes);
 
 // -----------------------------
 // Root Route

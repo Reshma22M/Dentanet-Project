@@ -443,6 +443,157 @@ const API = {
         }
     },
 
+
+        exams: {
+        getAll: async (moduleId = null, status = null) => {
+            const params = new URLSearchParams();
+
+            if (moduleId) params.append("module_id", moduleId);
+            if (status) params.append("status", status);
+
+            const url = `${API_BASE_URL}/exams${params.toString() ? `?${params.toString()}` : ""}`;
+
+            const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        },
+
+        getById: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/exams/${id}`, {
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        },
+
+        create: async (examData) => {
+            const response = await fetch(`${API_BASE_URL}/exams`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(examData)
+            });
+
+            return await parseResponse(response);
+        },
+
+        update: async (id, examData) => {
+            const response = await fetch(`${API_BASE_URL}/exams/${id}`, {
+                method: "PUT",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(examData)
+            });
+
+            return await parseResponse(response);
+        },
+
+        delete: async (id) => {
+            const response = await fetch(`${API_BASE_URL}/exams/${id}`, {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+
+            return await parseResponse(response);
+        }
+    },
+
+        examSlots: {
+
+        // ===============================
+        // Get slots for an exam
+        // ===============================
+        getByExamId: async (examId) => {
+
+            const response = await fetch(
+                `${API_BASE_URL}/exam-slots/exam/${examId}`,
+                {
+                    headers: getAuthHeaders()
+                }
+            );
+
+            return await parseResponse(response);
+        },
+
+        // ===============================
+        // Admin creates exam slots
+        // ===============================
+        create: async (slotData) => {
+
+            const response = await fetch(
+                `${API_BASE_URL}/exam-slots`,
+                {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(slotData)
+                }
+            );
+
+            return await parseResponse(response);
+        },
+
+        // ===============================
+        // Update slot capacity/status
+        // ===============================
+        update: async (slotId, slotData) => {
+
+            const response = await fetch(
+                `${API_BASE_URL}/exam-slots/${slotId}`,
+                {
+                    method: "PUT",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(slotData)
+                }
+            );
+
+            return await parseResponse(response);
+        },
+
+        // ===============================
+        // Delete slot
+        // ===============================
+        delete: async (slotId) => {
+
+            const response = await fetch(
+                `${API_BASE_URL}/exam-slots/${slotId}`,
+                {
+                    method: "DELETE",
+                    headers: getAuthHeaders()
+                }
+            );
+
+            return await parseResponse(response);
+        }
+
+    },
+
+    machines: {
+    getAll: async () => {
+        const response = await fetch(`${API_BASE_URL}/machines`, {
+            headers: getAuthHeaders()
+        });
+        return await parseResponse(response);
+    },
+
+    create: async (machineData) => {
+        const response = await fetch(`${API_BASE_URL}/machines`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(machineData)
+        });
+        return await parseResponse(response);
+    },
+
+    update: async (id, machineData) => {
+        const response = await fetch(`${API_BASE_URL}/machines/${id}`, {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(machineData)
+        });
+        return await parseResponse(response);
+    }
+},
+
     notifications: {
         getByUser: async (userId) => {
             const uid = userId || (getCurrentUser() && getCurrentUser().id);
