@@ -127,7 +127,6 @@
             </div>
           </section>
 
-          <!-- SCHEDULED EXAMS -->
           <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-lg font-bold text-gray-900 dark:text-white">Scheduled Exams</h3>
@@ -225,59 +224,100 @@
     <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
   </button>
 
-  <script>
-    function escapeHtml(value) {
-      return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+<script>
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function formatExamDate(dateValue) {
+    if (!dateValue) return "No date";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return dateValue;
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  function formatExamTime(timeValue) {
+    if (!timeValue) return "-";
+    const [h, m] = String(timeValue).split(":");
+    const hour = parseInt(h, 10);
+    const suffix = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${m} ${suffix}`;
+  }
+
+  function isExamExpired(exam) {
+    if (!exam || !exam.exam_date || !exam.end_time) return false;
+
+    try {
+      const endTime = String(exam.end_time).slice(0, 5);
+      const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
+      return examEnd.getTime() < Date.now();
+    } catch (err) {
+      console.error("Expiry check failed:", err);
+      return false;
     }
+  }
 
-    function formatExamDate(dateValue) {
-      if (!dateValue) return "No date";
-      const date = new Date(dateValue);
-      if (Number.isNaN(date.getTime())) return dateValue;
-      return date.toLocaleDateString();
-    }
+  function openExamBooking(examId) {
+    localStorage.setItem("selectedExamId", String(examId));
+    window.location.href = `lab-slot-booking.html?exam_id=${encodeURIComponent(examId)}`;
+  }
 
-    function buildExamBookingLink(exam) {
-      const params = new URLSearchParams();
-      params.append("slot_type", "EXAM");
-      params.append("exam_id", exam.exam_id);
-      if (exam.exam_name) params.append("exam_name", exam.exam_name);
-      if (exam.exam_date) params.append("booking_date", exam.exam_date);
-      if (exam.start_time) params.append("start_time", exam.start_time);
-      if (exam.end_time) params.append("end_time", exam.end_time);
-      if (exam.module_id) params.append("module_id", exam.module_id);
+  async function loadStudentScheduledExams() {
+    try {
+      const result = await API.exams.getAll(null, "SCHEDULED");
+      const exams = result.exams || [];
+      const container = document.getElementById("studentScheduledExams");
+      const countBox = document.getElementById("studentExamCount");
 
-      return `lab-slot-booking.html?${params.toString()}`;
-    }
+      if (countBox) {
+        countBox.textContent = `${exams.length} Exam${exams.length === 1 ? "" : "s"}`;
+      }
 
-    async function loadStudentScheduledExams() {
-      try {
-        const result = await API.exams.getAll(null, "SCHEDULED");
-        const exams = Array.isArray(result) ? result : (result.exams || []);
-        const container = document.getElementById("studentScheduledExams");
-        const countBox = document.getElementById("studentExamCount");
+      if (!container) return;
 
-        if (countBox) {
-          countBox.textContent = `${exams.length} Exam${exams.length === 1 ? "" : "s"}`;
-        }
+      if (!exams.length) {
+        container.innerHTML = `
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            No scheduled exams yet.
+          </div>
+        `;
+        return;
+      }
 
-        if (!container) return;
+      container.innerHTML = exams.map(exam => {
+        const expired = isExamExpired(exam);
+        const badgeText = expired ? "EXPIRED" : (exam.status || "SCHEDULED");
+        const badgeClass = expired ? "text-red-600 font-bold" : "text-primary font-semibold";
 
-        if (!exams.length) {
-          container.innerHTML = `
-            <div class="text-sm text-gray-500 dark:text-gray-400">
-              No scheduled exams yet.
-            </div>
+        const bookButtonHtml = expired
+          ? `
+            <button
+              disabled
+              class="px-4 py-2.5 bg-red-200 text-red-600 rounded-xl text-sm font-semibold cursor-not-allowed text-center"
+            >
+              Exam Expired
+            </button>
+          `
+          : `
+            <button
+              onclick="openExamBooking(${Number(exam.exam_id)})"
+              class="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center"
+            >
+              Book Exam Slot
+            </button>
           `;
-          return;
-        }
 
-        container.innerHTML = exams.map(exam => `
+        return `
           <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-purple-100 dark:border-gray-700">
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
@@ -288,21 +328,15 @@
                   ${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "")}
                 </p>
                 <p class="text-xs text-primary font-semibold mt-2">
-                  ${formatExamDate(exam.exam_date)} • ${escapeHtml(exam.start_time || "-")} - ${escapeHtml(exam.end_time || "-")}
+                  ${formatExamDate(exam.exam_date)} • ${formatExamTime(exam.start_time)} - ${formatExamTime(exam.end_time)}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Status: <span class="font-semibold text-primary">${escapeHtml(exam.status || "SCHEDULED")}</span>
+                  Status: <span class="${badgeClass}">${badgeText}</span>
                 </p>
               </div>
 
               <div class="flex flex-col sm:flex-row gap-3">
-
-                <a
-                href="lab-slot-booking.html?exam_id=${encodeURIComponent(exam.exam_id)}&exam_name=${encodeURIComponent(exam.exam_name)}&booking_date=${encodeURIComponent(exam.exam_date)}"
-                class="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center"
-                >
-                Book Exam Slot
-                </a>
+                ${bookButtonHtml}
 
                 <a
                   href="practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}"
@@ -313,47 +347,48 @@
               </div>
             </div>
           </div>
-        `).join("");
-      } catch (error) {
-        console.error("Failed to load scheduled exams:", error);
-        const container = document.getElementById("studentScheduledExams");
-        if (container) {
-          container.innerHTML = `<div class="text-sm text-red-500">Failed to load scheduled exams.</div>`;
-        }
+        `;
+      }).join("");
+    } catch (error) {
+      console.error("Failed to load scheduled exams:", error);
+      const container = document.getElementById("studentScheduledExams");
+      if (container) {
+        container.innerHTML = `<div class="text-sm text-red-500">Failed to load scheduled exams.</div>`;
       }
     }
+  }
 
-    document.addEventListener("DOMContentLoaded", async function () {
-      if (typeof requireAuth !== "function") {
-        alert("api.js failed to load correctly.");
-        return;
-      }
+  document.addEventListener("DOMContentLoaded", async function () {
+    if (typeof requireAuth !== "function") {
+      alert("api.js failed to load correctly.");
+      return;
+    }
 
-      const user = await requireAuth("student");
-      if (!user) return;
+    const user = await requireAuth("student");
+    if (!user) return;
 
-      const fullName =
-        user.fullName ||
-        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-        "Student";
+    const fullName =
+      user.fullName ||
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+      "Student";
 
-      const nameEl = document.getElementById("studentProfileName");
-      const welcomeEl = document.getElementById("studentWelcomeText");
+    const nameEl = document.getElementById("studentProfileName");
+    const welcomeEl = document.getElementById("studentWelcomeText");
 
-      if (nameEl) nameEl.textContent = fullName;
-      if (welcomeEl) {
-        welcomeEl.textContent = `Welcome back, ${user.firstName || fullName}! Here's what's happening today.`;
-      }
+    if (nameEl) nameEl.textContent = fullName;
+    if (welcomeEl) {
+      welcomeEl.textContent = `Welcome back, ${user.firstName || fullName}! Here's what's happening today.`;
+    }
 
-      const logoutBtn = document.getElementById("logoutBtn");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          API.auth.logout();
-        };
-      }
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.onclick = function () {
+        API.auth.logout();
+      };
+    }
 
-      await loadStudentScheduledExams();
-    });
-  </script>
+    await loadStudentScheduledExams();
+  });
+</script>
 </body>
 </html>

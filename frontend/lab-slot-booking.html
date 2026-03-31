@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>DentaNet - Lab Slot Booking</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <script src="assets/js/api.js"></script>
 <script>
@@ -17,8 +17,6 @@ tailwind.config = {
         primary: "#1d72d2",
         "background-light": "#f3f4f9",
         "background-dark": "#0f172a",
-        "nav-light": "#bfdbfe",
-        "nav-dark": "#1e293b",
       },
       fontFamily: {
         display: ["Inter", "sans-serif"],
@@ -34,8 +32,6 @@ tailwind.config = {
 </script>
 <style>
 body { font-family: 'Inter', sans-serif; }
-.sidebar-active { background-color: rgba(255, 255, 255, 0.9); color: #471dd2; }
-.nav-active { background-color: white; border-radius: 9999px; padding: 4px 12px; }
 </style>
 </head>
 
@@ -102,7 +98,6 @@ body { font-family: 'Inter', sans-serif; }
         <p class="text-slate-600 dark:text-slate-400">Book your exam slot or reserve practice sessions</p>
       </div>
 
-      <!-- Tabs -->
       <div class="bg-white dark:bg-slate-800 rounded-t-2xl shadow-lg border-b-2 border-slate-200 dark:border-slate-700">
         <div class="flex gap-1 p-2">
           <button onclick="switchTab('exam')" id="examTab" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-primary text-white shadow-sm">
@@ -120,25 +115,21 @@ body { font-family: 'Inter', sans-serif; }
         </div>
       </div>
 
-      <!-- Exam Content -->
       <div id="examContent" class="bg-white dark:bg-slate-800 rounded-b-2xl shadow-lg p-8">
         <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg">
           <div class="flex items-start gap-3">
             <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
             <div>
               <h3 class="font-bold text-amber-900 dark:text-amber-200 mb-1">Important Information</h3>
-              <p class="text-sm text-amber-800 dark:text-amber-300">Exam Date: <strong>February 15, 2026</strong> • Duration: <strong>1 hour</strong> • Machines per slot: <strong>20</strong></p>
-              <p class="text-sm text-amber-800 dark:text-amber-300 mt-1">You can book <strong>ONE</strong> exam slot only. Choose carefully.</p>
+              <p class="text-sm text-amber-800 dark:text-amber-300">Only the selected exam is shown here.</p>
+              <p class="text-sm text-amber-800 dark:text-amber-300 mt-1">Expired exams and past time slots cannot be booked.</p>
             </div>
           </div>
         </div>
 
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">schedule</span>
-          Available Exam Slots - February 15, 2026
-        </h2>
-
-        <div id="examSlotsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
+        <div id="selectedExamContainer" class="space-y-8">
+          <p class="text-slate-500 dark:text-slate-400">Loading selected exam...</p>
+        </div>
 
         <div id="examBookingStatus" class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
           <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-3 flex items-center gap-2">
@@ -151,7 +142,6 @@ body { font-family: 'Inter', sans-serif; }
         </div>
       </div>
 
-      <!-- Practice Content -->
       <div id="practiceContent" class="bg-white dark:bg-slate-800 rounded-b-2xl shadow-lg p-8 hidden">
         <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-lg">
           <div class="flex items-start gap-3">
@@ -229,36 +219,43 @@ body { font-family: 'Inter', sans-serif; }
 </button>
 
 <script>
-let EXAM_DATE = null;
-let EXAM_ID = null;
-let EXAM_NAME = null;
+let SELECTED_EXAM_ID = null;
 
 function switchTab(tab) {
-  const examTab = document.getElementById('examTab');
-  const practiceTab = document.getElementById('practiceTab');
-  const examContent = document.getElementById('examContent');
-  const practiceContent = document.getElementById('practiceContent');
+  const examTab = document.getElementById("examTab");
+  const practiceTab = document.getElementById("practiceTab");
+  const examContent = document.getElementById("examContent");
+  const practiceContent = document.getElementById("practiceContent");
 
-  if (tab === 'exam') {
-    examTab.classList.add('bg-primary', 'text-white', 'shadow-sm');
-    examTab.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
-    practiceTab.classList.remove('bg-primary', 'text-white', 'shadow-sm');
-    practiceTab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
-    examContent.classList.remove('hidden');
-    practiceContent.classList.add('hidden');
+  if (tab === "exam") {
+    examTab.classList.add("bg-primary", "text-white", "shadow-sm");
+    examTab.classList.remove("text-slate-600", "dark:text-slate-400", "hover:bg-slate-100", "dark:hover:bg-slate-700");
+    practiceTab.classList.remove("bg-primary", "text-white", "shadow-sm");
+    practiceTab.classList.add("text-slate-600", "dark:text-slate-400", "hover:bg-slate-100", "dark:hover:bg-slate-700");
+    examContent.classList.remove("hidden");
+    practiceContent.classList.add("hidden");
   } else {
-    practiceTab.classList.add('bg-primary', 'text-white', 'shadow-sm');
-    practiceTab.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
-    examTab.classList.remove('bg-primary', 'text-white', 'shadow-sm');
-    examTab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
-    practiceContent.classList.remove('hidden');
-    examContent.classList.add('hidden');
+    practiceTab.classList.add("bg-primary", "text-white", "shadow-sm");
+    practiceTab.classList.remove("text-slate-600", "dark:text-slate-400", "hover:bg-slate-100", "dark:hover:bg-slate-700");
+    examTab.classList.remove("bg-primary", "text-white", "shadow-sm");
+    examTab.classList.add("text-slate-600", "dark:text-slate-400", "hover:bg-slate-100", "dark:hover:bg-slate-700");
+    practiceContent.classList.remove("hidden");
+    examContent.classList.add("hidden");
   }
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function formatTime(timeStr) {
   if (!timeStr) return "";
-  const [h, m] = timeStr.split(":");
+  const [h, m] = String(timeStr).split(":");
   const hour = parseInt(h, 10);
   const suffix = hour >= 12 ? "PM" : "AM";
   const formattedHour = hour % 12 || 12;
@@ -268,6 +265,7 @@ function formatTime(timeStr) {
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -275,15 +273,197 @@ function formatDate(dateStr) {
   });
 }
 
-async function bookExamSlot(slot) {
-  if (!EXAM_ID) {
-    alert("Exam not selected.");
+function isExamExpired(exam) {
+  if (!exam || !exam.exam_date || !exam.end_time) return false;
+
+  try {
+    const endTime = String(exam.end_time).slice(0, 5);
+    const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
+    return examEnd.getTime() < Date.now();
+  } catch (err) {
+    console.error("Expiry check failed:", err);
+    return false;
+  }
+}
+
+function isSlotExpired(slot) {
+  if (!slot || !slot.slot_date || !slot.end_time) return false;
+
+  try {
+    const endTime = String(slot.end_time).slice(0, 5);
+    const slotEnd = new Date(`${slot.slot_date}T${endTime}:00`);
+    return slotEnd.getTime() < Date.now();
+  } catch (err) {
+    console.error("Slot expiry check failed:", err);
+    return false;
+  }
+}
+
+function getSelectedExamId() {
+  const params = new URLSearchParams(window.location.search);
+  const urlId = params.get("exam_id");
+  const savedId = localStorage.getItem("selectedExamId");
+
+  if (urlId) {
+    localStorage.setItem("selectedExamId", urlId);
+    return Number(urlId);
+  }
+
+  if (savedId) {
+    return Number(savedId);
+  }
+
+  return null;
+}
+
+async function findDefaultUpcomingExamId() {
+  const examsResult = await API.exams.getAll(null, "SCHEDULED");
+  if (!examsResult.ok) return null;
+
+  const exams = examsResult.exams || [];
+  const upcoming = exams.find(exam => !isExamExpired(exam));
+  return upcoming ? Number(upcoming.exam_id) : null;
+}
+
+async function loadSelectedExam(examBookings) {
+  const container = document.getElementById("selectedExamContainer");
+  container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">Loading selected exam...</p>`;
+
+  SELECTED_EXAM_ID = getSelectedExamId();
+
+  if (!SELECTED_EXAM_ID) {
+    SELECTED_EXAM_ID = await findDefaultUpcomingExamId();
+    if (SELECTED_EXAM_ID) {
+      localStorage.setItem("selectedExamId", String(SELECTED_EXAM_ID));
+    }
+  }
+
+  if (!SELECTED_EXAM_ID) {
+    container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No upcoming exam available right now.</p>`;
     return;
   }
 
+  const examResult = await API.exams.getById(SELECTED_EXAM_ID);
+
+  if (!examResult.ok || !examResult.exam) {
+    container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">Selected exam was not found.</p>`;
+    return;
+  }
+
+  const exam = examResult.exam;
+  const slotRes = await API.examSlots.getByExamId(SELECTED_EXAM_ID);
+
+  let slots = [];
+  if (slotRes.ok) {
+    slots = (slotRes.slots || []).filter(
+      slot => String(slot.exam_id) === String(SELECTED_EXAM_ID)
+    );
+  }
+
+  container.innerHTML = renderSelectedExamCard(exam, slots, examBookings);
+}
+
+function renderSelectedExamCard(exam, slots, examBookings) {
+  const examExpired = isExamExpired(exam);
+
+  const myBookingForThisExam = examBookings.find(
+    b => String(b.exam_id) === String(exam.exam_id) && b.status !== "CANCELLED"
+  );
+
+  const badgeClass = examExpired
+    ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+    : "bg-blue-100 dark:bg-blue-900/30 text-primary";
+
+  const badgeText = examExpired ? "EXPIRED" : (exam.status || "SCHEDULED");
+
+  let slotsHtml = "";
+  if (!slots.length) {
+    slotsHtml = `<p class="text-slate-500 dark:text-slate-400 mt-4">${examExpired ? "This exam is expired." : "No slots created for this exam yet."}</p>`;
+  } else {
+    slotsHtml = `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+        ${slots.map(slot => renderSelectedExamSlotCard(slot, exam, myBookingForThisExam)).join("")}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">${escapeHtml(exam.exam_name || "Exam")}</h2>
+          <p class="text-slate-500 dark:text-slate-400 text-sm">
+            ${escapeHtml(exam.module_code || "")} ${exam.module_name ? `- ${escapeHtml(exam.module_name)}` : ""}
+          </p>
+          <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">
+            ${formatDate(exam.exam_date)} • ${formatTime(exam.start_time)} - ${formatTime(exam.end_time)}
+          </p>
+        </div>
+        <span class="px-3 py-1 rounded-full ${badgeClass} font-semibold text-xs">
+          ${badgeText}
+        </span>
+      </div>
+      ${slotsHtml}
+    </div>
+  `;
+}
+
+function renderSelectedExamSlotCard(slot, exam, myBookingForThisExam) {
+  const bookedCount = Number(slot.booked_count || 0);
+  const capacity = Number(slot.max_machines || 0);
+  const isFull = capacity > 0 && bookedCount >= capacity;
+  const examExpired = isExamExpired(exam);
+  const slotExpired = isSlotExpired(slot);
+
+  let buttonHtml = "";
+
+  if (examExpired || slotExpired) {
+    buttonHtml = `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Expired</button>`;
+  } else if (isFull) {
+    buttonHtml = `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Fully Booked</button>`;
+  } else if (myBookingForThisExam) {
+    buttonHtml = `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Already Requested</button>`;
+  } else {
+    const slotJson = JSON.stringify(slot).replace(/'/g, "&apos;");
+    buttonHtml = `<button onclick='bookExamSlot(${slotJson}, ${exam.exam_id})' class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-2.5 rounded-lg transition-all">Book This Slot</button>`;
+  }
+
+  return `
+    <div class="border-2 border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-all">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="font-bold text-lg text-slate-900 dark:text-white">
+            ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}
+          </h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            ${formatDate(slot.slot_date)}
+          </p>
+        </div>
+        <span class="material-symbols-outlined ${(examExpired || slotExpired || isFull) ? "text-red-500" : "text-emerald-500"}">
+          ${(examExpired || slotExpired || isFull) ? "cancel" : "check_circle"}
+        </span>
+      </div>
+
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Capacity</span>
+        <span class="text-sm font-bold ${(examExpired || slotExpired || isFull) ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}">
+          ${bookedCount}/${capacity} booked
+        </span>
+      </div>
+
+      <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+        <div class="${(examExpired || slotExpired || isFull) ? "bg-red-500" : "bg-emerald-500"} h-2 rounded-full" style="width: ${capacity ? Math.min((bookedCount / capacity) * 100, 100) : 0}%"></div>
+      </div>
+
+      ${buttonHtml}
+    </div>
+  `;
+}
+
+async function bookExamSlot(slot, examId) {
   const result = await API.bookings.create({
     slotType: "EXAM",
-    examId: EXAM_ID,
+    examId: examId,
     slotId: slot.slot_id,
     bookingDate: slot.slot_date,
     startTime: slot.start_time,
@@ -314,30 +494,6 @@ async function cancelBooking(requestId) {
   await loadBookings();
 }
 
-function loadExamFromURL() {
-  const params = new URLSearchParams(window.location.search);
-
-  EXAM_ID = params.get("exam_id");
-  EXAM_DATE = params.get("booking_date");
-  EXAM_NAME = params.get("exam_name");
-
-  if (EXAM_DATE) {
-    document.querySelector("#examContent h2").innerHTML =
-      `<span class="material-symbols-outlined text-primary">schedule</span>
-       Available Exam Slots - ${formatDate(EXAM_DATE)}`;
-  }
-
-  if (EXAM_NAME) {
-    const infoBox = document.querySelector("#examContent .mb-6 p");
-
-    if (infoBox) {
-      infoBox.innerHTML =
-        `Exam: <strong>${EXAM_NAME}</strong>
-         • Date: <strong>${formatDate(EXAM_DATE)}</strong>`;
-    }
-  }
-}
-
 async function loadBookings() {
   const result = await API.bookings.getAll();
 
@@ -350,97 +506,19 @@ async function loadBookings() {
   }
 
   const bookings = result.bookings || [];
+  const examBookings = bookings.filter(b => b.slot_type === "EXAM");
+  const practiceBookings = bookings.filter(b => b.slot_type === "PRACTICE");
 
-  const examBookings = bookings.filter(
-    b => b.slot_type === "EXAM" && (!EXAM_ID || String(b.exam_id) === String(EXAM_ID))
-  );
-
-  const practiceBookings = bookings.filter(
-    b => b.slot_type === "PRACTICE"
-  );
-
-  await loadExamSlots(examBookings);
+  await loadSelectedExam(examBookings);
   renderExamStatus(examBookings);
   renderPracticeSessions(practiceBookings);
 }
 
-async function loadExamSlots(examBookings) {
-  if (!EXAM_ID) return;
-
-  const result = await API.examSlots.getByExamId(EXAM_ID);
-
-  if (!result.ok) {
-    document.getElementById("examSlotsGrid").innerHTML =
-      `<p class="text-red-600">${result.error || "Failed to load exam slots"}</p>`;
-    return;
-  }
-
-  const slots = result.slots || [];
-  renderExamSlots(slots, examBookings);
-}
-
-function renderExamSlots(slots, examBookings) {
-  const grid = document.getElementById("examSlotsGrid");
-
-  if (!slots.length) {
-    grid.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No exam slots available yet.</p>`;
-    return;
-  }
-
-  grid.innerHTML = slots.map(slot => {
-    const bookedCount = Number(slot.booked_count || 0);
-    const capacity = Number(slot.max_machines || 0);
-    const remaining = Math.max(capacity - bookedCount, 0);
-    const isFull = remaining <= 0;
-
-    const userOwn = examBookings.find(
-      b => b.status === "PENDING" || b.status === "APPROVED"
-    );
-
-    const canBook = !isFull && !userOwn;
-
-    return `
-      <div class="border-2 border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-all">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="font-bold text-lg text-slate-900 dark:text-white">
-              ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}
-            </h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-              ${formatDate(slot.slot_date)}
-            </p>
-          </div>
-          <span class="material-symbols-outlined ${isFull ? "text-red-500" : "text-emerald-500"}">
-            ${isFull ? "cancel" : "check_circle"}
-          </span>
-        </div>
-
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Capacity</span>
-          <span class="text-sm font-bold ${isFull ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}">
-            ${bookedCount}/${capacity} booked
-          </span>
-        </div>
-
-        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
-          <div class="${isFull ? "bg-red-500" : "bg-emerald-500"} h-2 rounded-full" style="width: ${capacity ? Math.min((bookedCount / capacity) * 100, 100) : 0}%"></div>
-        </div>
-
-        ${
-          isFull
-            ? `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Fully Booked</button>`
-            : canBook
-              ? `<button onclick='bookExamSlot(${JSON.stringify(slot)})' class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-2.5 rounded-lg transition-all">Book This Slot</button>`
-              : `<button disabled class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 font-semibold py-2.5 rounded-lg cursor-not-allowed">Already Requested</button>`
-        }
-      </div>
-    `;
-  }).join("");
-}
-
 function renderExamStatus(examBookings) {
   const container = document.getElementById("examStatusContent");
-  const myExam = examBookings.find(b => b.status !== "CANCELLED");
+  const myExam = examBookings.find(
+    b => String(b.exam_id) === String(SELECTED_EXAM_ID) && b.status !== "CANCELLED"
+  );
 
   if (!myExam) {
     container.innerHTML = `You haven't booked an exam slot yet. Select a slot above to confirm your booking.`;
@@ -449,10 +527,11 @@ function renderExamStatus(examBookings) {
 
   container.innerHTML = `
     <div class="space-y-2">
+      <p><strong>Exam:</strong> ${escapeHtml(myExam.exam_name || "Exam")}</p>
       <p><strong>Date:</strong> ${formatDate(myExam.booking_date)}</p>
       <p><strong>Time:</strong> ${formatTime(myExam.start_time)} - ${formatTime(myExam.end_time)}</p>
-      <p><strong>Status:</strong> ${myExam.status}</p>
-      <p><strong>Machine:</strong> ${myExam.machine_code || "Not assigned yet"}</p>
+      <p><strong>Status:</strong> ${escapeHtml(myExam.status)}</p>
+      <p><strong>Machine:</strong> ${escapeHtml(myExam.machine_code || "Not assigned yet")}</p>
       ${
         myExam.status === "PENDING" || myExam.status === "APPROVED"
           ? `<button onclick="cancelBooking(${myExam.request_id})" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">Cancel Request</button>`
@@ -485,10 +564,10 @@ function renderPracticeSessions(practiceBookings) {
         <div class="flex items-start justify-between mb-3">
           <div>
             <h3 class="font-bold text-slate-900 dark:text-white">${formatDate(b.booking_date)} - ${formatTime(b.start_time)} - ${formatTime(b.end_time)}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Practice Focus: ${b.purpose || "-"}</p>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Machine: ${b.machine_code || "Not assigned yet"}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Practice Focus: ${escapeHtml(b.purpose || "-")}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Machine: ${escapeHtml(b.machine_code || "Not assigned yet")}</p>
           </div>
-          <span class="px-3 py-1 ${badgeClass} text-xs font-bold rounded-full">${b.status}</span>
+          <span class="px-3 py-1 ${badgeClass} text-xs font-bold rounded-full">${escapeHtml(b.status)}</span>
         </div>
         ${
           b.status === "PENDING" || b.status === "APPROVED"
@@ -504,7 +583,7 @@ function renderPracticeSessions(practiceBookings) {
   }).join("");
 }
 
-document.getElementById('practiceBookingForm').addEventListener('submit', async function(e) {
+document.getElementById("practiceBookingForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
   const bookingDate = document.getElementById("practiceDate").value;
@@ -537,16 +616,12 @@ document.getElementById('practiceBookingForm').addEventListener('submit', async 
 });
 
 document.addEventListener("DOMContentLoaded", async function () {
-
   const student = await requireAuth("student");
   if (!student) return;
 
-  loadExamFromURL();
-  if (EXAM_ID) {
   switchTab("exam");
-}
-  const nameEl = document.getElementById("studentName");
 
+  const nameEl = document.getElementById("studentName");
   if (nameEl) {
     nameEl.textContent =
       student.firstName ||
@@ -555,16 +630,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   const logoutBtn = document.getElementById("logoutBtn");
-
   if (logoutBtn) {
     logoutBtn.addEventListener("click", function () {
       API.auth.logout();
     });
   }
 
-  const today =
-    new Date().toISOString().split("T")[0];
-
+  const today = new Date().toISOString().split("T")[0];
   document.getElementById("practiceDate").min = today;
 
   await loadBookings();

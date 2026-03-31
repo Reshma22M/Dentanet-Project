@@ -46,17 +46,17 @@
       line-height: 1;
     }
     .sidebar-active { @apply bg-accent text-white shadow-lg shadow-blue-900/20; }
+    .tab-active { @apply bg-primary text-white shadow-sm; }
+    .tab-inactive { @apply bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600; }
   </style>
 </head>
 
 <body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 min-h-screen flex flex-col">
   <nav class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-0 sm:px-0 lg:px-0">
+    <div class="max-w-7xl mx-auto">
       <div class="flex justify-between h-16 items-center">
         <div class="flex items-center gap-2">
-          <div class="flex items-center space-x-2 h-full">
-            <img src="blue-logo.svg" class="h-32 w-auto object-contain" alt="DentaNet logo" />
-          </div>
+          <img src="blue-logo.svg" class="h-32 w-auto object-contain" alt="DentaNet logo" />
         </div>
         <div class="hidden md:flex items-center space-x-8">
           <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-dashboard.html">Home</a>
@@ -109,33 +109,51 @@
         <div class="flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
             <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">Lab Slot Monitoring</h1>
-            <p class="text-slate-500 dark:text-slate-400 font-medium">Set up exam slots, approve requests, allocate machines, and monitor slot usage.</p>
+            <p class="text-slate-500 dark:text-slate-400 font-medium">Create and manage exam slots, review student requests, and keep machine records updated.</p>
           </div>
         </div>
 
-        <!-- SCHEDULED EXAMS REQUIRING SLOT SETUP -->
+        <!-- Scheduled Exams -->
         <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
-          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
-            <span class="material-symbols-outlined text-primary">calendar_clock</span>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Scheduled Exams & Slot Setup</h2>
+          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary">calendar_clock</span>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Scheduled Exams & Slot Setup</h2>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Click an exam to expand its slot section</p>
           </div>
 
           <div class="p-6">
-            <div id="scheduledExamsContainer" class="space-y-6">
+            <div id="scheduledExamsContainer" class="space-y-4">
               <p class="text-slate-500">Loading scheduled exams...</p>
             </div>
           </div>
         </section>
 
-        <!-- Pending requests -->
+        <!-- Requests -->
         <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
           <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
             <span class="material-symbols-outlined text-primary">pending_actions</span>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pending Slot Requests</h2>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Student Requests</h2>
           </div>
+
+          <div class="px-6 pt-5">
+            <div class="flex flex-wrap gap-2">
+              <button id="examRequestsTab" onclick="switchRequestTab('exam')" class="tab-active px-4 py-2 rounded-lg text-sm font-semibold">
+                Exam Requests
+              </button>
+              <button id="practiceRequestsTab" onclick="switchRequestTab('practice')" class="tab-inactive px-4 py-2 rounded-lg text-sm font-semibold">
+                Practice Requests
+              </button>
+              <button id="allRequestsTab" onclick="switchRequestTab('all')" class="tab-inactive px-4 py-2 rounded-lg text-sm font-semibold">
+                All Requests
+              </button>
+            </div>
+          </div>
+
           <div class="p-6">
             <div id="pendingRequestsContainer" class="space-y-4">
-              <p class="text-slate-500">Loading pending slot requests...</p>
+              <p class="text-slate-500">Loading requests...</p>
             </div>
           </div>
         </section>
@@ -143,8 +161,8 @@
         <!-- Machines -->
         <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
           <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
-            <span class="material-symbols-outlined text-primary">schedule</span>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Machines</h2>
+            <span class="material-symbols-outlined text-primary">developer_board</span>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Machine Registry</h2>
           </div>
 
           <div class="overflow-x-auto">
@@ -167,45 +185,24 @@
           </div>
         </section>
 
-        <!-- Add machine -->
+        <!-- Add Machine -->
         <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
-          <div class="p-6 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold mb-4">Add / Update Machine</h3>
+          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Add New Machine</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Create a machine record for lab allocation and maintenance tracking.</p>
+          </div>
 
+          <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <input
-                id="machineCode"
-                type="text"
-                placeholder="Machine Code"
-                class="px-4 py-2 border rounded-lg"
-              />
-
-              <input
-                id="labNumber"
-                type="text"
-                placeholder="Lab Number"
-                class="px-4 py-2 border rounded-lg"
-              />
-
-              <select
-                id="machineStatus"
-                class="px-4 py-2 border rounded-lg"
-              >
+              <input id="machineCode" type="text" placeholder="Machine Code" class="px-4 py-3 border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-700" />
+              <input id="labNumber" type="text" placeholder="Lab Number" class="px-4 py-3 border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-700" />
+              <select id="machineStatus" class="px-4 py-3 border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-700">
                 <option value="ready">Ready</option>
                 <option value="maintenance">Maintenance</option>
                 <option value="unavailable">Unavailable</option>
               </select>
-
-              <input
-                id="maintenanceDate"
-                type="date"
-                class="px-4 py-2 border rounded-lg"
-              />
-
-              <button
-                onclick="createMachine()"
-                class="bg-primary text-white px-4 py-2 rounded-lg"
-              >
+              <input id="maintenanceDate" type="date" class="px-4 py-3 border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-700" />
+              <button onclick="createMachine()" class="bg-primary text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-800">
                 Add Machine
               </button>
             </div>
@@ -232,6 +229,9 @@
   </button>
 
   <script>
+    let allBookingsCache = [];
+    let activeRequestTab = "exam";
+
     function escapeHtml(value) {
       return String(value || "")
         .replace(/&/g, "&amp;")
@@ -244,9 +244,7 @@
     function toDateInputValue(value) {
       if (!value) return "";
 
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return value;
-      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
         const [dd, mm, yyyy] = value.split("/");
@@ -255,7 +253,6 @@
 
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return "";
-
       return date.toISOString().split("T")[0];
     }
 
@@ -275,27 +272,141 @@
       return `${formattedHour}:${m} ${suffix}`;
     }
 
+    function isExamExpired(exam) {
+      if (!exam || !exam.exam_date || !exam.end_time) return false;
+
+      try {
+        const endTime = String(exam.end_time).slice(0, 5);
+        const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
+        return examEnd.getTime() < Date.now();
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function toggleExamPanel(examId) {
+      const panel = document.getElementById(`exam-panel-${examId}`);
+      const icon = document.getElementById(`exam-toggle-icon-${examId}`);
+
+      if (!panel || !icon) return;
+
+      panel.classList.toggle("hidden");
+      icon.textContent = panel.classList.contains("hidden") ? "expand_more" : "expand_less";
+    }
+
     function buildSlotRow(slot) {
       const booked = Number(slot.booked_count || 0);
       const max = Number(slot.max_machines || 0);
       const remaining = Math.max(max - booked, 0);
 
       return `
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/30">
-          <div>
-            <p class="font-semibold text-slate-900 dark:text-white">
-              ${formatDate(slot.slot_date)} • ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}
-            </p>
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-              Capacity: ${max} • Booked: ${booked} • Remaining: ${remaining}
-            </p>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/30 space-y-3">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p class="font-semibold text-slate-900 dark:text-white">
+                ${formatDate(slot.slot_date)} • ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Capacity: ${max} • Booked: ${booked} • Remaining: ${remaining}
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                onclick="toggleEditSlotForm(${slot.slot_id})"
+                class="px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
+              >
+                Edit Slot
+              </button>
+              <button
+                onclick="deleteExamSlot(${slot.slot_id})"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
+              >
+                Remove Slot
+              </button>
+            </div>
           </div>
+
+          <div id="edit-slot-form-${slot.slot_id}" class="hidden border-t border-slate-200 dark:border-slate-700 pt-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <input id="edit-slot-date-${slot.slot_id}" type="date" value="${toDateInputValue(slot.slot_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+              <input id="edit-slot-start-${slot.slot_id}" type="time" value="${String(slot.start_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+              <input id="edit-slot-end-${slot.slot_id}" type="time" value="${String(slot.end_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+              <input id="edit-slot-capacity-${slot.slot_id}" type="number" min="1" value="${max}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+            </div>
+            <div class="mt-3">
+              <button
+                onclick="saveSlotEdit(${slot.slot_id})"
+                class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildExamCard(exam, slots) {
+      const expired = isExamExpired(exam);
+      const badgeClass = expired
+        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-blue-100 text-primary dark:bg-blue-900/30 dark:text-blue-300";
+      const badgeText = expired ? "Expired" : (exam.status || "Scheduled");
+
+      return `
+        <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
           <button
-            onclick="deleteExamSlot(${slot.slot_id}, ${slot.exam_id})"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
+            onclick="toggleExamPanel(${exam.exam_id})"
+            class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between text-left"
           >
-            Remove Slot
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(exam.exam_name)}</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                ${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "")}
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                ${formatDate(exam.exam_date)} • ${formatTime(exam.start_time)} - ${formatTime(exam.end_time)}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${badgeClass}">
+                ${badgeText}
+              </span>
+              <span id="exam-toggle-icon-${exam.exam_id}" class="material-symbols-outlined text-slate-500">expand_more</span>
+            </div>
           </button>
+
+          <div id="exam-panel-${exam.exam_id}" class="hidden p-5 space-y-5">
+            <div>
+              <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Create Slot</h4>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <input id="slot-date-${exam.exam_id}" type="date" value="${toDateInputValue(exam.exam_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+                <input id="slot-start-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+                <input id="slot-end-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+                <input id="slot-capacity-${exam.exam_id}" type="number" min="1" value="10" placeholder="Machines" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+              </div>
+              <div class="mt-3">
+                <button
+                  onclick="createExamSlot(${exam.exam_id})"
+                  class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800"
+                >
+                  Add Slot
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Existing Slots</h4>
+              <div class="space-y-3">
+                ${
+                  slots.length
+                    ? slots.map(buildSlotRow).join("")
+                    : `<p class="text-sm text-slate-500 dark:text-slate-400">No slots created for this exam yet.</p>`
+                }
+              </div>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -313,7 +424,7 @@
 
       const exams = result.exams || [];
 
-      if (exams.length === 0) {
+      if (!exams.length) {
         container.innerHTML = `<p class="text-slate-500">No scheduled exams need slot setup right now.</p>`;
         return;
       }
@@ -322,58 +433,7 @@
         exams.map(async (exam) => {
           const slotRes = await API.examSlots.getByExamId(exam.exam_id);
           const slots = slotRes.ok ? (slotRes.slots || []) : [];
-
-          return `
-            <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-              <div class="px-5 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(exam.exam_name)}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                      ${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "")}
-                    </p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      ${formatDate(exam.exam_date)} • ${formatTime(exam.start_time)} - ${formatTime(exam.end_time)}
-                    </p>
-                  </div>
-                  <span class="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold text-xs">
-                    ${escapeHtml(exam.status)}
-                  </span>
-                </div>
-              </div>
-
-              <div class="p-5 space-y-5">
-                <div>
-                  <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Create Slot</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input id="slot-date-${exam.exam_id}" type="date" value="${toDateInputValue(exam.exam_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                    <input id="slot-start-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                    <input id="slot-end-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                    <input id="slot-capacity-${exam.exam_id}" type="number" min="1" value="10" placeholder="Machines" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                  </div>
-                  <div class="mt-3">
-                    <button
-                      onclick="createExamSlot(${exam.exam_id})"
-                      class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800"
-                    >
-                      Add Slot
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Existing Slots</h4>
-                  <div class="space-y-3">
-                    ${
-                      slots.length
-                        ? slots.map(buildSlotRow).join("")
-                        : `<p class="text-sm text-slate-500 dark:text-slate-400">No slots created for this exam yet.</p>`
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
+          return buildExamCard(exam, slots);
         })
       );
 
@@ -408,6 +468,38 @@
       await loadScheduledExams();
     }
 
+    function toggleEditSlotForm(slotId) {
+      const el = document.getElementById(`edit-slot-form-${slotId}`);
+      if (el) el.classList.toggle("hidden");
+    }
+
+    async function saveSlotEdit(slotId) {
+      const slot_date = document.getElementById(`edit-slot-date-${slotId}`).value;
+      const start_time = document.getElementById(`edit-slot-start-${slotId}`).value;
+      const end_time = document.getElementById(`edit-slot-end-${slotId}`).value;
+      const max_machines = document.getElementById(`edit-slot-capacity-${slotId}`).value;
+
+      if (!slot_date || !start_time || !end_time || !max_machines) {
+        alert("Please fill all slot fields before saving.");
+        return;
+      }
+
+      const result = await API.examSlots.update(slotId, {
+        slot_date,
+        start_time,
+        end_time,
+        max_machines
+      });
+
+      if (!result.ok) {
+        alert(result.error || "Failed to update slot");
+        return;
+      }
+
+      alert("Slot updated successfully.");
+      await loadScheduledExams();
+    }
+
     async function deleteExamSlot(slotId) {
       const confirmed = confirm("Are you sure you want to remove this exam slot?");
       if (!confirmed) return;
@@ -423,75 +515,114 @@
       await loadScheduledExams();
     }
 
-    async function loadBookings() {
-      const result = await API.bookings.getAll();
+    function switchRequestTab(type) {
+      activeRequestTab = type;
 
+      const examBtn = document.getElementById("examRequestsTab");
+      const practiceBtn = document.getElementById("practiceRequestsTab");
+      const allBtn = document.getElementById("allRequestsTab");
+
+      [examBtn, practiceBtn, allBtn].forEach(btn => {
+        btn.classList.remove("tab-active");
+        btn.classList.add("tab-inactive");
+      });
+
+      if (type === "exam") examBtn.classList.add("tab-active"), examBtn.classList.remove("tab-inactive");
+      if (type === "practice") practiceBtn.classList.add("tab-active"), practiceBtn.classList.remove("tab-inactive");
+      if (type === "all") allBtn.classList.add("tab-active"), allBtn.classList.remove("tab-inactive");
+
+      renderBookings();
+    }
+
+    function buildRequestCard(b) {
+      const isExam = b.slot_type === "EXAM";
+      const badgeClass = isExam
+        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
+
+      return `
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-slate-900 dark:text-white">${escapeHtml(b.first_name || "")} ${escapeHtml(b.last_name || "")}</h3>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeClass}">
+                  ${escapeHtml(b.slot_type)}
+                </span>
+              </div>
+
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                ${formatDate(b.booking_date)} • ${formatTime(b.start_time)} - ${formatTime(b.end_time)}
+              </p>
+
+              ${
+                isExam
+                  ? `<p class="text-sm text-slate-500 dark:text-slate-400">Exam: ${escapeHtml(b.exam_name || "-")}</p>`
+                  : `<p class="text-sm text-slate-500 dark:text-slate-400">Purpose: ${escapeHtml(b.purpose || "-")}</p>`
+              }
+
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Student Reg No: ${escapeHtml(b.registration_number || "-")}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 items-center">
+              <input
+                id="machine-${b.request_id}"
+                type="number"
+                min="1"
+                placeholder="Machine ID"
+                class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm w-32"
+              />
+              <button onclick="approveBooking(${b.request_id})" class="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800">
+                Approve
+              </button>
+              <button onclick="denyBooking(${b.request_id})" class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">
+                Deny
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBookings() {
       const pendingContainer = document.getElementById("pendingRequestsContainer");
-      const bookingsTableBody = document.getElementById("bookingsTableBody");
 
-      if (!result.ok) {
-        pendingContainer.innerHTML = `<p class="text-red-600">${result.error || "Failed to load bookings"}</p>`;
+      const pending = allBookingsCache.filter(b => b.status === "PENDING");
 
-        if (bookingsTableBody) {
-          bookingsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-red-600">Failed to load bookings</td></tr>`;
-        }
+      let filtered = pending;
+      if (activeRequestTab === "exam") {
+        filtered = pending.filter(b => b.slot_type === "EXAM");
+      } else if (activeRequestTab === "practice") {
+        filtered = pending.filter(b => b.slot_type === "PRACTICE");
+      }
+
+      if (!filtered.length) {
+        pendingContainer.innerHTML = `<p class="text-slate-500">No matching pending requests.</p>`;
         return;
       }
 
-      const bookings = result.bookings || [];
-      const pending = bookings.filter(b => b.status === "PENDING");
+      pendingContainer.innerHTML = filtered.map(buildRequestCard).join("");
+    }
 
-      if (pending.length === 0) {
-        pendingContainer.innerHTML = `<p class="text-slate-500">No pending slot requests.</p>`;
-      } else {
-        pendingContainer.innerHTML = pending.map(b => `
-          <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h3 class="font-bold text-slate-900 dark:text-white">${b.first_name || ""} ${b.last_name || ""}</h3>
-                <p class="text-sm text-slate-500">${b.slot_type} • ${b.booking_date} • ${b.start_time} - ${b.end_time}</p>
-                <p class="text-sm text-slate-500">Purpose: ${b.purpose || "-"}</p>
-              </div>
+    async function loadBookings() {
+      const result = await API.bookings.getAll();
+      const pendingContainer = document.getElementById("pendingRequestsContainer");
 
-              <div class="flex flex-wrap gap-2">
-                <input id="machine-${b.request_id}" type="number" min="1" placeholder="Machine ID" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm w-28">
-                <button onclick="approveBooking(${b.request_id})" class="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800">
-                  Approve
-                </button>
-                <button onclick="denyBooking(${b.request_id})" class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">
-                  Deny
-                </button>
-              </div>
-            </div>
-          </div>
-        `).join("");
+      if (!result.ok) {
+        pendingContainer.innerHTML = `<p class="text-red-600">${result.error || "Failed to load bookings"}</p>`;
+        return;
       }
 
-      if (bookingsTableBody) {
-        if (bookings.length === 0) {
-          bookingsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-slate-500">No bookings found.</td></tr>`;
-        } else {
-          bookingsTableBody.innerHTML = bookings.map(b => `
-            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
-              <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${b.first_name || ""} ${b.last_name || ""}</td>
-              <td class="px-6 py-4">${b.slot_type}</td>
-              <td class="px-6 py-4">${b.booking_date}</td>
-              <td class="px-6 py-4">${b.start_time} - ${b.end_time}</td>
-              <td class="px-6 py-4">${b.status}</td>
-              <td class="px-6 py-4">${b.machine_code || "-"}</td>
-            </tr>
-          `).join("");
-        }
-      }
+      allBookingsCache = result.bookings || [];
+      renderBookings();
     }
 
     async function loadMachines() {
       const machineTableBody = document.getElementById("machineTableBody");
 
-      if (!machineTableBody) {
-        console.error("machineTableBody not found in HTML");
-        return;
-      }
+      if (!machineTableBody) return;
 
       machineTableBody.innerHTML = `
         <tr>
@@ -532,7 +663,7 @@
                   id="machine-code-${m.machine_id}"
                   type="text"
                   value="${escapeHtml(m.machine_code || "")}"
-                  class="w-full border px-2 py-1 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
+                  class="w-full border px-3 py-2 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
                 />
               </td>
 
@@ -541,14 +672,14 @@
                   id="lab-number-${m.machine_id}"
                   type="text"
                   value="${escapeHtml(m.lab_number || "")}"
-                  class="w-full border px-2 py-1 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
+                  class="w-full border px-3 py-2 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
                 />
               </td>
 
               <td class="px-6 py-4">
                 <select
                   id="status-${m.machine_id}"
-                  class="border px-2 py-1 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
+                  class="border px-3 py-2 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
                 >
                   <option value="ready" ${m.status === "ready" ? "selected" : ""}>Ready</option>
                   <option value="maintenance" ${m.status === "maintenance" ? "selected" : ""}>Maintenance</option>
@@ -561,14 +692,14 @@
                   id="maintenance-date-${m.machine_id}"
                   type="date"
                   value="${cleanDate}"
-                  class="border px-2 py-1 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
+                  class="border px-3 py-2 rounded bg-white dark:bg-slate-900 dark:border-slate-700"
                 />
               </td>
 
               <td class="px-6 py-4">
                 <button
                   onclick="saveMachineUpdate(${m.machine_id})"
-                  class="px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-800"
+                  class="px-3 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-800"
                 >
                   Save
                 </button>
@@ -577,7 +708,6 @@
           `;
         }).join("");
       } catch (error) {
-        console.error("loadMachines error:", error);
         machineTableBody.innerHTML = `
           <tr>
             <td colspan="5" class="px-6 py-4 text-red-600">Failed to load machines</td>
