@@ -2,193 +2,632 @@ const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
-const { validateExamFile, isExamDeadlinePassed } = require('../middleware/validators');
 const multer = require('multer');
 const path = require('path');
 
-// Configure multer for file uploads
+// Upload config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/exam-submissions/');
+        cb(null, 'uploads/submissions/');
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'exam-' + uniqueSuffix + path.extname(file.originalname));
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, 'submission-' + unique + path.extname(file.originalname));
     }
 });
 
-const upload = multer({ 
-    storage: storage,
-    limits: { 
-        fileSize: 100 * 1024 * 1024 // 100MB max file size
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024
     },
     fileFilter: (req, file, cb) => {
-        // Only allow jpg, png, pdf
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-        if (allowedTypes.includes(file.mimetype)) {
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (allowed.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only JPG, PNG, and PDF files are allowed'));
+            cb(new Error('Only JPG and PNG files are allowed'));
         }
     }
 });
 
-// Get submissions (students see their own, lecturers see all)
-router.get('/', authenticateToken, async (req, res) => {
+function normalizeError(error, fallback) {
+    if (error && typeof error.message === 'string') return error.message;
+    return fallback;
+}
+
+// =======================================================
+// COMMON SUBMISSION HUB DATA
+// Sidebar submission page uses this
+// =======================================================
+router.get('/student/dashboard-data', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const role = req.user.role;
+        const studentId = req.user.userId;
 
-        let query;
-        let params;
+        const [practiceSessions] = await promisePool.query(`
+            SELECT
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+                psr.purpose,
 
-        if (role === 'student') {
-            // Students see only their own submissions
-            query = `
-                SELECT es.*, e.exam_name, e.exam_type, e.max_attempts, 
-                       c.course_name, c.course_code,
-                       COUNT(DISTINCT si.image_id) as image_count,
-                       ae.final_grade as ai_grade, ae.ai_comment,
-                       le.final_grade as lecturer_grade, le.lecturer_feedback, le.evaluation_status
-                FROM exam_submissions es
-                JOIN exams e ON es.exam_id = e.exam_id
-                JOIN courses c ON e.course_id = c.course_id
-                LEFT JOIN submission_images si ON es.submission_id = si.submission_id
-                LEFT JOIN ai_evaluations ae ON es.submission_id = ae.submission_id
-                LEFT JOIN lecturer_evaluations le ON es.submission_id = le.submission_id
-                WHERE es.student_id = ?
-                GROUP BY es.submission_id
-                ORDER BY es.submission_date DESC
-            `;
-            params = [userId];
-        } else if (role === 'lecturer' || role === 'admin') {
-            // Lecturers and admins see all submissions
-            query = `
-                SELECT es.*, e.exam_name, e.exam_type, e.max_attempts,
-                       c.course_name, c.course_code,
-                      CONCAT(s.first_name, ' ', s.last_name) as student_name, s.email as student_email,
-                          s.registration_number,
-                       COUNT(DISTINCT si.image_id) as image_count,
-                       ae.final_grade as ai_grade, ae.ai_comment,
-                       le.final_grade as lecturer_grade, le.lecturer_feedback, le.evaluation_status
-                FROM exam_submissions es
-                JOIN exams e ON es.exam_id = e.exam_id
-                JOIN courses c ON e.course_id = c.course_id
-                JOIN students s ON es.student_id = s.student_id
-                LEFT JOIN submission_images si ON es.submission_id = si.submission_id
-                LEFT JOIN ai_evaluations ae ON es.submission_id = ae.submission_id
-                LEFT JOIN lecturer_evaluations le ON es.submission_id = le.submission_id
-                GROUP BY es.submission_id
-                ORDER BY es.submission_date DESC
-            `;
-            params = [];
-        } else {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
+                latest.submission_id,
+                latest.attempt_number,
+                latest.submitted_at,
 
-        const [submissions] = await promisePool.query(query, params);
+                ae.api_score,
+                ae.api_status,
 
-        res.json({ submissions });
+                fr.final_grade,
+                fr.final_feedback,
+                fr.pass_fail
+
+            FROM practice_slot_requests psr
+            JOIN slot_requests sr
+                ON psr.request_id = sr.request_id
+
+            LEFT JOIN (
+                SELECT s1.*
+                FROM submissions s1
+                INNER JOIN (
+                    SELECT request_id, student_id, submission_type, MAX(attempt_number) AS latest_attempt
+                    FROM submissions
+                    WHERE submission_type = 'PRACTICE'
+                    GROUP BY request_id, student_id, submission_type
+                ) latest_pick
+                    ON latest_pick.request_id = s1.request_id
+                   AND latest_pick.student_id = s1.student_id
+                   AND latest_pick.submission_type = s1.submission_type
+                   AND latest_pick.latest_attempt = s1.attempt_number
+            ) latest
+                ON latest.request_id = sr.request_id
+               AND latest.student_id = sr.student_user_id
+               AND latest.submission_type = 'PRACTICE'
+
+            LEFT JOIN api_evaluations ae
+                ON ae.submission_id = latest.submission_id
+
+            LEFT JOIN final_results fr
+                ON fr.submission_id = latest.submission_id
+
+            WHERE sr.student_user_id = ?
+            ORDER BY sr.booking_date DESC, sr.start_time DESC
+        `, [studentId]);
+
+        const [examSessions] = await promisePool.query(`
+            SELECT
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+
+                e.exam_id,
+                e.exam_name,
+                e.description,
+                e.status AS exam_status,
+
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time,
+
+                latest.submission_id,
+                latest.attempt_number,
+                latest.submitted_at,
+
+                lr.final_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail
+
+            FROM exam_slot_requests esr
+            JOIN slot_requests sr
+                ON esr.request_id = sr.request_id
+            JOIN exam_time_slots ets
+                ON esr.slot_id = ets.slot_id
+            JOIN exams e
+                ON esr.exam_id = e.exam_id
+
+            LEFT JOIN (
+                SELECT s1.*
+                FROM submissions s1
+                INNER JOIN (
+                    SELECT request_id, student_id, submission_type, MAX(attempt_number) AS latest_attempt
+                    FROM submissions
+                    WHERE submission_type = 'EXAM'
+                    GROUP BY request_id, student_id, submission_type
+                ) latest_pick
+                    ON latest_pick.request_id = s1.request_id
+                   AND latest_pick.student_id = s1.student_id
+                   AND latest_pick.submission_type = s1.submission_type
+                   AND latest_pick.latest_attempt = s1.attempt_number
+            ) latest
+                ON latest.request_id = sr.request_id
+               AND latest.student_id = sr.student_user_id
+               AND latest.submission_type = 'EXAM'
+
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = latest.submission_id
+
+            LEFT JOIN final_results fr
+                ON fr.submission_id = latest.submission_id
+
+            WHERE sr.student_user_id = ?
+            ORDER BY ets.slot_date DESC, ets.start_time DESC
+        `, [studentId]);
+
+        res.json({
+            practiceSessions,
+            examSessions
+        });
     } catch (error) {
-        console.error('Fetch submissions error:', error);
-        res.status(500).json({ error: 'Failed to fetch submissions' });
+        console.error('Load student dashboard data error:', error);
+        res.status(500).json({
+            error: 'Failed to load student submission dashboard data'
+        });
     }
 });
 
-// Create submission with validations
-router.post('/', authenticateToken, upload.array('images', 10), async (req, res) => {
+// =======================================================
+// GET ONE EXAM SUBMISSION PAGE
+// Dashboard exam button uses this
+// =======================================================
+router.get('/exam/:exam_id', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const { examId, caseDescription } = req.body;
+        const studentId = req.user.userId;
+        const examId = req.params.exam_id;
+
+        const [examRows] = await promisePool.query(`
+            SELECT
+                e.exam_id,
+                e.exam_name,
+                e.description,
+                e.status AS exam_status,
+
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+
+                ets.slot_id,
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time
+
+            FROM exam_slot_requests esr
+            JOIN slot_requests sr
+                ON esr.request_id = sr.request_id
+            JOIN exam_time_slots ets
+                ON esr.slot_id = ets.slot_id
+            JOIN exams e
+                ON esr.exam_id = e.exam_id
+
+            WHERE sr.student_user_id = ?
+              AND e.exam_id = ?
+            ORDER BY ets.slot_date DESC, ets.start_time DESC
+            LIMIT 1
+        `, [studentId, examId]);
+
+        if (!examRows.length) {
+            return res.status(404).json({
+                error: 'No booked examination slot found for this examination'
+            });
+        }
+
+        const requestId = examRows[0].request_id;
+
+        const [historyRows] = await promisePool.query(`
+            SELECT
+                s.submission_id,
+                s.attempt_number,
+                s.comments,
+                s.submitted_at,
+                s.updated_at,
+
+                lr.final_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail
+
+            FROM submissions s
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = s.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = s.submission_id
+            WHERE s.request_id = ?
+              AND s.student_id = ?
+              AND s.submission_type = 'EXAM'
+            ORDER BY s.attempt_number DESC
+        `, [requestId, studentId]);
+
+        res.json({
+            mode: 'EXAM',
+            exam: examRows[0],
+            history: historyRows
+        });
+    } catch (error) {
+        console.error('Load exam submission page error:', error);
+        res.status(500).json({
+            error: 'Failed to load examination submission data'
+        });
+    }
+});
+
+// =======================================================
+// GET ONE PRACTICE SUBMISSION PAGE
+// Practice session button uses this
+// =======================================================
+router.get('/practice/:request_id', authenticateToken, async (req, res) => {
+    try {
+        const studentId = req.user.userId;
+        const requestId = req.params.request_id;
+
+        const [practiceRows] = await promisePool.query(`
+            SELECT
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+                psr.purpose
+
+            FROM practice_slot_requests psr
+            JOIN slot_requests sr
+                ON psr.request_id = sr.request_id
+            WHERE sr.request_id = ?
+              AND sr.student_user_id = ?
+            LIMIT 1
+        `, [requestId, studentId]);
+
+        if (!practiceRows.length) {
+            return res.status(404).json({
+                error: 'No booked practice session found'
+            });
+        }
+
+        const [historyRows] = await promisePool.query(`
+            SELECT
+                s.submission_id,
+                s.attempt_number,
+                s.comments,
+                s.submitted_at,
+                s.updated_at,
+
+                ae.api_score,
+                ae.api_status,
+
+                fr.final_grade,
+                fr.final_feedback,
+                fr.pass_fail
+
+            FROM submissions s
+            LEFT JOIN api_evaluations ae
+                ON ae.submission_id = s.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = s.submission_id
+            WHERE s.request_id = ?
+              AND s.student_id = ?
+              AND s.submission_type = 'PRACTICE'
+            ORDER BY s.attempt_number DESC
+        `, [requestId, studentId]);
+
+        res.json({
+            mode: 'PRACTICE',
+            practice: practiceRows[0],
+            history: historyRows
+        });
+    } catch (error) {
+        console.error('Load practice submission page error:', error);
+        res.status(500).json({
+            error: 'Failed to load practice submission data'
+        });
+    }
+});
+
+// =======================================================
+// CREATE SUBMISSION
+// =======================================================
+router.post('/', authenticateToken, upload.array('images', 3), async (req, res) => {
+    try {
+        const studentId = req.user.userId;
+        const { requestId, submissionType, comments } = req.body;
         const files = req.files;
 
-        // Validate required fields
-        if (!examId) {
-            return res.status(400).json({ error: 'Exam ID is required' });
+        if (!requestId) {
+            return res.status(400).json({
+                error: 'Request ID is required'
+            });
+        }
+
+        if (!submissionType || !['PRACTICE', 'EXAM'].includes(submissionType)) {
+            return res.status(400).json({
+                error: 'Valid submission type is required'
+            });
         }
 
         if (!files || files.length === 0) {
-            return res.status(400).json({ error: 'At least one image/file is required' });
+            return res.status(400).json({
+                error: 'Please upload at least one image'
+            });
         }
 
-        // Get exam details
-        const [exams] = await promisePool.query(
-            `SELECT e.*, e.exam_date, e.duration_minutes, e.max_attempts 
-             FROM exams e 
-             WHERE e.exam_id = ?`,
-            [examId]
-        );
+        const [requestRows] = await promisePool.query(`
+            SELECT
+                sr.request_id,
+                sr.student_user_id,
+                sr.slot_type,
+                sr.status
+            FROM slot_requests sr
+            WHERE sr.request_id = ?
+              AND sr.student_user_id = ?
+            LIMIT 1
+        `, [requestId, studentId]);
 
-        if (exams.length === 0) {
-            return res.status(404).json({ error: 'Exam not found' });
+        if (!requestRows.length) {
+            return res.status(404).json({
+                error: 'Submission slot request not found'
+            });
         }
 
-        const exam = exams[0];
+        const slotRequest = requestRows[0];
 
-        // Check if deadline has passed (exam_date + duration + 2 hours buffer)
-        if (exam.exam_date && exam.duration_minutes) {
-            const deadlinePassed = isExamDeadlinePassed(exam.exam_date, exam.duration_minutes);
-            if (deadlinePassed) {
-                return res.status(403).json({ 
-                    error: 'Exam deadline has passed. Submissions are no longer accepted.' 
+        if (!['APPROVED', 'COMPLETED'].includes(slotRequest.status)) {
+            return res.status(400).json({
+                error: 'Submission is allowed only for approved or completed slots'
+            });
+        }
+
+        if (slotRequest.slot_type !== submissionType) {
+            return res.status(400).json({
+                error: 'Submission type does not match the selected slot'
+            });
+        }
+
+        if (submissionType === 'EXAM') {
+            const [examLinkRows] = await promisePool.query(`
+                SELECT request_id
+                FROM exam_slot_requests
+                WHERE request_id = ?
+                LIMIT 1
+            `, [requestId]);
+
+            if (!examLinkRows.length) {
+                return res.status(400).json({
+                    error: 'The selected slot is not linked to an examination'
                 });
             }
         }
 
-        // Check if student has exceeded max attempts
-        const [existingSubmissions] = await promisePool.query(
-            'SELECT COUNT(*) as attempt_count FROM exam_submissions WHERE exam_id = ? AND student_id = ?',
-            [examId, userId]
-        );
+        if (submissionType === 'PRACTICE') {
+            const [practiceLinkRows] = await promisePool.query(`
+                SELECT request_id
+                FROM practice_slot_requests
+                WHERE request_id = ?
+                LIMIT 1
+            `, [requestId]);
 
-        const currentAttempts = existingSubmissions[0].attempt_count;
-
-        if (currentAttempts >= exam.max_attempts) {
-            return res.status(403).json({ 
-                error: `Maximum number of attempts (${exam.max_attempts}) exceeded` 
-            });
-        }
-
-        const attemptNumber = currentAttempts + 1;
-
-        // Validate each file
-        for (const file of files) {
-            const validation = validateExamFile(file);
-            if (!validation.valid) {
-                return res.status(400).json({ error: validation.error });
+            if (!practiceLinkRows.length) {
+                return res.status(400).json({
+                    error: 'The selected slot is not linked to a practice session'
+                });
             }
         }
 
-        // Create submission
-        const [submissionResult] = await promisePool.query(
-            `INSERT INTO exam_submissions 
-             (exam_id, student_id, attempt_number, case_description, status) 
-             VALUES (?, ?, ?, ?, 'pending')`,
-            [examId, userId, attemptNumber, caseDescription || null]
-        );
+        const [attemptRows] = await promisePool.query(`
+            SELECT COUNT(*) AS attempts
+            FROM submissions
+            WHERE request_id = ?
+              AND student_id = ?
+              AND submission_type = ?
+        `, [requestId, studentId, submissionType]);
+
+        const attemptNumber = attemptRows[0].attempts + 1;
+
+        const [submissionResult] = await promisePool.query(`
+            INSERT INTO submissions (
+                request_id,
+                student_id,
+                submission_type,
+                attempt_number,
+                comments
+            )
+            VALUES (?, ?, ?, ?, ?)
+        `, [
+            requestId,
+            studentId,
+            submissionType,
+            attemptNumber,
+            comments || null
+        ]);
 
         const submissionId = submissionResult.insertId;
 
-        // Insert submission images/files
         for (const file of files) {
-            await promisePool.query(
-                'INSERT INTO submission_images (submission_id, image_url, image_type) VALUES (?, ?, ?)',
-                [submissionId, file.path, file.mimetype]
-            );
+            await promisePool.query(`
+                INSERT INTO submission_files (
+                    submission_id,
+                    file_url,
+                    file_type,
+                    file_size_bytes
+                )
+                VALUES (?, ?, ?, ?)
+            `, [
+                submissionId,
+                file.path,
+                file.mimetype,
+                file.size
+            ]);
         }
 
-        console.log(`✅ Submission created: Exam ${examId}, Student ${userId}, Attempt ${attemptNumber}`);
+        if (submissionType === 'PRACTICE') {
+            await promisePool.query(`
+                INSERT INTO final_results (
+                    submission_id,
+                    final_grade,
+                    final_feedback,
+                    pass_fail
+                )
+                VALUES (?, ?, ?, ?)
+            `, [
+                submissionId,
+                0,
+                'Pending automated evaluation',
+                'FAIL'
+            ]);
+        }
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: 'Submission created successfully',
-            submissionId: submissionId,
-            attemptNumber: attemptNumber,
-            filesUploaded: files.length
+            submissionId,
+            attemptNumber
         });
-
     } catch (error) {
         console.error('Create submission error:', error);
-        res.status(500).json({ error: 'Failed to create submission' });
+        res.status(500).json({
+            error: normalizeError(error, 'Submission failed')
+        });
+    }
+});
+
+// =======================================================
+// SAVE LECTURER REVIEW
+// =======================================================
+router.post('/:submission_id/review', authenticateToken, async (req, res) => {
+    try {
+        const lecturerId = req.user.userId;
+        const role = req.user.role;
+
+        if (!['lecturer', 'admin'].includes(role)) {
+            return res.status(403).json({
+                error: 'Only lecturers can review submissions'
+            });
+        }
+
+        const submissionId = req.params.submission_id;
+        const { finalGrade, lecturerFeedback, decision, overrideReason } = req.body;
+
+        if (finalGrade === undefined || !decision) {
+            return res.status(400).json({
+                error: 'Final grade and decision are required'
+            });
+        }
+
+        await promisePool.query(`
+            INSERT INTO lecturer_reviews (
+                submission_id,
+                lecturer_id,
+                final_grade,
+                lecturer_feedback,
+                decision,
+                override_reason
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                lecturer_id = VALUES(lecturer_id),
+                final_grade = VALUES(final_grade),
+                lecturer_feedback = VALUES(lecturer_feedback),
+                decision = VALUES(decision),
+                override_reason = VALUES(override_reason),
+                reviewed_at = CURRENT_TIMESTAMP
+        `, [
+            submissionId,
+            lecturerId,
+            finalGrade,
+            lecturerFeedback || null,
+            decision,
+            overrideReason || null
+        ]);
+
+        res.json({
+            message: 'Lecturer review saved successfully'
+        });
+    } catch (error) {
+        console.error('Save lecturer review error:', error);
+        res.status(500).json({
+            error: 'Failed to save lecturer review'
+        });
+    }
+});
+
+// =======================================================
+// PUBLISH FINAL RESULT
+// =======================================================
+router.post('/:submission_id/publish', authenticateToken, async (req, res) => {
+    try {
+        const lecturerId = req.user.userId;
+        const role = req.user.role;
+
+        if (!['lecturer', 'admin'].includes(role)) {
+            return res.status(403).json({
+                error: 'Only lecturers can publish results'
+            });
+        }
+
+        const submissionId = req.params.submission_id;
+
+        const [reviewRows] = await promisePool.query(`
+            SELECT
+                final_grade,
+                lecturer_feedback,
+                decision
+            FROM lecturer_reviews
+            WHERE submission_id = ?
+            LIMIT 1
+        `, [submissionId]);
+
+        if (!reviewRows.length) {
+            return res.status(400).json({
+                error: 'Review must be completed before publishing'
+            });
+        }
+
+        const review = reviewRows[0];
+        const passFail = review.decision === 'PASS' ? 'PASS' : 'FAIL';
+
+        await promisePool.query(`
+            INSERT INTO final_results (
+                submission_id,
+                final_grade,
+                final_feedback,
+                pass_fail,
+                published_by
+            )
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                final_grade = VALUES(final_grade),
+                final_feedback = VALUES(final_feedback),
+                pass_fail = VALUES(pass_fail),
+                published_by = VALUES(published_by),
+                published_at = CURRENT_TIMESTAMP
+        `, [
+            submissionId,
+            review.final_grade,
+            review.lecturer_feedback || null,
+            passFail,
+            lecturerId
+        ]);
+
+        res.json({
+            message: 'Final result published successfully'
+        });
+    } catch (error) {
+        console.error('Publish final result error:', error);
+        res.status(500).json({
+            error: 'Failed to publish final result'
+        });
     }
 });
 

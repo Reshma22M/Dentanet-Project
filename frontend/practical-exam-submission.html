@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Practical Exam Submission - DentaNet LMS</title>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Practical Examination Submission - DentaNet LMS</title>
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="assets/js/api.js"></script>
 
   <script>
     tailwind.config = {
@@ -16,281 +17,274 @@
         extend: {
           colors: {
             primary: "#6366f1",
-            "background-light": "#f8fafc",
-            "background-dark": "#0f172a",
-            "sidebar-light": "#818cf8",
-            "sidebar-dark": "#1e1b4b",
+            "primary-light": "#8B5CF6",
+            "primary-dark": "#4C1D95",
+            "background-light": "#F5F3FF",
+            "background-dark": "#0F172A",
+            "card-light": "#FFFFFF",
+            "card-dark": "#1E293B",
+            "sidebar-light": "#EDE9FE",
+            "sidebar-dark": "#111827",
           },
-          fontFamily: { display: ["Inter", "sans-serif"] },
-          borderRadius: { DEFAULT: "0.75rem" },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
         },
       },
     };
   </script>
 
-  <style type="text/tailwindcss">
+  <style>
     body { font-family: 'Inter', sans-serif; }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
   </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
+  <nav class="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-purple-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+    </div>
 
-  <!-- HEADER (same as Grades page) -->
-  <header class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-    <div class="max-w-screen-2xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
+      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
+      <a class="hover:text-primary transition-colors" href="#">About</a>
+      <a class="hover:text-primary transition-colors" href="#">Contact</a>
+      <button id="logoutBtn" class="px-5 py-2 bg-primary text-white rounded-full font-semibold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-primary-dark transition-all">
+        Log Out
+      </button>
+    </div>
+  </nav>
+
+  <div class="flex min-h-screen pt-14">
+    <aside class="fixed top-14 left-0 bottom-0 w-72 bg-sidebar-light dark:bg-sidebar-dark p-6 hidden lg:block border-r border-purple-100 dark:border-gray-800 overflow-y-auto">
+      <div class="mb-8">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-primary mb-1">LMS</h2>
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">University of Peradeniya</p>
       </div>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
-        <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
-        <a class="hover:text-primary transition-colors" href="study-materials.html">Courses</a>
-        <a class="hover:text-primary transition-colors" href="#">Support</a>
-        <button class="bg-white dark:bg-slate-800 px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200" onclick="window.location.href='login.html'">
-          Log Out
-        </button>
+      <nav class="space-y-2">
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="student-dashboard.html">
+          <span class="material-icons-round text-[20px]">dashboard</span>
+          <span class="font-medium">Dashboard</span>
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl shadow-md" href="practical-exam-submission.html">
+          <span class="material-icons-round text-[20px]">assignment</span>
+          <span class="font-medium">Practical Examination Submission</span>
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="lab-slot-booking.html">
+          <span class="material-icons-round text-[20px]">event_available</span>
+          <span class="font-medium">Lab Slot Timetable</span>
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="study-materials.html">
+          <span class="material-icons-round text-[20px]">auto_stories</span>
+          <span class="font-medium">Study Materials</span>
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="grades-feedback.html">
+          <span class="material-icons-round text-[20px]">insights</span>
+          <span class="font-medium">Grades & Feedback</span>
+        </a>
       </nav>
-    </div>
-  </header>
 
-  <div class="flex-grow flex max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-8 gap-8">
-
-    <!-- SIDEBAR (same style as Grades page) -->
-    <aside class="w-72 hidden lg:block shrink-0">
-      <div class="bg-indigo-500 dark:bg-indigo-950 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200 dark:shadow-none min-h-[600px] flex flex-col">
-        <div class="mb-10">
-          <p class="text-xs uppercase tracking-widest text-indigo-100 opacity-80 font-bold">LMS</p>
-          <p class="text-sm font-medium">University of Peradeniya</p>
-        </div>
-
-        <nav class="space-y-2 flex-grow">
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="student-dashboard.html">
-            <span class="material-symbols-outlined">dashboard</span>
-            <span>Dashboard</span>
-          </a>
-
-          <!-- ACTIVE ITEM -->
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary shadow-lg font-semibold" href="#">
-            <span class="material-symbols-outlined">upload_file</span>
-            <span>Practical Exam Submission</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="lab-slot-booking.html">
-            <span class="material-symbols-outlined">event_seat</span>
-            <span>Lab Slot Timetable</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="study-materials.html">
-            <span class="material-symbols-outlined">menu_book</span>
-            <span>Study Materials</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="grades-feedback.html">
-            <span class="material-symbols-outlined">grade</span>
-            <span>Grades &amp; Feedback</span>
-          </a>
-        </nav>
-
-        <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
-          <img
-            alt="Student Profile"
-            class="w-10 h-10 rounded-full border-2 border-white/50 object-cover"
-            src="public/images/stu.jpg"
-          />
-          <div>
-            <p class="text-xs text-indigo-100">Welcome back,</p>
-            <p class="text-sm font-bold">Senara</p>
-          </div>
+      <div class="mt-10 pt-6 border-t border-purple-200 dark:border-gray-700 flex items-center gap-3">
+        <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg" />
+        <div>
+          <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
+          <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN -->
-    <main class="flex-grow">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <main class="flex-1 lg:ml-72 p-6 md:p-10">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Practical Exam Submission</h1>
-          <p class="text-slate-500 dark:text-slate-400">Upload your cavity preparation images for evaluation.</p>
+          <h1 id="pageTitle" class="text-3xl font-bold text-gray-900 dark:text-white">Practical Examination Submission</h1>
+          <p id="pageSubtitle" class="text-gray-500 dark:text-gray-400">
+            Upload up to 3 images and submit them for evaluation.
+          </p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+      <div id="alertBox" class="hidden mb-6 rounded-2xl px-4 py-3 text-sm font-medium"></div>
 
-        <!-- LEFT: FORM -->
-        <section class="xl:col-span-8 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <section class="xl:col-span-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div class="space-y-2">
-              <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Student ID</label>
-              <input class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm"
-                     readonly type="text" value="DENT/2022/002"/>
+              <label id="nameLabel" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Examination</label>
+              <input
+                id="examName"
+                class="w-full bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm"
+                readonly
+                type="text"
+                value="Loading..."
+              />
             </div>
 
             <div class="space-y-2">
-              <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exam Category</label>
-              <select class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm">
-                <option>Restorative Dentistry - Class I</option>
-                <option>Restorative Dentistry - Class II</option>
-                <option>Endodontics - Access Cavity</option>
-                <option>Prosthodontics - Crown Prep</option>
-              </select>
+              <label id="dateLabel" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Scheduled Date</label>
+              <input
+                id="examDate"
+                class="w-full bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm"
+                readonly
+                type="text"
+                value="-"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <label id="timeLabel" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Scheduled Time</label>
+              <input
+                id="examTime"
+                class="w-full bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm"
+                readonly
+                type="text"
+                value="-"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Attempt Summary</label>
+              <input
+                id="attemptSummary"
+                class="w-full bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm"
+                readonly
+                type="text"
+                value="-"
+              />
             </div>
           </div>
 
           <div class="space-y-2 mb-6">
-            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Case Description</label>
-            <textarea class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary px-4 py-3 text-sm"
-                      placeholder="Describe the procedure steps and any challenges encountered..." rows="3"></textarea>
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Comments</label>
+            <textarea
+              id="caseDescription"
+              class="w-full bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary"
+              placeholder="Add comments about the procedure, preparation, or any difficulties encountered..."
+              rows="4"></textarea>
           </div>
 
           <div class="space-y-2 mb-8">
-            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Image Uploads (Up to 5)</label>
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Image Uploads (Up to 3)</label>
 
-            <div class="border-2 border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all">
-              <div class="w-16 h-16 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700">
-                <span class="material-symbols-outlined text-primary text-4xl">cloud_upload</span>
+            <label for="imageInput" class="border-2 border-dashed border-purple-300 dark:border-gray-700 bg-purple-50 dark:bg-gray-800/40 rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-purple-100 dark:hover:bg-gray-800 transition-all">
+              <div class="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
+                <span class="material-icons-round text-primary text-4xl">cloud_upload</span>
               </div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Drag &amp; Drop Images</h3>
-              <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                or <span class="text-primary font-semibold underline">browse files</span> on your computer
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upload Clinical Images</h3>
+              <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                Click here to browse and add images
               </p>
-              <p class="text-xs text-slate-400 mt-4 uppercase tracking-widest font-bold">
-                Supports: PNG, JPG (Max 10MB each)
+              <p class="text-xs text-gray-400 mt-4 uppercase tracking-widest font-bold">
+                Supports: JPG, PNG • Max 10MB each • Up to 3 files
               </p>
+            </label>
+
+            <input id="imageInput" type="file" accept=".jpg,.jpeg,.png" multiple class="hidden" />
+
+            <div id="selectedFiles" class="mt-4 space-y-2">
+              <p class="text-sm text-gray-500 dark:text-gray-400">No files selected yet.</p>
             </div>
           </div>
 
           <div class="flex items-center justify-end gap-4">
-            <button class="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-              Save Draft
+            <button
+              id="clearBtn"
+              type="button"
+              class="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              Clear
             </button>
-            <button class="px-8 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-shadow shadow-lg shadow-indigo-100 dark:shadow-none">
-              Submit for Evaluation
+
+            <button
+              id="submitBtn"
+              type="button"
+              class="px-8 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-dark transition-shadow shadow-lg shadow-purple-200 dark:shadow-none">
+              Submit
             </button>
           </div>
         </section>
 
-        <!-- RIGHT: GUIDELINES -->
         <aside class="xl:col-span-4 space-y-6">
-          <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="material-symbols-outlined text-primary">info</span>
-              <h3 class="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Submission Guidelines</h3>
+          <div class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Submission Guidelines</h3>
+              <span class="material-icons-round text-primary/40">info</span>
             </div>
 
-            <ul class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
-              <li class="flex gap-3">
-                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
-                <p>Ensure clear lighting for all cavity preparation images.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
-                <p>Capture all four angles (Occlusal, Mesial, Distal, and Facial).</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
-                <p>Images must be taken immediately after preparation.</p>
-              </li>
-            </ul>
-
-            <hr class="my-6 border-slate-100 dark:border-slate-700"/>
-
-            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4">File Requirements</h4>
-            <div class="space-y-4">
-              <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Max File Size</p>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">10MB per image</p>
+            <div class="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <div class="flex items-start gap-3">
+                <span class="material-icons-round text-primary text-base">check_circle</span>
+                <p>Upload clear clinical images with proper lighting.</p>
               </div>
-
-              <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Accepted Formats</p>
-                <div class="flex gap-2 mt-1">
-                  <span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-primary">JPG</span>
-                  <span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-primary">PNG</span>
-                </div>
+              <div class="flex items-start gap-3">
+                <span class="material-icons-round text-primary text-base">check_circle</span>
+                <p>Only JPG and PNG files are accepted.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="material-icons-round text-primary text-base">check_circle</span>
+                <p>You may upload a maximum of 3 images for one submission.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="material-icons-round text-primary text-base">check_circle</span>
+                <p>Review the selected session details before submitting.</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-100 dark:shadow-none">
-            <div class="flex items-center gap-3 mb-6">
-              <span class="material-symbols-outlined p-2 bg-white/20 rounded-xl">tips_and_updates</span>
-              <h3 class="font-bold text-xl">Need help?</h3>
+          <div class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Submission Status</h3>
+              <span class="material-icons-round text-primary/40">task_alt</span>
             </div>
-            <p class="text-indigo-100 leading-relaxed mb-6">
-              Check our clinical photography guide to submit clear images and avoid rejections.
-            </p>
-            <button class="w-full py-4 bg-white text-indigo-600 text-sm font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
-              Read Guide
-            </button>
+
+            <div class="space-y-4">
+              <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Current Item</p>
+                <p id="statusExamName" class="text-sm font-semibold text-gray-900 dark:text-white">-</p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Submissions Recorded</p>
+                <p id="statusSubmissionCount" class="text-sm font-semibold text-gray-900 dark:text-white">0</p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Latest Status</p>
+                <p id="statusLatest" class="text-sm font-semibold text-gray-900 dark:text-white">Pending</p>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
 
-      <!-- HISTORY -->
-      <section class="mt-10 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Submission History</h2>
-          <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-            View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
-          </button>
+      <section class="mt-10 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">Submission History</h3>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden overflow-x-auto">
-          <table class="w-full text-left min-w-[700px]">
-            <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[760px] text-left">
+            <thead class="border-b border-purple-100 dark:border-gray-700">
               <tr>
-                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Exam Name</th>
-                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Date Submitted</th>
-                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Score</th>
-                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Action</th>
+                <th id="historyNameHeader" class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-gray-500">Examination</th>
+                <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-gray-500">Attempt</th>
+                <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-gray-500">Status</th>
+                <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-gray-500">Result</th>
+                <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-gray-500">Submitted On</th>
               </tr>
             </thead>
-
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium">Class II Amalgam Prep</td>
-                <td class="px-6 py-4 text-sm text-slate-500">Jan 12, 2026</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    Evaluated
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-sm font-bold">88/100</td>
-                <td class="px-6 py-4">
-                  <button class="text-primary font-bold text-sm hover:underline">View Results</button>
-                </td>
-              </tr>
-
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium">Indirect Restoration Prep</td>
-                <td class="px-6 py-4 text-sm text-slate-500">Jan 18, 2026</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                    Pending
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-sm font-medium text-slate-400">--</td>
-                <td class="px-6 py-4">
-                  <button class="text-primary font-bold text-sm hover:underline">Edit</button>
-                </td>
-              </tr>
-
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium">Access Cavity - Molars</td>
-                <td class="px-6 py-4 text-sm text-slate-500">Jan 07, 2026</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    Evaluated
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-sm font-bold">92/100</td>
-                <td class="px-6 py-4">
-                  <button class="text-primary font-bold text-sm hover:underline">View Results</button>
-                </td>
+            <tbody id="historyTableBody" class="divide-y divide-purple-50 dark:divide-gray-800">
+              <tr>
+                <td colspan="5" class="px-4 py-8 text-sm text-gray-500 text-center">Loading submission history...</td>
               </tr>
             </tbody>
           </table>
@@ -299,21 +293,410 @@
     </main>
   </div>
 
-  <!-- FOOTER (same as Grades page) -->
-  <footer class="bg-indigo-50 dark:bg-slate-900 border-t border-indigo-100 dark:border-slate-800 py-12 mt-12">
-    <div class="max-w-screen-2xl mx-auto px-6">
-      <div class="flex flex-wrap justify-center gap-8 md:gap-16 mb-8 text-sm font-medium text-slate-500 dark:text-slate-400">
-        <a class="hover:text-primary" href="#">Privacy Policy</a>
-        <a class="hover:text-primary" href="#">Terms of Service</a>
-        <a class="hover:text-primary" href="#">Contact Us</a>
-        <a class="hover:text-primary" href="#">For Students</a>
-        <a class="hover:text-primary" href="#">For Lecturers</a>
-        <a class="hover:text-primary" href="#">Lab Services</a>
+  <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col items-center">
+      <div class="flex flex-wrap justify-center gap-8 mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
+        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+        <a class="hover:text-primary transition-colors" href="#">Contact Us</a>
+        <a class="hover:text-primary transition-colors" href="#">For Students</a>
+        <a class="hover:text-primary transition-colors" href="#">For Lecturers</a>
+        <a class="hover:text-primary transition-colors" href="#">Lab Services</a>
       </div>
 
-      <p class="text-center text-slate-400 text-xs font-medium">© 2026 DentaNet. All rights reserved.</p>
+      <div class="flex gap-6 mb-8 text-gray-400">
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">facebook</i></a>
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">alternate_email</i></a>
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">groups</i></a>
+      </div>
+
+      <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">© 2025 DentaNet LMS. All rights reserved. Professional Dental Education Platform.</p>
     </div>
   </footer>
 
+  <button class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center justify-center border border-purple-100 dark:border-gray-700 hover:scale-110 transition-transform" onclick="document.documentElement.classList.toggle('dark')">
+    <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
+  </button>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+    const urlParams = new URLSearchParams(window.location.search);
+    const examId = urlParams.get('exam_id');
+    const requestId = urlParams.get('request_id');
+
+    let submissionMode = null;
+    if (examId) {
+      submissionMode = 'EXAM';
+    } else if (requestId) {
+      submissionMode = 'PRACTICE';
+    }
+
+    let selectedFiles = [];
+    let pageData = null;
+    let submissionHistory = [];
+
+    const alertBox = document.getElementById('alertBox');
+    const examNameInput = document.getElementById('examName');
+    const examDateInput = document.getElementById('examDate');
+    const examTimeInput = document.getElementById('examTime');
+    const attemptSummaryInput = document.getElementById('attemptSummary');
+    const commentsInput = document.getElementById('caseDescription');
+    const imageInput = document.getElementById('imageInput');
+    const selectedFilesDiv = document.getElementById('selectedFiles');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    function showAlert(message, type = 'error') {
+      const text = typeof message === 'string'
+        ? message
+        : (message?.message || 'Something went wrong');
+
+      alertBox.classList.remove(
+        'hidden',
+        'bg-red-100', 'text-red-700', 'border', 'border-red-200',
+        'bg-green-100', 'text-green-700', 'border-green-200'
+      );
+
+      if (type === 'success') {
+        alertBox.classList.add('bg-green-100', 'text-green-700', 'border', 'border-green-200');
+      } else {
+        alertBox.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-200');
+      }
+
+      alertBox.textContent = text;
+    }
+
+    function clearAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.textContent = '';
+    }
+
+    function formatDate(dateValue) {
+      if (!dateValue) return '-';
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return dateValue;
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    function formatTime(timeValue) {
+      if (!timeValue) return '-';
+      const [h, m] = String(timeValue).split(':');
+      const hour = parseInt(h, 10);
+      const suffix = hour >= 12 ? 'PM' : 'AM';
+      const formattedHour = hour % 12 || 12;
+      return `${formattedHour}:${m} ${suffix}`;
+    }
+
+    function getDisplayName() {
+      if (!pageData) return '-';
+      if (submissionMode === 'EXAM') return pageData.exam_name || '-';
+      return pageData.purpose || 'Practice Session';
+    }
+
+    function updateStaticLabels() {
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      const nameLabel = document.getElementById('nameLabel');
+      const dateLabel = document.getElementById('dateLabel');
+      const timeLabel = document.getElementById('timeLabel');
+      const historyNameHeader = document.getElementById('historyNameHeader');
+
+      if (submissionMode === 'PRACTICE') {
+        pageTitle.textContent = 'Practice Session Submission';
+        pageSubtitle.textContent = 'Upload up to 3 images and submit them for evaluation.';
+        nameLabel.textContent = 'Practice Session';
+        dateLabel.textContent = 'Session Date';
+        timeLabel.textContent = 'Session Time';
+        historyNameHeader.textContent = 'Practice Session';
+        submitBtn.textContent = 'Submit Practice Session';
+      } else {
+        pageTitle.textContent = 'Practical Examination Submission';
+        pageSubtitle.textContent = 'Upload up to 3 images and submit them for evaluation.';
+        nameLabel.textContent = 'Examination';
+        dateLabel.textContent = 'Scheduled Date';
+        timeLabel.textContent = 'Scheduled Time';
+        historyNameHeader.textContent = 'Examination';
+        submitBtn.textContent = 'Submit Practical Examination';
+      }
+    }
+
+    function updateStatusCard() {
+      document.getElementById('statusExamName').textContent = getDisplayName();
+      document.getElementById('statusSubmissionCount').textContent = String(submissionHistory.length);
+
+      const latest = submissionHistory[0];
+      const latestStatus = latest
+        ? (latest.pass_fail || latest.decision || latest.api_status || 'Pending Review')
+        : 'No Submission Yet';
+
+      document.getElementById('statusLatest').textContent = latestStatus;
+    }
+
+    function renderPageData() {
+      if (!pageData) return;
+
+      examNameInput.value = getDisplayName();
+
+      if (submissionMode === 'EXAM') {
+        examDateInput.value = formatDate(pageData.slot_date || pageData.booking_date);
+        examTimeInput.value = `${formatTime(pageData.exam_start_time || pageData.start_time)} - ${formatTime(pageData.exam_end_time || pageData.end_time)}`;
+      } else {
+        examDateInput.value = formatDate(pageData.booking_date);
+        examTimeInput.value = `${formatTime(pageData.start_time)} - ${formatTime(pageData.end_time)}`;
+      }
+
+      attemptSummaryInput.value = `${submissionHistory.length} submission${submissionHistory.length === 1 ? '' : 's'}`;
+      updateStatusCard();
+    }
+
+    function renderSelectedFiles() {
+      if (!selectedFiles.length) {
+        selectedFilesDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">No files selected yet.</p>';
+        return;
+      }
+
+      selectedFilesDiv.innerHTML = selectedFiles.map((file, index) => `
+        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${file.name}</p>
+            <p class="text-xs text-gray-500">${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+          </div>
+          <button type="button" class="text-red-500 text-sm font-semibold hover:underline ml-4" onclick="removeSelectedFile(${index})">
+            Remove
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderHistory() {
+      if (!submissionHistory.length) {
+        historyTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-sm text-gray-500 text-center">No submissions yet.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      historyTableBody.innerHTML = submissionHistory.map(item => {
+        let resultText = '-';
+        let statusText = 'Pending Review';
+
+        if (submissionMode === 'EXAM') {
+          resultText =
+            item.published_grade != null ? item.published_grade :
+            item.final_grade != null ? item.final_grade :
+            '-';
+          statusText = item.pass_fail || item.decision || 'Pending Review';
+        } else {
+          resultText =
+            item.final_grade != null ? item.final_grade :
+            item.api_score != null ? item.api_score :
+            '-';
+          statusText = item.pass_fail || item.api_status || 'Pending Evaluation';
+        }
+
+        return `
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+            <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${getDisplayName()}</td>
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${item.attempt_number || '-'}</td>
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${statusText}</td>
+            <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">${resultText}</td>
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${item.submitted_at ? formatDate(item.submitted_at) : '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.removeSelectedFile = function(index) {
+      selectedFiles.splice(index, 1);
+      renderSelectedFiles();
+    };
+
+    imageInput.addEventListener('change', (event) => {
+      const newFiles = Array.from(event.target.files || []);
+      if (!newFiles.length) return;
+
+      for (const file of newFiles) {
+        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+          showAlert('Only JPG and PNG images are allowed.');
+          imageInput.value = '';
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          showAlert(`"${file.name}" exceeds the 10MB file size limit.`);
+          imageInput.value = '';
+          return;
+        }
+
+        const alreadyExists = selectedFiles.some(existing =>
+          existing.name === file.name &&
+          existing.size === file.size &&
+          existing.lastModified === file.lastModified
+        );
+
+        if (!alreadyExists) {
+          selectedFiles.push(file);
+        }
+      }
+
+      if (selectedFiles.length > 3) {
+        selectedFiles = selectedFiles.slice(0, 3);
+        showAlert('You can upload a maximum of 3 images.');
+      } else {
+        clearAlert();
+      }
+
+      imageInput.value = '';
+      renderSelectedFiles();
+    });
+
+    async function loadSubmissionPage() {
+      try {
+        if (!submissionMode) {
+          showAlert('Open this page from the dashboard or from a selected submission item.');
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          examNameInput.value = 'No item selected';
+          examDateInput.value = '-';
+          examTimeInput.value = '-';
+          attemptSummaryInput.value = '-';
+          return;
+        }
+
+        const token = getToken();
+        let endpoint = '';
+
+        if (submissionMode === 'EXAM') {
+          endpoint = `${API_BASE}/submissions/exam/${examId}`;
+        } else {
+          endpoint = `${API_BASE}/submissions/practice/${requestId}`;
+        }
+
+        const response = await fetch(endpoint, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load submission data');
+        }
+
+        pageData = submissionMode === 'EXAM' ? data.exam : data.practice;
+        submissionHistory = data.history || [];
+
+        updateStaticLabels();
+        renderPageData();
+        renderHistory();
+      } catch (error) {
+        showAlert(error.message || 'Failed to load submission data');
+      }
+    }
+
+    async function submitCurrentItem() {
+      try {
+        clearAlert();
+
+        if (!submissionMode || !pageData) {
+          showAlert('No submission item was selected.');
+          return;
+        }
+
+        if (!selectedFiles.length) {
+          showAlert('Please select at least one image.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const formData = new FormData();
+        formData.append('requestId', pageData.request_id);
+        formData.append('submissionType', submissionMode);
+        formData.append('comments', commentsInput.value.trim());
+
+        selectedFiles.forEach(file => {
+          formData.append('images', file);
+        });
+
+        const response = await fetch(`${API_BASE}/submissions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getToken()}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Submission failed');
+        }
+
+        showAlert('Submission completed successfully.', 'success');
+        selectedFiles = [];
+        commentsInput.value = '';
+        renderSelectedFiles();
+        await loadSubmissionPage();
+      } catch (error) {
+        showAlert(error.message || 'Submission failed');
+      } finally {
+        submitBtn.disabled = false;
+        updateStaticLabels();
+      }
+    }
+
+    clearBtn.addEventListener('click', () => {
+      selectedFiles = [];
+      commentsInput.value = '';
+      imageInput.value = '';
+      renderSelectedFiles();
+      clearAlert();
+    });
+
+    submitBtn.addEventListener('click', submitCurrentItem);
+
+    document.addEventListener('DOMContentLoaded', async function () {
+      if (typeof requireAuth !== "function") {
+        alert("api.js failed to load correctly.");
+        return;
+      }
+
+      const user = await requireAuth("student");
+      if (!user) return;
+
+      const fullName =
+        user.fullName ||
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+        "Student";
+
+      const nameEl = document.getElementById("studentProfileName");
+      if (nameEl) nameEl.textContent = fullName;
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.onclick = function () {
+          API.auth.logout();
+        };
+      }
+
+      updateStaticLabels();
+      renderSelectedFiles();
+      loadSubmissionPage();
+    });
+  </script>
 </body>
 </html>
