@@ -17,6 +17,7 @@ const authenticateToken = (req, res, next) => {
 
     // Normalize user object so routes can use req.user.id and req.user.role safely
     req.user = {
+      ...decoded,
       id:
         decoded.id ||
         decoded.user_id ||
@@ -26,7 +27,6 @@ const authenticateToken = (req, res, next) => {
         null,
       role: decoded.role || null,
       email: decoded.email || null,
-      ...decoded,
     };
 
     if (!req.user.id || !req.user.role) {

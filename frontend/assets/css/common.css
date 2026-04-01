@@ -2,58 +2,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-@layer base {
-    body { 
-        @apply font-sans; 
-    }
+body {
+    font-family: 'Inter', sans-serif;
 }
 
 /* Sidebar Active State */
-.sidebar-active { 
-    background-color: rgba(255, 255, 255, 0.9); 
-    color: #6D5CB3; 
+.sidebar-active {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #6D5CB3;
 }
 
 /* Glass Card Effect */
-.glass-card { 
-    background: rgba(255, 255, 255, 0.7); 
-    backdrop-filter: blur(10px); 
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 /* Tab States */
-.tab-active { 
-    @apply border-primary text-primary border-b-2; 
+.tab-active {
+    border-bottom: 2px solid #3B82F6;
+    color: #3B82F6;
 }
 
-.tab-inactive { 
-    @apply border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300; 
+.tab-inactive {
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+}
+
+.tab-inactive:hover {
+    color: #334155;
+    border-bottom-color: #cbd5e1;
 }
 
 /* Student Theme Colors */
-.student-primary { 
-    color: #90cdf4; 
+.student-primary {
+    color: #90cdf4;
 }
 
-.student-bg { 
-    background-color: #90cdf4; 
+.student-bg {
+    background-color: #90cdf4;
 }
 
 /* Lecturer Theme Colors */
-.lecturer-primary { 
-    color: #a78bfa; 
+.lecturer-primary {
+    color: #a78bfa;
 }
 
-.lecturer-bg { 
-    background-color: #a78bfa; 
+.lecturer-bg {
+    background-color: #a78bfa;
 }
 
 /* Admin Theme Colors */
-.admin-primary { 
-    color: #6D5CB3; 
+.admin-primary {
+    color: #6D5CB3;
 }
 
-.admin-bg { 
-    background-color: #6D5CB3; 
+.admin-bg {
+    background-color: #6D5CB3;
 }
 
 /* Custom Scrollbar */
@@ -63,13 +69,49 @@
 }
 
 ::-webkit-scrollbar-track {
-    @apply bg-slate-100 dark:bg-slate-800;
+    background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #1e293b;
 }
 
 ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400 dark:bg-slate-500;
+    background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* DentaNet Toast Notifications */
+#dentanet-toast-container {
+    pointer-events: none;
+}
+
+.dentanet-toast {
+    pointer-events: auto;
+    animation: dentanetPulseGlow 2.8s ease-in-out;
+}
+
+.toast-progress {
+    width: 100%;
+}
+
+@keyframes dentanetPulseGlow {
+    0%, 100% {
+        box-shadow: 0 12px 35px rgba(109, 92, 179, 0.18);
+    }
+    50% {
+        box-shadow: 0 16px 42px rgba(109, 92, 179, 0.28);
+    }
 }

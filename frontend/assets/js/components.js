@@ -22,7 +22,6 @@ class DentaNetComponents {
                 </div>
             </div>
         `;
-        
         return header;
     }
 

@@ -4,10 +4,15 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Manage User Accounts - DentaNet LMS</title>
+
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<link href="assets/css/common.css" rel="stylesheet"/>
+<script src="assets/js/common.js"></script>
 <script src="assets/js/api.js"></script>
+
 <script>
 tailwind.config = {
     darkMode: "class",
@@ -24,6 +29,7 @@ tailwind.config = {
     }
 };
 </script>
+
 <style type="text/tailwindcss">
 :root {
     --primary-blue: #1e3a8a;
@@ -119,7 +125,7 @@ body {
     <div class="flex justify-between items-start mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Manage User Accounts</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">View registered users, filter them, and create lecturer accounts.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">View users, edit details, deactivate accounts, and create lecturer accounts.</p>
         </div>
         <div class="flex flex-col items-center">
             <img alt="Admin Profile" class="w-14 h-14 rounded-full border-2 border-[var(--primary-blue)] dark:border-blue-500 object-cover mb-1 shadow-md" src="public/images/admin.jpg"/>
@@ -127,6 +133,7 @@ body {
         </div>
     </div>
 
+    <!-- Filters + main action -->
     <div class="bg-white dark:bg-dark-card p-6 rounded-xl shadow-sm mb-6 border border-slate-200 dark:border-dark-border">
         <div class="flex flex-col lg:flex-row gap-4 lg:items-end lg:justify-between">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
@@ -160,6 +167,7 @@ body {
         </div>
     </div>
 
+    <!-- Users table -->
     <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -170,16 +178,33 @@ body {
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID / Batch</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-dark-border">
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading users...</td>
+                        <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading users...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <!-- Low-priority admin creation section -->
+    <section id="createAdminSection" class="mt-10 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-start justify-between gap-4 flex-col md:flex-row">
+            <div>
+                <h2 class="text-base font-semibold text-slate-700 dark:text-slate-200">Optional: Additional Admin Accounts</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    The primary admin can create only up to 2 more admins, making a maximum of 3 admins in total.
+                </p>
+            </div>
+            <button id="openCreateAdminModal" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition-all">
+                Create Admin
+            </button>
+        </div>
+        <p id="adminCreateHint" class="text-xs text-slate-500 dark:text-slate-400 mt-3"></p>
+    </section>
 </main>
 </div>
 
@@ -193,7 +218,7 @@ body {
         <a class="hover:text-blue-400 transition-colors" href="#">For Lecturers</a>
         <a class="hover:text-blue-400 transition-colors" href="#">Lab Services</a>
     </div>
-    <p class="text-center text-xs opacity-60">© 2025 DentaNet LMS Admin Portal. All rights reserved.</p>
+    <p class="text-center text-xs opacity-60">© 2026 DentaNet LMS Admin Portal. All rights reserved.</p>
 </div>
 </footer>
 
@@ -203,7 +228,7 @@ body {
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-dark-border">
             <div>
                 <h2 class="text-xl font-bold text-slate-800 dark:text-white">Create Lecturer Account</h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Enter lecturer details. A temporary password will be generated or you can provide one.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">A temporary password will be generated if left blank.</p>
             </div>
             <button id="closeLecturerModal" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">
                 <span class="material-symbols-outlined">close</span>
@@ -213,17 +238,17 @@ body {
         <form id="createLecturerForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name</label>
-                <input id="lecFirstName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Nimal" required />
+                <input id="lecFirstName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
             </div>
 
             <div>
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
-                <input id="lecLastName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Perera" required />
+                <input id="lecLastName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
             </div>
 
             <div>
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input id="lecEmail" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="email" placeholder="lecturer@dentanet.lk" required />
+                <input id="lecEmail" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="email" required />
             </div>
 
             <div>
@@ -251,7 +276,7 @@ body {
             </div>
 
             <div class="md:col-span-2 flex items-center justify-between gap-4 mt-2">
-                <div id="createResult" class="text-sm"></div>
+                <div id="createLecturerResult" class="text-sm"></div>
                 <div class="flex gap-3">
                     <button id="cancelCreateLecturer" type="button" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200">Cancel</button>
                     <button id="createLecturerBtn" type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Create Lecturer</button>
@@ -261,8 +286,137 @@ body {
     </div>
 </div>
 
+<!-- Create Admin Modal -->
+<div id="adminModal" class="fixed inset-0 z-[100] hidden items-center justify-center modal-backdrop p-4">
+    <div class="w-full max-w-2xl bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-dark-border">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Create Admin Account</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Only the primary admin can create up to 2 additional admins.</p>
+            </div>
+            <button id="closeAdminModal" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="createAdminForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+                <input id="adminFirstName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+                <input id="adminLastName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input id="adminEmail" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="email" required />
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Temporary Password (optional)</label>
+                <input id="adminPassword" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" placeholder="Leave blank to auto-generate" />
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-between gap-4 mt-2">
+                <div id="createAdminResult" class="text-sm"></div>
+                <div class="flex gap-3">
+                    <button id="cancelCreateAdmin" type="button" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200">Cancel</button>
+                    <button id="createAdminBtn" type="submit" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg">Create Admin</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="fixed inset-0 z-[100] hidden items-center justify-center modal-backdrop p-4">
+    <div class="w-full max-w-3xl bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-dark-border">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Edit User</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Update account details and save changes.</p>
+            </div>
+            <button id="closeEditUserModal" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="editUserForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input id="editAccountType" type="hidden"/>
+            <input id="editUserId" type="hidden"/>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+                <input id="editFirstName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+                <input id="editLastName" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" required />
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input id="editEmail" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="email" required />
+            </div>
+
+            <div id="studentFields" class="hidden">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Registration Number</label>
+                <input id="editRegistrationNumber" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" />
+            </div>
+
+            <div id="lecturerFields" class="hidden">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Staff ID</label>
+                <input id="editStaffId" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white" type="text" />
+            </div>
+
+            <div id="departmentField" class="hidden">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select id="editDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                    <option value="">Select Department</option>
+                    <option value="Basic Sciences">Basic Sciences</option>
+                    <option value="Community Dental Health">Community Dental Health</option>
+                    <option value="Oral Medicine & Periodontology">Oral Medicine & Periodontology</option>
+                    <option value="Oral & Maxillofacial Surgery">Oral & Maxillofacial Surgery</option>
+                    <option value="Oral Pathology">Oral Pathology</option>
+                    <option value="Prosthetic Dentistry">Prosthetic Dentistry</option>
+                    <option value="Restorative Dentistry">Restorative Dentistry</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                <select id="editIsActive" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+
+            <div id="mustChangePasswordField" class="hidden">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Require Password Change</label>
+                <select id="editMustChangePassword" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-between gap-4 mt-2">
+                <div id="editUserResult" class="text-sm"></div>
+                <div class="flex gap-3">
+                    <button id="cancelEditUser" type="button" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-primary hover:bg-accent text-white rounded-lg">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 let allUsers = [];
+let currentAdmin = null;
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -282,13 +436,43 @@ function getBatchFromUser(user) {
 function buildBatchOptions(users) {
     const batchFilter = document.getElementById("batchFilter");
     const batches = [...new Set(
-        users
-            .map(getBatchFromUser)
-            .filter(Boolean)
+        users.map(getBatchFromUser).filter(Boolean)
     )].sort();
 
     batchFilter.innerHTML = `<option value="">All Batches</option>` +
         batches.map(batch => `<option value="${escapeHtml(batch)}">${escapeHtml(batch)}</option>`).join("");
+}
+
+function updateAdminCreationHint() {
+    const section = document.getElementById("createAdminSection");
+    const hint = document.getElementById("adminCreateHint");
+    const adminBtn = document.getElementById("openCreateAdminModal");
+    const admins = allUsers.filter(u => u.account_type === "admin");
+    const totalAdmins = admins.length;
+    const isPrimaryAdmin = currentAdmin && Number(currentAdmin.id) === 1;
+
+    if (!isPrimaryAdmin) {
+        if (section) {
+            section.classList.add("hidden");
+        }
+        return;
+    }
+
+    if (section) {
+        section.classList.remove("hidden");
+    }
+
+    if (totalAdmins >= 3) {
+        hint.textContent = "Maximum number of admin accounts has already been reached.";
+        adminBtn.disabled = true;
+        adminBtn.classList.add("opacity-50", "cursor-not-allowed");
+        return;
+    }
+
+    const remaining = 3 - totalAdmins;
+    hint.textContent = `You can create ${remaining} more admin account${remaining > 1 ? "s" : ""}.`;
+    adminBtn.disabled = false;
+    adminBtn.classList.remove("opacity-50", "cursor-not-allowed");
 }
 
 function renderUsers(users) {
@@ -297,7 +481,7 @@ function renderUsers(users) {
     if (!users.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                     No users found.
                 </td>
             </tr>
@@ -317,6 +501,44 @@ function renderUsers(users) {
             ? `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>`
             : `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Inactive</span>`;
 
+        const isAdminRow = user.account_type === "admin";
+        const isPrimaryAdminLoggedIn = currentAdmin && Number(currentAdmin.id) === 1;
+        const canManageThisAdminRow = !isAdminRow || isPrimaryAdminLoggedIn;
+
+        const disableDeactivate =
+            (isAdminRow && Number(user.id) === 1) ||
+            !canManageThisAdminRow;
+
+        const actionButtons = canManageThisAdminRow
+            ? `
+        <div class="flex justify-end gap-2">
+            <button
+                class="edit-user-btn px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 text-xs font-semibold"
+                data-id="${escapeHtml(user.id)}"
+                data-account-type="${escapeHtml(user.account_type)}"
+            >
+                Edit
+            </button>
+            <button
+                class="deactivate-user-btn px-3 py-1.5 rounded-lg ${disableDeactivate
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500"
+                    : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"} text-xs font-semibold"
+                data-id="${escapeHtml(user.id)}"
+                data-account-type="${escapeHtml(user.account_type)}"
+                ${disableDeactivate ? "disabled" : ""}
+            >
+                Remove
+            </button>
+        </div>
+      `
+    : `
+        <div class="flex justify-end">
+            <span class="text-xs text-slate-400 dark:text-slate-500 italic">
+                Primary admin only
+            </span>
+        </div>
+      `;
+
         return `
             <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
                 <td class="px-6 py-4 text-sm font-medium dark:text-slate-200">${escapeHtml(name)}</td>
@@ -324,9 +546,12 @@ function renderUsers(users) {
                 <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(user.email || "-")}</td>
                 <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${idOrBatch}</td>
                 <td class="px-6 py-4 text-sm">${statusBadge}</td>
+                <td class="px-6 py-4 text-sm">${actionButtons}</td>
             </tr>
         `;
     }).join("");
+
+    attachRowActionListeners();
 }
 
 function applyFilters() {
@@ -357,10 +582,11 @@ function applyFilters() {
 
 async function loadUsers() {
     const result = await API.users.getAll();
+
     if (!result.ok) {
         document.getElementById("usersTableBody").innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-sm text-red-600">
+                <td colspan="6" class="px-6 py-8 text-center text-sm text-red-600">
                     ${escapeHtml(result.error || "Failed to load users")}
                 </td>
             </tr>
@@ -370,44 +596,155 @@ async function loadUsers() {
 
     allUsers = result.users || [];
     buildBatchOptions(allUsers);
+    updateAdminCreationHint();
     applyFilters();
 }
 
+function toggleModal(id, show) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.toggle("hidden", !show);
+    modal.classList.toggle("flex", show);
+}
+
 function openLecturerModal() {
-    const modal = document.getElementById("lecturerModal");
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
+    toggleModal("lecturerModal", true);
 }
 
 function closeLecturerModal() {
-    const modal = document.getElementById("lecturerModal");
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-
+    toggleModal("lecturerModal", false);
     document.getElementById("createLecturerForm").reset();
-    const resultDiv = document.getElementById("createResult");
-    resultDiv.textContent = "";
-    resultDiv.className = "text-sm";
+    document.getElementById("createLecturerResult").textContent = "";
+    document.getElementById("createLecturerResult").className = "text-sm";
+}
+
+function openAdminModal() {
+    toggleModal("adminModal", true);
+}
+
+function closeAdminModal() {
+    toggleModal("adminModal", false);
+    document.getElementById("createAdminForm").reset();
+    document.getElementById("createAdminResult").textContent = "";
+    document.getElementById("createAdminResult").className = "text-sm";
+}
+
+function closeEditUserModal() {
+    toggleModal("editUserModal", false);
+    document.getElementById("editUserForm").reset();
+    document.getElementById("editUserResult").textContent = "";
+    document.getElementById("editUserResult").className = "text-sm";
+}
+
+function populateEditForm(user) {
+    document.getElementById("editAccountType").value = user.account_type || "";
+    document.getElementById("editUserId").value = user.id || "";
+    document.getElementById("editFirstName").value = user.first_name || "";
+    document.getElementById("editLastName").value = user.last_name || "";
+    document.getElementById("editEmail").value = user.email || "";
+    document.getElementById("editIsActive").value = String(Boolean(user.is_active));
+
+    const studentFields = document.getElementById("studentFields");
+    const lecturerFields = document.getElementById("lecturerFields");
+    const departmentField = document.getElementById("departmentField");
+    const mustChangePasswordField = document.getElementById("mustChangePasswordField");
+
+    studentFields.classList.add("hidden");
+    lecturerFields.classList.add("hidden");
+    departmentField.classList.add("hidden");
+    mustChangePasswordField.classList.add("hidden");
+
+    if (user.account_type === "student") {
+        studentFields.classList.remove("hidden");
+        departmentField.classList.remove("hidden");
+        document.getElementById("editRegistrationNumber").value = user.registration_number || user.identifier || "";
+        document.getElementById("editDepartment").value = user.department_name || "";
+    }
+
+    if (user.account_type === "lecturer") {
+        lecturerFields.classList.remove("hidden");
+        departmentField.classList.remove("hidden");
+        mustChangePasswordField.classList.remove("hidden");
+        document.getElementById("editStaffId").value = user.staff_id || user.identifier || "";
+        document.getElementById("editDepartment").value = user.department_name || "";
+        document.getElementById("editMustChangePassword").value = String(Boolean(user.must_change_password));
+    }
+
+    if (user.account_type === "admin") {
+        mustChangePasswordField.classList.remove("hidden");
+        document.getElementById("editMustChangePassword").value = String(Boolean(user.must_change_password));
+    }
+
+    toggleModal("editUserModal", true);
+}
+
+async function openEditUser(accountType, id) {
+    const result = await API.users.getById(accountType, id);
+
+    if (!result.ok || !result.user) {
+        showErrorNotification(result.error || "Failed to load user details.");
+        return;
+    }
+
+    populateEditForm(result.user);
+}
+
+async function deactivateUser(accountType, id) {
+    const confirmed = await showConfirmDialog({
+        title: "Deactivate Account",
+        message: "Are you sure you want to deactivate this account?",
+        confirmText: "Deactivate",
+        cancelText: "Cancel",
+        confirmClass: "bg-red-600 hover:bg-red-700"
+    });
+
+    if (!confirmed) return;
+
+    const result = await API.users.delete(accountType, id);
+
+    if (!result.ok) {
+        showErrorNotification(result.error || "Failed to deactivate account.");
+        return;
+    }
+
+    showSuccessNotification(result.message || "Account deactivated successfully.");
+    await loadUsers();
+}
+
+function attachRowActionListeners() {
+    document.querySelectorAll(".edit-user-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const accountType = btn.dataset.accountType;
+            const id = btn.dataset.id;
+            await openEditUser(accountType, id);
+        });
+    });
+
+    document.querySelectorAll(".deactivate-user-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (btn.disabled) return;
+            const accountType = btn.dataset.accountType;
+            const id = btn.dataset.id;
+            await deactivateUser(accountType, id);
+        });
+    });
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-    const admin = await requireAuth("admin");
-    if (!admin) return;
+    currentAdmin = await requireAuth("admin");
+    if (!currentAdmin) return;
 
     const adminProfileName = document.getElementById("adminProfileName");
     if (adminProfileName) {
         adminProfileName.textContent =
-            admin.fullName ||
-            `${admin.firstName || ""} ${admin.lastName || ""}`.trim() ||
+            currentAdmin.fullName ||
+            `${currentAdmin.firstName || ""} ${currentAdmin.lastName || ""}`.trim() ||
             "Admin";
     }
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            API.auth.logout();
-        });
-    }
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        API.auth.logout();
+    });
 
     document.getElementById("searchInput").addEventListener("input", applyFilters);
     document.getElementById("roleFilter").addEventListener("change", applyFilters);
@@ -417,65 +754,163 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("closeLecturerModal").addEventListener("click", closeLecturerModal);
     document.getElementById("cancelCreateLecturer").addEventListener("click", closeLecturerModal);
 
+    document.getElementById("openCreateAdminModal").addEventListener("click", openAdminModal);
+    document.getElementById("closeAdminModal").addEventListener("click", closeAdminModal);
+    document.getElementById("cancelCreateAdmin").addEventListener("click", closeAdminModal);
+
+    document.getElementById("closeEditUserModal").addEventListener("click", closeEditUserModal);
+    document.getElementById("cancelEditUser").addEventListener("click", closeEditUserModal);
+
     document.getElementById("lecturerModal").addEventListener("click", function (e) {
-        if (e.target.id === "lecturerModal") {
-            closeLecturerModal();
-        }
+        if (e.target.id === "lecturerModal") closeLecturerModal();
+    });
+
+    document.getElementById("adminModal").addEventListener("click", function (e) {
+        if (e.target.id === "adminModal") closeAdminModal();
+    });
+
+    document.getElementById("editUserModal").addEventListener("click", function (e) {
+        if (e.target.id === "editUserModal") closeEditUserModal();
     });
 
     document.getElementById("createLecturerForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const firstName = document.getElementById("lecFirstName").value.trim();
-        const lastName = document.getElementById("lecLastName").value.trim();
-        const email = document.getElementById("lecEmail").value.trim().toLowerCase();
-        const staffId = document.getElementById("lecStaffId").value.trim().toUpperCase();
-        const department = document.getElementById("lecDepartment").value;
-        const password = document.getElementById("lecPassword").value.trim();
-
-        const resultDiv = document.getElementById("createResult");
-        resultDiv.textContent = "";
-        resultDiv.className = "text-sm";
-
-        if (!firstName || !lastName || !email || !department) {
-            resultDiv.textContent = "First name, last name, email, and department are required.";
-            resultDiv.classList.add("text-red-600");
-            return;
-        }
-
-        resultDiv.textContent = "Creating lecturer account...";
-        resultDiv.classList.add("text-slate-500");
-
         const payload = {
-            firstName,
-            lastName,
-            email,
-            department,
-            ...(staffId ? { staffId } : {}),
-            ...(password ? { password } : {})
+            firstName: document.getElementById("lecFirstName").value.trim(),
+            lastName: document.getElementById("lecLastName").value.trim(),
+            email: document.getElementById("lecEmail").value.trim().toLowerCase(),
+            staffId: document.getElementById("lecStaffId").value.trim().toUpperCase(),
+            department: document.getElementById("lecDepartment").value,
+            password: document.getElementById("lecPassword").value.trim()
         };
 
-        const result = await API.registration.createLecturer(payload);
+        const resultDiv = document.getElementById("createLecturerResult");
+        resultDiv.textContent = "Creating lecturer account...";
+        resultDiv.className = "text-sm text-slate-500";
+
+        const result = await API.registration.createLecturer({
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            email: payload.email,
+            department: payload.department,
+            ...(payload.staffId ? { staffId: payload.staffId } : {}),
+            ...(payload.password ? { password: payload.password } : {})
+        });
 
         if (!result.ok) {
             resultDiv.textContent = result.error || "Failed to create lecturer account.";
             resultDiv.className = "text-sm text-red-600";
+            showErrorNotification(result.error || "Failed to create lecturer account.");
             return;
         }
 
-        let successText = result.message || "Lecturer account created successfully.";
+        let text = result.message || "Lecturer account created successfully.";
         if (result.tempPassword) {
-            successText += ` Temporary password: ${result.tempPassword}`;
+            text += ` Temporary password: ${result.tempPassword}`;
         }
 
-        resultDiv.textContent = successText;
+        resultDiv.textContent = text;
         resultDiv.className = "text-sm text-green-600";
+        showSuccessNotification("Lecturer account created successfully.");
 
         await loadUsers();
 
         setTimeout(() => {
             closeLecturerModal();
-        }, 1800);
+        }, 1600);
+    });
+
+    document.getElementById("createAdminForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const resultDiv = document.getElementById("createAdminResult");
+        resultDiv.textContent = "Creating admin account...";
+        resultDiv.className = "text-sm text-slate-500";
+
+        const result = await API.registration.createAdmin({
+            firstName: document.getElementById("adminFirstName").value.trim(),
+            lastName: document.getElementById("adminLastName").value.trim(),
+            email: document.getElementById("adminEmail").value.trim().toLowerCase(),
+            ...(document.getElementById("adminPassword").value.trim()
+                ? { password: document.getElementById("adminPassword").value.trim() }
+                : {})
+        });
+
+        if (!result.ok) {
+            resultDiv.textContent = result.error || "Failed to create admin account.";
+            resultDiv.className = "text-sm text-red-600";
+            showErrorNotification(result.error || "Failed to create admin account.");
+            return;
+        }
+
+        let text = result.message || "Admin account created successfully.";
+        if (result.tempPassword) {
+            text += ` Temporary password: ${result.tempPassword}`;
+        }
+
+        resultDiv.textContent = text;
+        resultDiv.className = "text-sm text-green-600";
+        showSuccessNotification("Admin account created successfully.");
+
+        await loadUsers();
+
+        setTimeout(() => {
+            closeAdminModal();
+        }, 1600);
+    });
+
+    document.getElementById("editUserForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const accountType = document.getElementById("editAccountType").value;
+        const id = document.getElementById("editUserId").value;
+
+        const payload = {
+            accountType,
+            firstName: document.getElementById("editFirstName").value.trim(),
+            lastName: document.getElementById("editLastName").value.trim(),
+            email: document.getElementById("editEmail").value.trim().toLowerCase(),
+            isActive: document.getElementById("editIsActive").value === "true"
+        };
+
+        if (accountType === "student") {
+            payload.registrationNumber = document.getElementById("editRegistrationNumber").value.trim();
+            payload.department = document.getElementById("editDepartment").value;
+        }
+
+        if (accountType === "lecturer") {
+            payload.staffId = document.getElementById("editStaffId").value.trim().toUpperCase();
+            payload.department = document.getElementById("editDepartment").value;
+            payload.mustChangePassword = document.getElementById("editMustChangePassword").value === "true";
+        }
+
+        if (accountType === "admin") {
+            payload.mustChangePassword = document.getElementById("editMustChangePassword").value === "true";
+        }
+
+        const resultDiv = document.getElementById("editUserResult");
+        resultDiv.textContent = "Saving changes...";
+        resultDiv.className = "text-sm text-slate-500";
+
+        const result = await API.users.update(accountType, id, payload);
+
+        if (!result.ok) {
+            resultDiv.textContent = result.error || "Failed to update user.";
+            resultDiv.className = "text-sm text-red-600";
+            showErrorNotification(result.error || "Failed to update user.");
+            return;
+        }
+
+        resultDiv.textContent = result.message || "User updated successfully.";
+        resultDiv.className = "text-sm text-green-600";
+        showSuccessNotification("User updated successfully.");
+
+        await loadUsers();
+
+        setTimeout(() => {
+            closeEditUserModal();
+        }, 1200);
     });
 
     await loadUsers();

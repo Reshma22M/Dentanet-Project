@@ -1,6 +1,5 @@
 // DentaNet Common JavaScript Configuration
 
-// Tailwind CSS Configuration
 tailwind.config = {
     darkMode: "class",
     theme: {
@@ -17,93 +16,277 @@ tailwind.config = {
             },
             fontFamily: {
                 display: ["Inter", "sans-serif"],
-                sans: ["Inter", "sans-serif"],
+                sans: ["Inter", "sans-serif"]
             },
             borderRadius: {
                 DEFAULT: "0.5rem",
-                'xl': '1rem'
-            },
-        },
-    },
+                xl: "1rem"
+            }
+        }
+    }
 };
 
-// Dark Mode Toggle Function
 function toggleDarkMode() {
-    document.documentElement.classList.toggle('dark');
-    // Save preference to localStorage
-    const isDark = document.documentElement.classList.contains('dark');
-    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    document.documentElement.classList.toggle("dark");
+    const isDark = document.documentElement.classList.contains("dark");
+    localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
 }
 
-// Load Dark Mode Preference
 function loadDarkModePreference() {
-    const darkMode = localStorage.getItem('darkMode');
-    if (darkMode === 'enabled') {
-        document.documentElement.classList.add('dark');
+    const darkMode = localStorage.getItem("darkMode");
+    if (darkMode === "enabled") {
+        document.documentElement.classList.add("dark");
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadDarkModePreference();
-});
-
-// Tab Switching Function
-function switchTab(tabName, tabGroup = 'default') {
+function switchTab(tabName, tabGroup = "default") {
     const tabs = document.querySelectorAll(`[data-tab-group="${tabGroup}"]`);
     const contents = document.querySelectorAll(`[data-content-group="${tabGroup}"]`);
-    
-    tabs.forEach(tab => {
+
+    tabs.forEach((tab) => {
         if (tab.dataset.tab === tabName) {
-            tab.classList.remove('tab-inactive');
-            tab.classList.add('tab-active');
+            tab.classList.remove("tab-inactive");
+            tab.classList.add("tab-active");
         } else {
-            tab.classList.remove('tab-active');
-            tab.classList.add('tab-inactive');
+            tab.classList.remove("tab-active");
+            tab.classList.add("tab-inactive");
         }
     });
-    
-    contents.forEach(content => {
+
+    contents.forEach((content) => {
         if (content.dataset.content === tabName) {
-            content.classList.remove('hidden');
+            content.classList.remove("hidden");
         } else {
-            content.classList.add('hidden');
+            content.classList.add("hidden");
         }
     });
 }
 
-// Success Notification Toast
-function showSuccessNotification(message = 'Operation completed successfully!') {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in';
-    notification.innerHTML = `
-        <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined">check_circle</span>
-            <span class="font-semibold">${message}</span>
-        </div>
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('animate-fade-out');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+function ensureToastContainer() {
+    let container = document.getElementById("dentanet-toast-container");
+
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "dentanet-toast-container";
+        container.className = "fixed top-4 right-4 z-[9999] flex w-[min(92vw,380px)] flex-col gap-3";
+        document.body.appendChild(container);
+    }
+
+    return container;
 }
 
-// Error Notification Toast
-function showErrorNotification(message = 'An error occurred. Please try again.') {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in';
-    notification.innerHTML = `
-        <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined">error</span>
-            <span class="font-semibold">${message}</span>
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function ensureConfirmModal() {
+    let modal = document.getElementById("dentanet-confirm-modal");
+
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "dentanet-confirm-modal";
+        modal.className = "fixed inset-0 z-[10000] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4";
+
+        modal.innerHTML = `
+            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EFEBFF] text-[#6D5CB3] dark:bg-[#6D5CB3]/20 dark:text-[#c4b5fd]">
+                            <span class="material-symbols-outlined">help</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 id="dentanet-confirm-title" class="text-lg font-bold text-slate-800 dark:text-white">Confirm Action</h3>
+                            <p id="dentanet-confirm-message" class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                Are you sure?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700">
+                    <button id="dentanet-confirm-cancel" type="button" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:opacity-90">
+                        Cancel
+                    </button>
+                    <button id="dentanet-confirm-ok" type="button" class="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    }
+
+    return modal;
+}
+
+function showConfirmDialog({
+    title = "Confirm Action",
+    message = "Are you sure you want to continue?",
+    confirmText = "Confirm",
+    cancelText = "Cancel",
+    confirmClass = "bg-red-600 hover:bg-red-700"
+} = {}) {
+    return new Promise((resolve) => {
+        const modal = ensureConfirmModal();
+        const titleEl = document.getElementById("dentanet-confirm-title");
+        const messageEl = document.getElementById("dentanet-confirm-message");
+        const okBtn = document.getElementById("dentanet-confirm-ok");
+        const cancelBtn = document.getElementById("dentanet-confirm-cancel");
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        okBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+
+        okBtn.className = `px-4 py-2 rounded-lg text-white font-medium ${confirmClass}`;
+        cancelBtn.className = "px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:opacity-90";
+
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        function cleanup(result) {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            okBtn.removeEventListener("click", onOk);
+            cancelBtn.removeEventListener("click", onCancel);
+            modal.removeEventListener("click", onBackdrop);
+            document.removeEventListener("keydown", onKeydown);
+            resolve(result);
+        }
+
+        function onOk() {
+            cleanup(true);
+        }
+
+        function onCancel() {
+            cleanup(false);
+        }
+
+        function onBackdrop(e) {
+            if (e.target === modal) cleanup(false);
+        }
+
+        function onKeydown(e) {
+            if (e.key === "Escape") cleanup(false);
+        }
+
+        okBtn.addEventListener("click", onOk);
+        cancelBtn.addEventListener("click", onCancel);
+        modal.addEventListener("click", onBackdrop);
+        document.addEventListener("keydown", onKeydown);
+    });
+}
+
+function showNotification(type = "info", message = "", duration = 3500) {
+    const container = ensureToastContainer();
+
+    const config = {
+        success: {
+            icon: "check_circle",
+            title: "Success",
+            accent: "border-emerald-500"
+        },
+        error: {
+            icon: "error",
+            title: "Error",
+            accent: "border-rose-500"
+        },
+        warning: {
+            icon: "warning",
+            title: "Warning",
+            accent: "border-amber-500"
+        },
+        info: {
+            icon: "info",
+            title: "Notice",
+            accent: "border-[#6D5CB3]"
+        }
+    };
+
+    const selected = config[type] || config.info;
+
+    const toast = document.createElement("div");
+    toast.className = `
+        dentanet-toast pointer-events-auto overflow-hidden rounded-2xl border-l-4 ${selected.accent}
+        bg-white/95 dark:bg-slate-900/95
+        shadow-[0_12px_35px_rgba(109,92,179,0.18)]
+        backdrop-blur-md
+        ring-1 ring-slate-200/70 dark:ring-slate-700/70
+        transform transition-all duration-300 ease-out
+        opacity-0 translate-y-2
+    `;
+
+    toast.innerHTML = `
+        <div class="flex items-start gap-3 p-4">
+            <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFEBFF] text-[#6D5CB3] dark:bg-[#6D5CB3]/20 dark:text-[#c4b5fd]">
+                <span class="material-symbols-outlined text-[20px]">${selected.icon}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${selected.title}</p>
+                <p class="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300 break-words">${escapeHtml(message)}</p>
+            </div>
+            <button type="button" class="toast-close rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+        <div class="h-1 w-full bg-slate-100 dark:bg-slate-800">
+            <div class="toast-progress h-full bg-gradient-to-r from-[#6D5CB3] to-[#9B8CCB]"></div>
         </div>
     `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('animate-fade-out');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove("opacity-0", "translate-y-2");
+    });
+
+    const progress = toast.querySelector(".toast-progress");
+    if (progress) {
+        progress.style.transition = `width ${duration}ms linear`;
+        requestAnimationFrame(() => {
+            progress.style.width = "0%";
+        });
+    }
+
+    let removed = false;
+
+    function removeToast() {
+        if (removed) return;
+        removed = true;
+        toast.classList.add("opacity-0", "translate-x-4");
+        setTimeout(() => toast.remove(), 250);
+    }
+
+    const closeBtn = toast.querySelector(".toast-close");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", removeToast);
+    }
+
+    setTimeout(removeToast, duration);
 }
+
+function showSuccessNotification(message = "Operation completed successfully.") {
+    showNotification("success", message);
+}
+
+function showErrorNotification(message = "An error occurred. Please try again.") {
+    showNotification("error", message);
+}
+
+function showWarningNotification(message = "Please check the entered details.") {
+    showNotification("warning", message);
+}
+
+function showInfoNotification(message = "Here is an update.") {
+    showNotification("info", message);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadDarkModePreference();
+    ensureToastContainer();
+});

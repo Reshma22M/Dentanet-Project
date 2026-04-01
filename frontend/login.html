@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Login - DentaNet LMS</title>
@@ -9,7 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
     <link href="public/css/styles.css" rel="stylesheet"/>
+    <link href="assets/css/common.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script src="assets/js/common.js"></script>
     <script src="assets/js/api.js"></script>
     <script>
       tailwind.config = {
@@ -146,51 +149,145 @@
     </style>
 
     <script>
-        document.getElementById("loginForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
+        document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
 
-            const identifier = document.getElementById("identifier").value.trim();
-            const password = document.getElementById("password").value;
+        e.preventDefault();
 
-            if (!identifier || !password) {
-                alert("Please enter your identifier and password");
-                return;
-            }
+        const btn =
+        document.querySelector("button[type='submit']");
 
-            try {
-                const result = await API.auth.login(identifier, password);
-                console.log("Login result:", result);
+        const identifier =
+        document.getElementById("identifier")
+        .value.trim();
 
-                if (!result.ok) {
-                    alert(result.error || "Login failed");
-                    return;
-                }
+        const password =
+        document.getElementById("password")
+        .value;
 
-                if (result.requiresPasswordChange) {
-                    localStorage.setItem("pendingPasswordChangeEmail", result.email);
-                    alert("You must change your temporary password before continuing.");
-                    window.location.href = "change-password.html";
-                    return;
-                }
+        if (!identifier || !password) {
 
-                if (!result.user || !result.token) {
-                    alert("Login failed. User details were not returned by the server.");
-                    return;
-                }
+        showWarningNotification(
+        "Please enter your identifier and password"
+        );
 
-                if (result.user.role === "student") {
-                    window.location.href = "student-dashboard.html";
-                } else if (result.user.role === "lecturer") {
-                    window.location.href = "lecturer-dashboard.html";
-                } else if (result.user.role === "admin") {
-                    window.location.href = "admin-dashboard.html";
-                } else {
-                    window.location.href = "index.html";
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-                alert("Connection error. Please make sure the backend server is running on port 3000.");
-            }
+        return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Signing in...";
+
+        try {
+
+        const result =
+        await API.auth.login(
+        identifier,
+        password
+        );
+
+        console.log("Login result:", result);
+
+        if (!result.ok) {
+
+        showErrorNotification(
+        result.error ||
+        "Login failed"
+        );
+
+        return;
+        }
+
+        /* FIRST TIME PASSWORD */
+
+        if (result.requiresPasswordChange) {
+
+        localStorage.setItem(
+        "pendingPasswordChangeEmail",
+        result.email
+        );
+
+        showInfoNotification(
+        "You must change your temporary password."
+        );
+
+        setTimeout(() => {
+
+        window.location.href =
+        "change-password.html";
+
+        }, 800);
+
+        return;
+        }
+
+        /* NORMAL LOGIN */
+
+        if (!result.user || !result.token) {
+
+        showErrorNotification(
+        "Login failed. Missing token."
+        );
+
+        return;
+        }
+
+        /* SAVE SESSION */
+
+        localStorage.setItem(
+        "authToken",
+        result.token
+        );
+
+        localStorage.setItem(
+        "user",
+        JSON.stringify(result.user)
+        );
+
+        /* ROLE REDIRECT */
+
+        if (result.user.role === "student") {
+
+        window.location.href =
+        "student-dashboard.html";
+
+        }
+        else if (result.user.role === "lecturer") {
+
+        window.location.href =
+        "lecturer-dashboard.html";
+
+        }
+        else if (result.user.role === "admin") {
+
+        window.location.href =
+        "admin-dashboard.html";
+
+        }
+        else {
+
+        window.location.href =
+        "index.html";
+
+        }
+
+        }
+        catch (error) {
+
+        console.error(error);
+
+        showErrorNotification(
+        "Connection error. Make sure backend is running."
+        );
+
+        }
+        finally {
+
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+
+        }
+
         });
     </script>
 </body>

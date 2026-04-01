@@ -142,7 +142,15 @@ const API = {
                 headers: getAuthHeaders(),
                 body: JSON.stringify(lecturerData)
             });
+            return await parseResponse(response);
+        },
 
+        createAdmin: async (adminData) => {
+            const response = await fetch(`${API_BASE_URL}/registration/create-admin`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(adminData)
+            });
             return await parseResponse(response);
         },
 
@@ -152,7 +160,6 @@ const API = {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email })
             });
-
             return await parseResponse(response);
         },
 
@@ -162,7 +169,6 @@ const API = {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(registrationData)
             });
-
             return await parseResponse(response);
         }
     },
@@ -182,15 +188,15 @@ const API = {
             return await parseResponse(response);
         },
 
-        getById: async (id) => {
-            const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+        getById: async (accountType, id) => {
+            const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}`, {
                 headers: getAuthHeaders()
             });
             return await parseResponse(response);
         },
 
-        update: async (id, userData) => {
-            const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+        update: async (accountType, id, userData) => {
+            const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}`, {
                 method: "PUT",
                 headers: getAuthHeaders(),
                 body: JSON.stringify(userData)
@@ -198,8 +204,8 @@ const API = {
             return await parseResponse(response);
         },
 
-        delete: async (id) => {
-            const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+        delete: async (accountType, id) => {
+            const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}`, {
                 method: "DELETE",
                 headers: getAuthHeaders()
             });
@@ -707,10 +713,47 @@ async function requireAuth(expectedRole = null) {
     }
 
     if (expectedRole && result.user.role !== expectedRole) {
-        alert("Access denied");
+        showErrorNotification("Access denied.");
         window.location.href = "login.html";
         return null;
     }
 
     return result.user;
 }
+
+setInterval(async () => {
+
+const token =
+localStorage.getItem("authToken");
+
+if (!token) return;
+
+try {
+
+const result =
+await API.auth.verify();
+
+if (!result.ok) {
+
+clearAuthStorage();
+
+showWarningNotification(
+"Session expired. Please login again."
+);
+
+window.location.href =
+"login.html";
+
+}
+
+}
+catch (err) {
+
+console.error(
+"Session check failed:",
+err
+);
+
+}
+
+}, 300000); // every 5 minutes
