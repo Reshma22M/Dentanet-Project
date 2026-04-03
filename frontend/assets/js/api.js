@@ -32,6 +32,7 @@ async function parseResponse(response) {
 
 function clearAuthStorage() {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("pendingPasswordChangeEmail");
     localStorage.removeItem("resetEmail");
@@ -410,13 +411,6 @@ const API = {
         },
 
         create: async (moduleData) => {
-
-            const user = getCurrentUser();
-
-            const payload = {
-                ...moduleData,
-                created_by: user?.id   // 🔥 REQUIRED FIX
-            };
 
             const response = await fetch(`${API_BASE_URL}/modules`, {
                 method: "POST",
