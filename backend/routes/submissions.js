@@ -1,18 +1,24 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { promisePool } = require('../config/database');
-const { authenticateToken } = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
+const { promisePool } = require("../config/database");
+const { authenticateToken } = require("../middleware/auth");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
+// -------------------------------------------------------
 // Upload config
+// -------------------------------------------------------
+const uploadDir = path.join(__dirname, "..", "uploads", "submissions");
+fs.mkdirSync(uploadDir, { recursive: true });
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/submissions/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, 'submission-' + unique + path.extname(file.originalname));
+        const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(null, "submission-" + unique + path.extname(file.originalname));
     }
 });
 
@@ -22,27 +28,26 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024
     },
     fileFilter: (req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+        const allowed = ["image/jpeg", "image/jpg", "image/png"];
         if (allowed.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only JPG and PNG files are allowed'));
+            cb(new Error("Only JPG and PNG files are allowed"));
         }
     }
 });
 
 function normalizeError(error, fallback) {
-    if (error && typeof error.message === 'string') return error.message;
+    if (error && typeof error.message === "string") return error.message;
     return fallback;
 }
 
 // =======================================================
-// COMMON SUBMISSION HUB DATA
-// Sidebar submission page uses this
+// COMMON STUDENT SUBMISSION HUB DATA
 // =======================================================
-router.get('/student/dashboard-data', authenticateToken, async (req, res) => {
+router.get("/student/dashboard-data", authenticateToken, async (req, res) => {
     try {
-        const studentId = req.user.userId;
+        const studentId = req.user.id;
 
         const [practiceSessions] = await promisePool.query(`
             SELECT
@@ -163,25 +168,26 @@ router.get('/student/dashboard-data', authenticateToken, async (req, res) => {
             ORDER BY ets.slot_date DESC, ets.start_time DESC
         `, [studentId]);
 
-        res.json({
+        return res.json({
+            ok: true,
             practiceSessions,
             examSessions
         });
     } catch (error) {
-        console.error('Load student dashboard data error:', error);
-        res.status(500).json({
-            error: 'Failed to load student submission dashboard data'
+        console.error("Load student dashboard data error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load student submission dashboard data"
         });
     }
 });
 
 // =======================================================
 // GET ONE EXAM SUBMISSION PAGE
-// Dashboard exam button uses this
 // =======================================================
-router.get('/exam/:exam_id', authenticateToken, async (req, res) => {
+router.get("/exam/:exam_id", authenticateToken, async (req, res) => {
     try {
-        const studentId = req.user.userId;
+        const studentId = req.user.id;
         const examId = req.params.exam_id;
 
         const [examRows] = await promisePool.query(`
@@ -219,7 +225,8 @@ router.get('/exam/:exam_id', authenticateToken, async (req, res) => {
 
         if (!examRows.length) {
             return res.status(404).json({
-                error: 'No booked examination slot found for this examination'
+                ok: false,
+                error: "No booked examination slot found for this examination"
             });
         }
 
@@ -252,26 +259,27 @@ router.get('/exam/:exam_id', authenticateToken, async (req, res) => {
             ORDER BY s.attempt_number DESC
         `, [requestId, studentId]);
 
-        res.json({
-            mode: 'EXAM',
+        return res.json({
+            ok: true,
+            mode: "EXAM",
             exam: examRows[0],
             history: historyRows
         });
     } catch (error) {
-        console.error('Load exam submission page error:', error);
-        res.status(500).json({
-            error: 'Failed to load examination submission data'
+        console.error("Load exam submission page error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load examination submission data"
         });
     }
 });
 
 // =======================================================
 // GET ONE PRACTICE SUBMISSION PAGE
-// Practice session button uses this
 // =======================================================
-router.get('/practice/:request_id', authenticateToken, async (req, res) => {
+router.get("/practice/:request_id", authenticateToken, async (req, res) => {
     try {
-        const studentId = req.user.userId;
+        const studentId = req.user.id;
         const requestId = req.params.request_id;
 
         const [practiceRows] = await promisePool.query(`
@@ -294,7 +302,8 @@ router.get('/practice/:request_id', authenticateToken, async (req, res) => {
 
         if (!practiceRows.length) {
             return res.status(404).json({
-                error: 'No booked practice session found'
+                ok: false,
+                error: "No booked practice session found"
             });
         }
 
@@ -324,15 +333,17 @@ router.get('/practice/:request_id', authenticateToken, async (req, res) => {
             ORDER BY s.attempt_number DESC
         `, [requestId, studentId]);
 
-        res.json({
-            mode: 'PRACTICE',
+        return res.json({
+            ok: true,
+            mode: "PRACTICE",
             practice: practiceRows[0],
             history: historyRows
         });
     } catch (error) {
-        console.error('Load practice submission page error:', error);
-        res.status(500).json({
-            error: 'Failed to load practice submission data'
+        console.error("Load practice submission page error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load practice submission data"
         });
     }
 });
@@ -340,27 +351,37 @@ router.get('/practice/:request_id', authenticateToken, async (req, res) => {
 // =======================================================
 // CREATE SUBMISSION
 // =======================================================
-router.post('/', authenticateToken, upload.array('images', 3), async (req, res) => {
+router.post("/", authenticateToken, upload.array("images", 3), async (req, res) => {
     try {
-        const studentId = req.user.userId;
+        const studentId = req.user.id;
         const { requestId, submissionType, comments } = req.body;
         const files = req.files;
 
-        if (!requestId) {
-            return res.status(400).json({
-                error: 'Request ID is required'
+        if (req.user.role !== "student") {
+            return res.status(403).json({
+                ok: false,
+                error: "Only students can submit files"
             });
         }
 
-        if (!submissionType || !['PRACTICE', 'EXAM'].includes(submissionType)) {
+        if (!requestId) {
             return res.status(400).json({
-                error: 'Valid submission type is required'
+                ok: false,
+                error: "Request ID is required"
+            });
+        }
+
+        if (!submissionType || !["PRACTICE", "EXAM"].includes(submissionType)) {
+            return res.status(400).json({
+                ok: false,
+                error: "Valid submission type is required"
             });
         }
 
         if (!files || files.length === 0) {
             return res.status(400).json({
-                error: 'Please upload at least one image'
+                ok: false,
+                error: "Please upload at least one image"
             });
         }
 
@@ -378,25 +399,28 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
 
         if (!requestRows.length) {
             return res.status(404).json({
-                error: 'Submission slot request not found'
+                ok: false,
+                error: "Submission slot request not found"
             });
         }
 
         const slotRequest = requestRows[0];
 
-        if (!['APPROVED', 'COMPLETED'].includes(slotRequest.status)) {
+        if (!["APPROVED", "COMPLETED"].includes(slotRequest.status)) {
             return res.status(400).json({
-                error: 'Submission is allowed only for approved or completed slots'
+                ok: false,
+                error: "Submission is allowed only for approved or completed slots"
             });
         }
 
         if (slotRequest.slot_type !== submissionType) {
             return res.status(400).json({
-                error: 'Submission type does not match the selected slot'
+                ok: false,
+                error: "Submission type does not match the selected slot"
             });
         }
 
-        if (submissionType === 'EXAM') {
+        if (submissionType === "EXAM") {
             const [examLinkRows] = await promisePool.query(`
                 SELECT request_id
                 FROM exam_slot_requests
@@ -406,12 +430,13 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
 
             if (!examLinkRows.length) {
                 return res.status(400).json({
-                    error: 'The selected slot is not linked to an examination'
+                    ok: false,
+                    error: "The selected slot is not linked to an examination"
                 });
             }
         }
 
-        if (submissionType === 'PRACTICE') {
+        if (submissionType === "PRACTICE") {
             const [practiceLinkRows] = await promisePool.query(`
                 SELECT request_id
                 FROM practice_slot_requests
@@ -421,7 +446,8 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
 
             if (!practiceLinkRows.length) {
                 return res.status(400).json({
-                    error: 'The selected slot is not linked to a practice session'
+                    ok: false,
+                    error: "The selected slot is not linked to a practice session"
                 });
             }
         }
@@ -434,7 +460,7 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
               AND submission_type = ?
         `, [requestId, studentId, submissionType]);
 
-        const attemptNumber = attemptRows[0].attempts + 1;
+        const attemptNumber = Number(attemptRows[0].attempts || 0) + 1;
 
         const [submissionResult] = await promisePool.query(`
             INSERT INTO submissions (
@@ -466,13 +492,13 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
                 VALUES (?, ?, ?, ?)
             `, [
                 submissionId,
-                file.path,
+                `/uploads/submissions/${path.basename(file.path)}`,
                 file.mimetype,
                 file.size
             ]);
         }
 
-        if (submissionType === 'PRACTICE') {
+        if (submissionType === "PRACTICE") {
             await promisePool.query(`
                 INSERT INTO final_results (
                     submission_id,
@@ -484,20 +510,22 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
             `, [
                 submissionId,
                 0,
-                'Pending automated evaluation',
-                'FAIL'
+                "Pending automated evaluation",
+                "FAIL"
             ]);
         }
 
-        res.status(201).json({
-            message: 'Submission created successfully',
+        return res.status(201).json({
+            ok: true,
+            message: "Submission created successfully",
             submissionId,
             attemptNumber
         });
     } catch (error) {
-        console.error('Create submission error:', error);
-        res.status(500).json({
-            error: normalizeError(error, 'Submission failed')
+        console.error("Create submission error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: normalizeError(error, "Submission failed")
         });
     }
 });
@@ -505,14 +533,15 @@ router.post('/', authenticateToken, upload.array('images', 3), async (req, res) 
 // =======================================================
 // SAVE LECTURER REVIEW
 // =======================================================
-router.post('/:submission_id/review', authenticateToken, async (req, res) => {
+router.post("/:submission_id/review", authenticateToken, async (req, res) => {
     try {
-        const lecturerId = req.user.userId;
+        const lecturerId = req.user.id;
         const role = req.user.role;
 
-        if (!['lecturer', 'admin'].includes(role)) {
+        if (!["lecturer", "admin"].includes(role)) {
             return res.status(403).json({
-                error: 'Only lecturers can review submissions'
+                ok: false,
+                error: "Only lecturers can review submissions"
             });
         }
 
@@ -521,7 +550,8 @@ router.post('/:submission_id/review', authenticateToken, async (req, res) => {
 
         if (finalGrade === undefined || !decision) {
             return res.status(400).json({
-                error: 'Final grade and decision are required'
+                ok: false,
+                error: "Final grade and decision are required"
             });
         }
 
@@ -551,13 +581,15 @@ router.post('/:submission_id/review', authenticateToken, async (req, res) => {
             overrideReason || null
         ]);
 
-        res.json({
-            message: 'Lecturer review saved successfully'
+        return res.json({
+            ok: true,
+            message: "Lecturer review saved successfully"
         });
     } catch (error) {
-        console.error('Save lecturer review error:', error);
-        res.status(500).json({
-            error: 'Failed to save lecturer review'
+        console.error("Save lecturer review error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to save lecturer review"
         });
     }
 });
@@ -565,14 +597,15 @@ router.post('/:submission_id/review', authenticateToken, async (req, res) => {
 // =======================================================
 // PUBLISH FINAL RESULT
 // =======================================================
-router.post('/:submission_id/publish', authenticateToken, async (req, res) => {
+router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
     try {
-        const lecturerId = req.user.userId;
+        const lecturerId = req.user.id;
         const role = req.user.role;
 
-        if (!['lecturer', 'admin'].includes(role)) {
+        if (!["lecturer", "admin"].includes(role)) {
             return res.status(403).json({
-                error: 'Only lecturers can publish results'
+                ok: false,
+                error: "Only lecturers can publish results"
             });
         }
 
@@ -590,12 +623,13 @@ router.post('/:submission_id/publish', authenticateToken, async (req, res) => {
 
         if (!reviewRows.length) {
             return res.status(400).json({
-                error: 'Review must be completed before publishing'
+                ok: false,
+                error: "Review must be completed before publishing"
             });
         }
 
         const review = reviewRows[0];
-        const passFail = review.decision === 'PASS' ? 'PASS' : 'FAIL';
+        const passFail = review.decision === "PASS" ? "PASS" : "FAIL";
 
         await promisePool.query(`
             INSERT INTO final_results (
@@ -620,13 +654,15 @@ router.post('/:submission_id/publish', authenticateToken, async (req, res) => {
             lecturerId
         ]);
 
-        res.json({
-            message: 'Final result published successfully'
+        return res.json({
+            ok: true,
+            message: "Final result published successfully"
         });
     } catch (error) {
-        console.error('Publish final result error:', error);
-        res.status(500).json({
-            error: 'Failed to publish final result'
+        console.error("Publish final result error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to publish final result"
         });
     }
 });

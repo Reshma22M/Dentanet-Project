@@ -115,10 +115,10 @@
         <section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-8 shadow-lg">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <p class="text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">My Profile</p>
+              <p class="text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">Profile</p>
               <h1 id="profileHeroName" class="text-3xl md:text-4xl font-extrabold">Lecturer Profile</h1>
               <p class="mt-2 text-blue-100 max-w-2xl">
-                View and update your lecturer profile details.
+                Review and update your lecturer account information.
               </p>
             </div>
 
@@ -132,7 +132,7 @@
           <section class="xl:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
               <h2 class="text-lg font-bold text-slate-900 dark:text-white">Profile Details</h2>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Update your personal information here.</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Keep your personal information up to date.</p>
             </div>
 
             <form id="lecturerProfileForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -149,7 +149,7 @@
               </div>
 
               <div class="md:col-span-2">
-                <label class="block text-sm font-semibold mb-2">Email</label>
+                <label class="block text-sm font-semibold mb-2">Email Address</label>
                 <input id="email" type="email" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly />
               </div>
 
@@ -163,8 +163,16 @@
                 <input id="departmentName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly />
               </div>
 
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-2">Profile Picture</label>
+                <input id="profileImage" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700">
+                <p class="text-xs text-slate-500 mt-2">
+                  Accepted formats: JPG, PNG, WEBP. Maximum file size: 5 MB.
+                </p>
+              </div>
+
               <div class="md:col-span-2 flex items-center gap-3">
-                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold">
+                <button id="saveBtn" type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold">
                   Save Changes
                 </button>
                 <span id="profileStatus" class="text-sm"></span>
@@ -178,14 +186,6 @@
                 <img id="profilePreview" src="public/images/lec.jpeg" alt="Lecturer Profile" class="w-28 h-28 rounded-3xl object-cover border border-slate-200 dark:border-slate-700 mb-4"/>
                 <p id="profileCardName" class="font-bold text-lg text-slate-900 dark:text-white">Lecturer Name</p>
                 <p class="text-sm text-slate-500 dark:text-slate-400">Lecturer</p>
-
-                <div class="w-full mt-5">
-                  <label class="block text-sm font-semibold mb-2 text-left">Profile Picture</label>
-                  <input id="profileImage" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700">
-                  <p class="text-xs text-slate-500 mt-2 text-left">
-                    Image preview is ready. Backend image save can be connected next.
-                  </p>
-                </div>
               </div>
             </section>
 
@@ -224,49 +224,76 @@
   </button>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        window.location.href = "login.html";
-        return;
+    const DEFAULT_PROFILE_IMAGE = "public/images/lec.jpeg";
+    const FILE_BASE_URL = "http://localhost:3000";
+
+    function setStatus(message, type = "default") {
+      const statusEl = document.getElementById("profileStatus");
+      statusEl.textContent = message;
+
+      if (type === "error") {
+        statusEl.className = "text-sm text-red-600";
+      } else if (type === "success") {
+        statusEl.className = "text-sm text-green-600";
+      } else {
+        statusEl.className = "text-sm text-slate-500";
       }
+    }
 
-      const auth = await API.auth.verify();
-      if (!auth.ok || !auth.user || auth.user.role !== "lecturer") {
-        window.location.href = "login.html";
-        return;
-      }
+    function buildImageUrl(imagePath) {
+      if (!imagePath) return DEFAULT_PROFILE_IMAGE;
+      if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+      if (imagePath.startsWith("/")) return `${FILE_BASE_URL}${imagePath}?t=${Date.now()}`;
+      return imagePath;
+    }
 
-      const meResponse = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const me = await meResponse.json();
-
-      if (!meResponse.ok || !me.user) {
-        alert(me.error || "Failed to load profile");
-        return;
-      }
-
-      const firstName = me.user.first_name || "";
-      const lastName = me.user.last_name || "";
+    function updateProfileUI(user) {
+      const firstName = user.first_name || "";
+      const lastName = user.last_name || "";
       const fullName = `${firstName} ${lastName}`.trim() || "Lecturer";
+      const imageUrl = buildImageUrl(user.profile_image_url);
 
-      document.getElementById("profileUserId").value = me.user.id || "";
+      document.getElementById("profileUserId").value = user.id || "";
       document.getElementById("firstName").value = firstName;
       document.getElementById("lastName").value = lastName;
-      document.getElementById("email").value = me.user.email || "";
-      document.getElementById("staffId").value = me.user.staff_id || "";
-      document.getElementById("departmentName").value = me.user.department_name || "";
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("staffId").value = user.staff_id || "";
+      document.getElementById("departmentName").value = user.department_name || "";
 
       document.getElementById("profileHeroName").textContent = fullName;
       document.getElementById("profileCardName").textContent = fullName;
-      document.getElementById("summaryEmail").textContent = me.user.email || "-";
-      document.getElementById("summaryStaffId").textContent = me.user.staff_id || "-";
-      document.getElementById("summaryDepartment").textContent = me.user.department_name || "-";
+      document.getElementById("summaryEmail").textContent = user.email || "-";
+      document.getElementById("summaryStaffId").textContent = user.staff_id || "-";
+      document.getElementById("summaryDepartment").textContent = user.department_name || "-";
+      document.getElementById("profilePreview").src = imageUrl;
+      document.getElementById("topProfileImage").src = imageUrl;
+    }
+
+    async function loadLecturerProfile() {
+      const result = await API.users.getMe();
+
+      if (!result.success || !result.user || result.user.account_type !== "lecturer") {
+        setStatus(result.error || "Failed to load profile.", "error");
+        return null;
+      }
+
+      const user = result.user;
+      updateProfileUI(user);
+
+      localStorage.setItem("user", JSON.stringify({
+        ...getCurrentUser(),
+        ...user,
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        profile_image_url: user.profile_image_url || null
+      }));
+
+      return user;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      const authUser = await requireAuth("lecturer");
+      if (!authUser) return;
 
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
@@ -275,30 +302,18 @@
         });
       }
 
-      document.getElementById("lecturerProfileForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
+      await loadLecturerProfile();
 
-        const id = document.getElementById("profileUserId").value;
-        const firstName = document.getElementById("firstName").value.trim();
-        const lastName = document.getElementById("lastName").value.trim();
-        const statusEl = document.getElementById("profileStatus");
+      document.getElementById("firstName").addEventListener("input", function () {
+        const fullName = `${document.getElementById("firstName").value.trim()} ${document.getElementById("lastName").value.trim()}`.trim() || "Lecturer";
+        document.getElementById("profileHeroName").textContent = fullName;
+        document.getElementById("profileCardName").textContent = fullName;
+      });
 
-        statusEl.textContent = "";
-
-        const result = await API.users.update(id, { firstName, lastName });
-
-        if (!result.ok) {
-          statusEl.textContent = result.error || "Failed to update profile";
-          statusEl.className = "text-sm text-red-600";
-          return;
-        }
-
-        statusEl.textContent = "Profile updated successfully";
-        statusEl.className = "text-sm text-green-600";
-
-        const newFullName = `${firstName} ${lastName}`.trim();
-        document.getElementById("profileHeroName").textContent = newFullName;
-        document.getElementById("profileCardName").textContent = newFullName;
+      document.getElementById("lastName").addEventListener("input", function () {
+        const fullName = `${document.getElementById("firstName").value.trim()} ${document.getElementById("lastName").value.trim()}`.trim() || "Lecturer";
+        document.getElementById("profileHeroName").textContent = fullName;
+        document.getElementById("profileCardName").textContent = fullName;
       });
 
       document.getElementById("profileImage").addEventListener("change", function (e) {
@@ -312,6 +327,67 @@
         };
         reader.readAsDataURL(file);
       });
+    });
+
+    document.getElementById("lecturerProfileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const id = document.getElementById("profileUserId").value.trim();
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const imageFile = document.getElementById("profileImage").files[0];
+      const saveBtn = document.getElementById("saveBtn");
+
+      if (!id) {
+        setStatus("Profile could not be loaded.", "error");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.classList.add("opacity-60", "cursor-not-allowed");
+      setStatus("Saving changes...");
+
+      try {
+        const formData = new FormData();
+        formData.append("first_name", firstName);
+        formData.append("last_name", lastName);
+
+        if (imageFile) {
+          formData.append("profile_image", imageFile);
+        }
+
+        const result = await API.users.updateWithImage("lecturer", id, formData);
+
+        if (!result.success) {
+          setStatus(result.error || "Failed to update profile.", "error");
+          return;
+        }
+
+        const updatedUser = result.user || {};
+
+        localStorage.setItem("user", JSON.stringify({
+          ...getCurrentUser(),
+          ...updatedUser,
+          firstName: updatedUser.first_name || firstName,
+          lastName: updatedUser.last_name || lastName,
+          profile_image_url: updatedUser.profile_image_url || null
+        }));
+
+        updateProfileUI({
+          ...updatedUser,
+          first_name: updatedUser.first_name || firstName,
+          last_name: updatedUser.last_name || lastName
+        });
+
+        document.getElementById("profileImage").value = "";
+        setStatus("Profile updated successfully.", "success");
+      } catch (error) {
+        console.error("Lecturer profile update error:", error);
+        setStatus("An unexpected error occurred while updating the profile.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("opacity-60", "cursor-not-allowed");
+      }
     });
   </script>
 </body>

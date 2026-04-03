@@ -11,7 +11,7 @@ function getAuthHeaders() {
     const token = getAuthToken();
     return {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` })
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
 }
 
@@ -41,6 +41,7 @@ function clearAuthStorage() {
 function saveAuthData(token, user) {
     if (token) {
         localStorage.setItem("authToken", token);
+        localStorage.setItem("token", token);
     }
     if (user) {
         localStorage.setItem("user", JSON.stringify(user));
@@ -69,18 +70,26 @@ const API = {
         },
 
         verify: async () => {
-            const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-                method: "GET",
-                headers: getAuthHeaders()
-            });
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    method: "GET",
+                    headers: getAuthHeaders()
+                });
 
-            const data = await parseResponse(response);
+                const data = await parseResponse(response);
 
-            if (data.ok && data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
+                if (data.ok && data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                }
+
+                return data;
+            } catch (error) {
+                return {
+                    ok: false,
+                    status: 0,
+                    error: "Cannot connect to server"
+                };
             }
-
-            return data;
         },
 
         firstTimeChangePassword: async (email, currentPassword, newPassword) => {
@@ -196,13 +205,18 @@ const API = {
             return await parseResponse(response);
         },
 
-        update: async (accountType, id, userData) => {
-            const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}`, {
-                method: "PUT",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(userData)
-            });
-            return await parseResponse(response);
+        update: async (accountType, id, data) => {
+
+        const response = await fetch(
+            `${API_BASE_URL}/users/${accountType}/${id}`,
+            {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+            }
+        );
+
+        return await parseResponse(response);
         },
 
         delete: async (accountType, id) => {
@@ -211,7 +225,29 @@ const API = {
                 headers: getAuthHeaders()
             });
             return await parseResponse(response);
-        }
+        },
+
+        restore: async (accountType, id) => {
+        const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}/restore`, {
+            method: "PATCH",
+            headers: getAuthHeaders()
+        });
+        return await parseResponse(response);
+    },
+
+        updateWithImage: async (accountType, id, formData) => {
+        const token = getAuthToken();
+
+        const response = await fetch(`${API_BASE_URL}/users/${accountType}/${id}`, {
+            method: "PUT",
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: formData
+        });
+
+        return await parseResponse(response);
+    }
     },
 
     bookings: {
@@ -411,6 +447,13 @@ const API = {
         },
 
         create: async (moduleData) => {
+
+            const user = getCurrentUser();
+
+            const payload = {
+                ...moduleData,
+                created_by: user?.id   // 🔥 REQUIRED FIX
+            };
 
             const response = await fetch(`${API_BASE_URL}/modules`, {
                 method: "POST",
@@ -630,6 +673,25 @@ const API = {
 
             return await parseResponse(response);
         }
+    },
+
+    admin: {
+
+    updateProfile: async (id, data) => {
+
+        const response = await fetch(
+        `${API_BASE_URL}/admins/${id}`,
+        {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        }
+        );
+
+        return await parseResponse(response);
+
+    }
+
     },
 
     evaluations: {

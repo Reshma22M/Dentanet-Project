@@ -1,4 +1,4 @@
-console.log("✅ RUNNING server.js from:", __filename);
+console.log("RUNNING server.js from:", __filename);
 require("dotenv").config();
 
 const express = require("express");
@@ -26,6 +26,7 @@ const materialTypeRoutes = require("./routes/materialTypes");
 const examRoutes = require("./routes/exams");
 const examSlotRoutes = require("./routes/examSlots");
 const machineRoutes = require("./routes/machines");
+const studentMaterialRoutes = require("./routes/studyMaterials");
 
 // -----------------------------
 // Middleware
@@ -48,9 +49,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // -----------------------------
 pool.getConnection((err, conn) => {
   if (err) {
-    console.error("❌ MySQL connection failed:", err.message);
+    console.error("MySQL connection failed:", err.message);
   } else {
-    console.log("✅ MySQL connected to DB:", process.env.DB_NAME);
+    console.log("MySQL connected to DB:", process.env.DB_NAME);
     conn.release();
   }
 });
@@ -71,6 +72,7 @@ app.use("/api/material-types", materialTypeRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/exam-slots", examSlotRoutes);
 app.use("/api/machines", machineRoutes);
+app.use("/api/study-materials", studentMaterialRoutes);
 
 // -----------------------------
 // Root Route
@@ -126,6 +128,7 @@ app.use((req, res) => {
   });
 });
 
+
 // -----------------------------
 // Start Server
 // -----------------------------
@@ -141,20 +144,26 @@ const server = app.listen(PORT, () => {
 `);
 });
 
+// Handle server start errors
+server.on("error", (err) => {
+  console.error("Server failed to start:", err.message);
+  process.exit(1);
+});
+
 // -----------------------------
 // Graceful Shutdown
 // -----------------------------
 const shutdown = (signal) => {
-  console.log(`\n🛑 ${signal} received. Shutting down...`);
+  console.log(`\n ${signal} received. Shutting down...`);
 
   server.close(() => {
-    console.log("✅ HTTP server closed");
+    console.log("HTTP server closed");
 
     pool.end((err) => {
       if (err) {
-        console.error("⚠️ Error closing DB pool:", err.message);
+        console.error("Error closing DB pool:", err.message);
       } else {
-        console.log("✅ Database pool closed");
+        console.log("Database pool closed");
       }
 
       process.exit(0);
@@ -166,10 +175,12 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 process.on("uncaughtException", (err) => {
-  console.error("💥 Uncaught Exception:", err);
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (reason) => {
-  console.error("💥 Unhandled Rejection:", reason);
+  console.error("Unhandled Rejection:", reason);
 });
-module.exports = app; 
+
+module.exports = app;

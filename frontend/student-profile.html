@@ -4,10 +4,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Profile - DentaNet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script src="assets/js/api.js"></script>
+
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -21,126 +24,207 @@
             "background-dark": "#0F172A",
             "card-light": "#FFFFFF",
             "card-dark": "#1E293B"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
           }
         }
       }
     };
   </script>
 </head>
+
 <body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-white">
-  <div class="max-w-3xl mx-auto px-4 py-10">
-    <div class="bg-white dark:bg-card-dark rounded-3xl shadow-sm border border-purple-100 dark:border-slate-800 p-8">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-bold">Student Profile</h1>
-          <p class="text-slate-500 dark:text-slate-400 mt-1">View and update your profile details</p>
+  <div class="max-w-4xl mx-auto px-4 py-10">
+    <div class="bg-white dark:bg-card-dark rounded-3xl shadow-sm border border-purple-100 dark:border-slate-800 overflow-hidden">
+
+      <div class="px-8 py-8 border-b border-purple-100 dark:border-slate-800 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div>
+            <p class="text-sm uppercase tracking-[0.2em] text-indigo-100 font-semibold mb-2">Student Account</p>
+            <h1 class="text-3xl md:text-4xl font-extrabold">Student Profile</h1>
+            <p class="mt-2 text-indigo-100">Review and update your profile details.</p>
+          </div>
+
+          <a href="student-dashboard.html" class="inline-flex items-center justify-center px-5 py-3 bg-white text-primary rounded-xl font-semibold shadow">
+            Back to Dashboard
+          </a>
         </div>
-        <a href="student-dashboard.html" class="px-4 py-2 bg-primary text-white rounded-xl font-semibold">Back</a>
       </div>
 
-      <div class="flex items-center gap-4 mb-8">
-        <img id="profilePreview" src="public/images/stu.jpg" alt="Profile" class="w-20 h-20 rounded-full object-cover border-4 border-purple-100"/>
-        <div>
-          <p id="profileTitleName" class="text-xl font-bold">Student Name</p>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Dental Student</p>
-        </div>
+      <div class="p-8 grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <aside class="xl:col-span-1">
+          <div class="rounded-2xl border border-purple-100 dark:border-slate-700 bg-purple-50/60 dark:bg-slate-900/40 p-6 text-center">
+            <img
+              id="profilePreview"
+              src="public/images/stu.jpg"
+              alt="Student Profile"
+              class="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow mx-auto"
+            />
+
+            <h2 id="profileTitleName" class="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+              Student Name
+            </h2>
+
+            <p class="text-sm text-slate-500 dark:text-slate-400">Student</p>
+
+            <div class="mt-6 space-y-3 text-sm text-left">
+              <div class="flex justify-between gap-4 pb-3 border-b border-purple-100 dark:border-slate-700">
+                <span class="text-slate-500 dark:text-slate-400">Email</span>
+                <span id="summaryEmail" class="font-medium text-slate-900 dark:text-white text-right break-all">-</span>
+              </div>
+
+              <div class="flex justify-between gap-4 pb-3 border-b border-purple-100 dark:border-slate-700">
+                <span class="text-slate-500 dark:text-slate-400">Registration No.</span>
+                <span id="summaryRegNo" class="font-medium text-slate-900 dark:text-white text-right">-</span>
+              </div>
+
+              <div class="flex justify-between gap-4">
+                <span class="text-slate-500 dark:text-slate-400">Department</span>
+                <span id="summaryDepartment" class="font-medium text-slate-900 dark:text-white text-right">-</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="xl:col-span-2">
+          <div class="rounded-2xl border border-purple-100 dark:border-slate-700 bg-white dark:bg-card-dark shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-purple-100 dark:border-slate-700">
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Profile Details</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Keep your personal information current.
+              </p>
+            </div>
+
+            <form id="studentProfileForm" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <input type="hidden" id="profileUserId"/>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">First Name</label>
+                <input id="firstName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Last Name</label>
+                <input id="lastName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-2">Email Address</label>
+                <input id="email" type="email" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Registration Number</label>
+                <input id="registrationNumber" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-2">Department</label>
+                <input id="departmentName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold mb-2">Profile Picture</label>
+                <input id="profileImage" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700">
+                <p class="text-xs text-slate-500 mt-2">
+                  Accepted formats: JPG, PNG, WEBP. Maximum file size: 5 MB.
+                </p>
+              </div>
+
+              <div class="md:col-span-2 flex items-center gap-3">
+                <button id="saveBtn" type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold">
+                  Save Changes
+                </button>
+                <span id="profileStatus" class="text-sm"></span>
+              </div>
+            </form>
+          </div>
+        </section>
       </div>
-
-      <form id="studentProfileForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <input type="hidden" id="profileUserId"/>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">First Name</label>
-          <input id="firstName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">Last Name</label>
-          <input id="lastName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700" required>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-semibold mb-2">Email</label>
-          <input id="email" type="email" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">Registration Number</label>
-          <input id="registrationNumber" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">Department</label>
-          <input id="departmentName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:border-slate-700" readonly>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-semibold mb-2">Profile Picture</label>
-          <input id="profileImage" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white dark:bg-slate-900 dark:border-slate-700">
-          <p class="text-xs text-slate-500 mt-2">Image upload wiring can be added next after the base profile save is done.</p>
-        </div>
-
-        <div class="md:col-span-2 flex items-center gap-3">
-          <button type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold">Save Changes</button>
-          <span id="profileStatus" class="text-sm"></span>
-        </div>
-      </form>
     </div>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      const auth = await API.auth.verify();
+    const DEFAULT_PROFILE_IMAGE = "public/images/stu.jpg";
+    const FILE_BASE_URL = "http://localhost:3000";
 
-      if (!auth.ok || !auth.user || auth.user.role !== "student") {
-        window.location.href = "login.html";
-        return;
+    function setStatus(message, type = "default") {
+      const statusEl = document.getElementById("profileStatus");
+      statusEl.textContent = message;
+
+      if (type === "error") {
+        statusEl.className = "text-sm text-red-600";
+      } else if (type === "success") {
+        statusEl.className = "text-sm text-green-600";
+      } else {
+        statusEl.className = "text-sm text-slate-500";
+      }
+    }
+
+    function buildImageUrl(imagePath) {
+      if (!imagePath) return DEFAULT_PROFILE_IMAGE;
+      if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+      if (imagePath.startsWith("/")) return `${FILE_BASE_URL}${imagePath}?t=${Date.now()}`;
+      return imagePath;
+    }
+
+    function updateStudentUI(user) {
+      const firstName = user.first_name || "";
+      const lastName = user.last_name || "";
+      const fullName = `${firstName} ${lastName}`.trim() || "Student";
+      const imageUrl = buildImageUrl(user.profile_image_url);
+
+      document.getElementById("profileUserId").value = user.id || "";
+      document.getElementById("firstName").value = firstName;
+      document.getElementById("lastName").value = lastName;
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("registrationNumber").value = user.registration_number || "";
+      document.getElementById("departmentName").value = user.department_name || "";
+
+      document.getElementById("profileTitleName").textContent = fullName;
+      document.getElementById("summaryEmail").textContent = user.email || "-";
+      document.getElementById("summaryRegNo").textContent = user.registration_number || "-";
+      document.getElementById("summaryDepartment").textContent = user.department_name || "-";
+      document.getElementById("profilePreview").src = imageUrl;
+    }
+
+    async function loadStudentProfile() {
+      const result = await API.users.getMe();
+
+      if (!result.success || !result.user || result.user.account_type !== "student") {
+        setStatus(result.error || "Failed to load profile.", "error");
+        return null;
       }
 
-      const meResponse = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-        }
+      const user = result.user;
+      updateStudentUI(user);
+
+      localStorage.setItem("user", JSON.stringify({
+        ...getCurrentUser(),
+        ...user,
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        profile_image_url: user.profile_image_url || null
+      }));
+
+      return user;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      const authUser = await requireAuth("student");
+      if (!authUser) return;
+
+      await loadStudentProfile();
+
+      document.getElementById("firstName").addEventListener("input", function () {
+        const fullName = `${document.getElementById("firstName").value.trim()} ${document.getElementById("lastName").value.trim()}`.trim() || "Student";
+        document.getElementById("profileTitleName").textContent = fullName;
       });
 
-      const me = await meResponse.json();
-
-      if (!meResponse.ok || !me.user) {
-        alert(me.error || "Failed to load profile");
-        return;
-      }
-
-      document.getElementById("profileUserId").value = me.user.id;
-      document.getElementById("firstName").value = me.user.first_name || "";
-      document.getElementById("lastName").value = me.user.last_name || "";
-      document.getElementById("email").value = me.user.email || "";
-      document.getElementById("registrationNumber").value = me.user.registration_number || "";
-      document.getElementById("departmentName").value = me.user.department_name || "";
-
-      const fullName = `${me.user.first_name || ""} ${me.user.last_name || ""}`.trim();
-      document.getElementById("profileTitleName").textContent = fullName || "Student";
-
-      document.getElementById("studentProfileForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const id = document.getElementById("profileUserId").value;
-        const firstName = document.getElementById("firstName").value.trim();
-        const lastName = document.getElementById("lastName").value.trim();
-        const statusEl = document.getElementById("profileStatus");
-
-        statusEl.textContent = "";
-
-        const result = await API.users.update(id, { firstName, lastName });
-
-        if (!result.ok) {
-          statusEl.textContent = result.error || "Failed to update profile";
-          statusEl.className = "text-sm text-red-600";
-          return;
-        }
-
-        statusEl.textContent = "Profile updated successfully";
-        statusEl.className = "text-sm text-green-600";
+      document.getElementById("lastName").addEventListener("input", function () {
+        const fullName = `${document.getElementById("firstName").value.trim()} ${document.getElementById("lastName").value.trim()}`.trim() || "Student";
+        document.getElementById("profileTitleName").textContent = fullName;
       });
 
       document.getElementById("profileImage").addEventListener("change", function (e) {
@@ -153,6 +237,67 @@
         };
         reader.readAsDataURL(file);
       });
+    });
+
+    document.getElementById("studentProfileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const id = document.getElementById("profileUserId").value.trim();
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const imageFile = document.getElementById("profileImage").files[0];
+      const saveBtn = document.getElementById("saveBtn");
+
+      if (!id) {
+        setStatus("Profile could not be loaded.", "error");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.classList.add("opacity-60", "cursor-not-allowed");
+      setStatus("Saving changes...");
+
+      try {
+        const formData = new FormData();
+        formData.append("first_name", firstName);
+        formData.append("last_name", lastName);
+
+        if (imageFile) {
+          formData.append("profile_image", imageFile);
+        }
+
+        const result = await API.users.updateWithImage("student", id, formData);
+
+        if (!result.success) {
+          setStatus(result.error || "Failed to update profile.", "error");
+          return;
+        }
+
+        const updatedUser = result.user || {};
+
+        localStorage.setItem("user", JSON.stringify({
+          ...getCurrentUser(),
+          ...updatedUser,
+          firstName: updatedUser.first_name || firstName,
+          lastName: updatedUser.last_name || lastName,
+          profile_image_url: updatedUser.profile_image_url || null
+        }));
+
+        updateStudentUI({
+          ...updatedUser,
+          first_name: updatedUser.first_name || firstName,
+          last_name: updatedUser.last_name || lastName
+        });
+
+        document.getElementById("profileImage").value = "";
+        setStatus("Profile updated successfully.", "success");
+      } catch (error) {
+        console.error("Student profile update error:", error);
+        setStatus("An unexpected error occurred while updating the profile.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("opacity-60", "cursor-not-allowed");
+      }
     });
   </script>
 </body>

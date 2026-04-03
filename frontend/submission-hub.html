@@ -164,202 +164,332 @@
   </button>
 
 <script>
-  const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:3000';
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function showAlert(message, type = "error") {
+  const alertBox = document.getElementById("alertBox");
+
+  alertBox.classList.remove("hidden");
+
+  if (type === "success") {
+    alertBox.className =
+      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200";
+  } else {
+    alertBox.className =
+      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
   }
 
-  function showAlert(message, type = "error") {
-    const alertBox = document.getElementById("alertBox");
-    alertBox.classList.remove("hidden", "bg-red-100", "text-red-700", "border", "border-red-200", "bg-green-100", "text-green-700", "border-green-200");
+  alertBox.textContent = message;
+}
 
-    if (type === "success") {
-      alertBox.classList.add("bg-green-100", "text-green-700", "border", "border-green-200");
-    } else {
-      alertBox.classList.add("bg-red-100", "text-red-700", "border", "border-red-200");
-    }
+function formatDate(dateValue) {
+  if (!dateValue) return "-";
 
-    alertBox.textContent = message;
-  }
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "-";
 
-  function formatDate(dateValue) {
-    if (!dateValue) return "No date";
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) return dateValue;
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-  }
-
-  function formatTime(timeValue) {
-    if (!timeValue) return "-";
-    const [h, m] = String(timeValue).split(":");
-    const hour = parseInt(h, 10);
-    const suffix = hour >= 12 ? "PM" : "AM";
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${m} ${suffix}`;
-  }
-
-  function getExamStatusText(exam) {
-    if (exam.pass_fail) return exam.pass_fail;
-    if (exam.decision) return exam.decision;
-    if (exam.submission_id) return "Submitted";
-    return exam.slot_status || "Pending";
-  }
-
-  function getPracticeStatusText(session) {
-    if (session.pass_fail) return session.pass_fail;
-    if (session.api_status) return session.api_status;
-    if (session.submission_id) return "Submitted";
-    return session.slot_status || "Pending";
-  }
-
-  function renderPracticeSessions(practiceSessions) {
-    const container = document.getElementById("practiceSessionsContainer");
-    const countBox = document.getElementById("practiceCount");
-
-    countBox.textContent = `${practiceSessions.length} Session${practiceSessions.length === 1 ? "" : "s"}`;
-
-    if (!practiceSessions.length) {
-      container.innerHTML = `
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          No practice sessions found.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = practiceSessions.map(session => `
-      <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-purple-100 dark:border-gray-700">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h4 class="font-bold text-gray-900 dark:text-white text-base">
-              ${escapeHtml(session.purpose || "Practice Session")}
-            </h4>
-            <p class="text-xs text-primary font-semibold mt-2">
-              ${formatDate(session.booking_date)} • ${formatTime(session.start_time)} - ${formatTime(session.end_time)}
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Status: <span class="text-primary font-semibold">${escapeHtml(getPracticeStatusText(session))}</span>
-            </p>
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-3">
-            <a
-              href="practical-exam-submission.html?request_id=${encodeURIComponent(session.request_id)}"
-              class="px-4 py-2.5 bg-white dark:bg-card-dark text-primary border border-purple-200 dark:border-gray-700 rounded-xl text-sm font-semibold hover:bg-purple-50 dark:hover:bg-gray-800 transition-all text-center"
-            >
-              Open Submission
-            </a>
-          </div>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  function renderExamSessions(examSessions) {
-    const container = document.getElementById("examSessionsContainer");
-    const countBox = document.getElementById("examCount");
-
-    countBox.textContent = `${examSessions.length} Examination${examSessions.length === 1 ? "" : "s"}`;
-
-    if (!examSessions.length) {
-      container.innerHTML = `
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          No examinations found.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = examSessions.map(exam => `
-      <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-purple-100 dark:border-gray-700">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h4 class="font-bold text-gray-900 dark:text-white text-base">
-              ${escapeHtml(exam.exam_name)}
-            </h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              ${escapeHtml(exam.description || "Practical examination")}
-            </p>
-            <p class="text-xs text-primary font-semibold mt-2">
-              ${formatDate(exam.slot_date)} • ${formatTime(exam.exam_start_time)} - ${formatTime(exam.exam_end_time)}
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Status: <span class="text-primary font-semibold">${escapeHtml(getExamStatusText(exam))}</span>
-            </p>
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-3">
-            <a
-              href="practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}"
-              class="px-4 py-2.5 bg-white dark:bg-card-dark text-primary border border-purple-200 dark:border-gray-700 rounded-xl text-sm font-semibold hover:bg-purple-50 dark:hover:bg-gray-800 transition-all text-center"
-            >
-              Open Submission
-            </a>
-          </div>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  async function loadSubmissionHub() {
-    try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_BASE}/submissions/student/dashboard-data`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to load submission hub data");
-      }
-
-      renderPracticeSessions(data.practiceSessions || []);
-      renderExamSessions(data.examSessions || []);
-    } catch (error) {
-      console.error("Submission hub load error:", error);
-      showAlert(error.message || "Failed to load submission hub data");
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", async function () {
-    if (typeof requireAuth !== "function") {
-      alert("api.js failed to load correctly.");
-      return;
-    }
-
-    const user = await requireAuth("student");
-    if (!user) return;
-
-    const fullName =
-      user.fullName ||
-      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-      "Student";
-
-    const nameEl = document.getElementById("studentProfileName");
-    if (nameEl) nameEl.textContent = fullName;
-
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.onclick = function () {
-        API.auth.logout();
-      };
-    }
-    await loadSubmissionHub();
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
   });
+}
+
+function formatTime(timeValue) {
+  if (!timeValue) return "-";
+
+  const [h, m] = String(timeValue).split(":");
+  const hour = parseInt(h, 10);
+
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+
+  return `${formattedHour}:${m} ${suffix}`;
+}
+
+/* ===========================
+   PRACTICE RENDER
+=========================== */
+
+function renderPracticeSessions(practiceSessions) {
+
+  const container =
+    document.getElementById("practiceSessionsContainer");
+
+  const countBox =
+    document.getElementById("practiceCount");
+
+  countBox.textContent =
+    `${practiceSessions.length} Session`;
+
+  if (!practiceSessions.length) {
+    container.innerHTML =
+      `<div class="text-sm text-gray-500">
+        No practice sessions found.
+      </div>`;
+    return;
+  }
+
+  container.innerHTML =
+    practiceSessions.map(session => {
+
+      const isAllowed =
+        session.slot_status === "APPROVED" ||
+        session.slot_status === "COMPLETED";
+
+      return `
+
+<div class="p-5 rounded-2xl bg-gray-50 border">
+
+<div class="flex flex-col md:flex-row md:justify-between gap-4">
+
+<div>
+
+<h4 class="font-bold text-gray-900">
+
+${escapeHtml(session.purpose || "Practice Session")}
+
+</h4>
+
+<p class="text-xs text-primary font-semibold mt-2">
+
+${formatDate(session.booking_date)}
+
+•
+
+${formatTime(session.start_time)}
+-
+${formatTime(session.end_time)}
+
+</p>
+
+<p class="text-xs text-gray-500 mt-1">
+
+Status:
+
+<span class="text-primary font-semibold">
+
+${escapeHtml(session.slot_status)}
+
+</span>
+
+</p>
+
+</div>
+
+<div>
+
+${
+isAllowed
+? `<a
+href="practical-exam-submission.html?request_id=${session.request_id}"
+class="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold"
+>
+Open Submission
+</a>`
+: `<span class="text-xs text-gray-400 font-semibold">
+Submission Locked
+</span>`
+}
+
+</div>
+
+</div>
+</div>
+
+`;
+    }).join("");
+}
+
+/* ===========================
+   EXAM RENDER
+=========================== */
+
+function renderExamSessions(examSessions) {
+
+  const container =
+    document.getElementById("examSessionsContainer");
+
+  const countBox =
+    document.getElementById("examCount");
+
+  countBox.textContent =
+    `${examSessions.length} Examination`;
+
+  if (!examSessions.length) {
+
+    container.innerHTML =
+      `<div class="text-sm text-gray-500">
+        No examinations found.
+      </div>`;
+
+    return;
+  }
+
+  container.innerHTML =
+    examSessions.map(exam => {
+
+      const isAllowed =
+        exam.slot_status === "APPROVED" ||
+        exam.slot_status === "COMPLETED";
+
+      return `
+
+<div class="p-5 rounded-2xl bg-gray-50 border">
+
+<div class="flex flex-col md:flex-row md:justify-between gap-4">
+
+<div>
+
+<h4 class="font-bold text-gray-900">
+
+${escapeHtml(exam.exam_name)}
+
+</h4>
+
+<p class="text-sm text-gray-500 mt-1">
+
+${escapeHtml(exam.description || "")}
+
+</p>
+
+<p class="text-xs text-primary font-semibold mt-2">
+
+${formatDate(exam.slot_date)}
+
+•
+
+${formatTime(exam.exam_start_time)}
+-
+${formatTime(exam.exam_end_time)}
+
+</p>
+
+<p class="text-xs text-gray-500 mt-1">
+
+Status:
+
+<span class="text-primary font-semibold">
+
+${escapeHtml(exam.slot_status)}
+
+</span>
+
+</p>
+
+</div>
+
+<div>
+
+${
+isAllowed
+? `<a
+href="practical-exam-submission.html?exam_id=${exam.exam_id}"
+class="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold"
+>
+Open Submission
+</a>`
+: `<span class="text-xs text-gray-400 font-semibold">
+Submission Locked
+</span>`
+}
+
+</div>
+
+</div>
+</div>
+
+`;
+    }).join("");
+}
+
+/* ===========================
+   LOAD DATA
+=========================== */
+
+async function loadSubmissionHub() {
+
+  try {
+
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+      showAlert("User not logged in");
+      return;
+    }
+
+    const response =
+      await fetch(
+        `${API_BASE}/submissions/student/dashboard-data`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error);
+    }
+
+    renderPracticeSessions(
+      data.practiceSessions || []
+    );
+
+    renderExamSessions(
+      data.examSessions || []
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    showAlert(
+      error.message ||
+      "Failed to load submission data"
+    );
+  }
+}
+
+/* ===========================
+   INIT
+=========================== */
+
+document.addEventListener(
+"DOMContentLoaded",
+async function () {
+
+  if (typeof requireAuth !== "function") {
+    alert("api.js failed to load");
+    return;
+  }
+
+  const user =
+    await requireAuth("student");
+
+  if (!user) return;
+
+  const logoutBtn =
+    document.getElementById("logoutBtn");
+
+  if (logoutBtn) {
+    logoutBtn.onclick =
+      () => API.auth.logout();
+  }
+
+  loadSubmissionHub();
+
+});
 </script>
 </body>
 </html>

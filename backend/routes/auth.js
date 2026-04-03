@@ -48,6 +48,31 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+function buildClientUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+    role: user.role,
+    registration_number: user.registration_number || null,
+    registrationNumber: user.registration_number || null,
+    staff_id: user.staff_id || null,
+    staffId: user.staff_id || null,
+    department_id: user.department_id || null,
+    departmentId: user.department_id || null,
+    department_name: user.department_name || null,
+    departmentName: user.department_name || null,
+    must_change_password: user.must_change_password || false,
+    mustChangePassword: user.must_change_password || false,
+    profile_image_url: user.profile_image_url || null,
+    is_active: user.is_active,
+  };
+}
+
 async function findAccountByIdentifier(identifier) {
   const raw = String(identifier || "").trim();
   const normalizedEmail = raw.toLowerCase();
@@ -62,6 +87,7 @@ async function findAccountByIdentifier(identifier) {
         first_name,
         last_name,
         must_change_password,
+        profile_image_url,
         is_active,
         'admin' AS role
      FROM admins
@@ -87,6 +113,7 @@ async function findAccountByIdentifier(identifier) {
         last_name,
         registration_number,
         department_id,
+        profile_image_url,
         is_active,
         'student' AS role
      FROM students
@@ -114,6 +141,7 @@ async function findAccountByIdentifier(identifier) {
         staff_id,
         department_id,
         must_change_password,
+        profile_image_url,
         is_active,
         'lecturer' AS role
      FROM lecturers
@@ -141,6 +169,7 @@ async function getFullUserProfile(role, id) {
           email,
           first_name,
           last_name,
+          profile_image_url,
           must_change_password,
           is_active,
           'admin' AS role
@@ -163,6 +192,7 @@ async function getFullUserProfile(role, id) {
           s.department_id,
           d.department_name,
           s.is_active,
+          s.profile_image_url,
           'student' AS role
        FROM students s
        LEFT JOIN departments d ON s.department_id = d.department_id
@@ -185,6 +215,7 @@ async function getFullUserProfile(role, id) {
           d.department_name,
           l.must_change_password,
           l.is_active,
+          l.profile_image_url,
           'lecturer' AS role
        FROM lecturers l
        LEFT JOIN departments d ON l.department_id = d.department_id
@@ -205,8 +236,6 @@ router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
-    console.log("LOGIN BODY:", req.body);
-
     if (!identifier || !password) {
       return res.status(400).json({
         success: false,
@@ -225,7 +254,7 @@ router.post("/login", async (req, res) => {
 
     const { user, role } = account;
 
-    if (!user.is_active) {
+    if (user.is_active === 0 || user.is_active === false) {
       return res.status(403).json({
         success: false,
         error: "Account is inactive. Contact administrator.",
@@ -253,6 +282,7 @@ router.post("/login", async (req, res) => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
+        profile_image_url: user.profile_image_url || null,
       });
     }
 
@@ -268,19 +298,7 @@ router.post("/login", async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: {
-        id: fullUser.id,
-        email: fullUser.email,
-        firstName: fullUser.first_name,
-        lastName: fullUser.last_name,
-        fullName: `${fullUser.first_name} ${fullUser.last_name}`.trim(),
-        role: fullUser.role,
-        registrationNumber: fullUser.registration_number || null,
-        staffId: fullUser.staff_id || null,
-        departmentId: fullUser.department_id || null,
-        departmentName: fullUser.department_name || null,
-        mustChangePassword: fullUser.must_change_password || false,
-      },
+      user: buildClientUser(fullUser),
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -316,7 +334,7 @@ router.get("/verify", async (req, res) => {
       });
     }
 
-    if (!user.is_active) {
+    if (user.is_active === 0 || user.is_active === false) {
       return res.status(403).json({
         success: false,
         error: "Account is inactive",
@@ -325,19 +343,7 @@ router.get("/verify", async (req, res) => {
 
     return res.json({
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        fullName: `${user.first_name} ${user.last_name}`.trim(),
-        role: user.role,
-        registrationNumber: user.registration_number || null,
-        staffId: user.staff_id || null,
-        departmentId: user.department_id || null,
-        departmentName: user.department_name || null,
-        mustChangePassword: user.must_change_password || false,
-      },
+      user: buildClientUser(user),
     });
   } catch (error) {
     return res.status(401).json({
@@ -351,8 +357,6 @@ router.get("/verify", async (req, res) => {
 // FIRST-TIME CHANGE PASSWORD
 // -----------------------------
 router.post("/first-time-change-password", async (req, res) => {
-  console.log("FIRST TIME CHANGE BODY:", req.body);
-
   try {
     const { email, currentPassword, newPassword } = req.body;
 
@@ -434,18 +438,7 @@ router.post("/first-time-change-password", async (req, res) => {
       success: true,
       message: "Password changed successfully",
       token,
-      user: {
-        id: fullUser.id,
-        email: fullUser.email,
-        firstName: fullUser.first_name,
-        lastName: fullUser.last_name,
-        fullName: `${fullUser.first_name} ${fullUser.last_name}`.trim(),
-        role: fullUser.role,
-        registrationNumber: fullUser.registration_number || null,
-        staffId: fullUser.staff_id || null,
-        departmentId: fullUser.department_id || null,
-        departmentName: fullUser.department_name || null,
-      },
+      user: buildClientUser(fullUser),
     });
   } catch (error) {
     console.error("First-time password change error:", error);

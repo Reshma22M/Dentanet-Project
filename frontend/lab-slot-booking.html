@@ -83,7 +83,7 @@ body { font-family: 'Inter', sans-serif; }
     </nav>
 
     <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
-      <img alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50" src="public/images/stu.jpg"/>
+      <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
       <div>
         <p class="text-xs text-indigo-100">Welcome back,</p>
         <p id="studentName" class="text-sm font-bold">Student</p>
@@ -121,7 +121,7 @@ body { font-family: 'Inter', sans-serif; }
             <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
             <div>
               <h3 class="font-bold text-amber-900 dark:text-amber-200 mb-1">Important Information</h3>
-              <p class="text-sm text-amber-800 dark:text-amber-300">Only the selected exam is shown here.</p>
+              <p class="text-sm text-amber-800 dark:text-amber-300">Only upcoming scheduled exams with active slots can be booked.</p>
               <p class="text-sm text-amber-800 dark:text-amber-300 mt-1">Expired exams and past time slots cannot be booked.</p>
             </div>
           </div>
@@ -220,6 +220,7 @@ body { font-family: 'Inter', sans-serif; }
 
 <script>
 let SELECTED_EXAM_ID = null;
+let EXAMS_CACHE = [];
 
 function switchTab(tab) {
   const examTab = document.getElementById("examTab");
@@ -316,12 +317,16 @@ function getSelectedExamId() {
   return null;
 }
 
-async function findDefaultUpcomingExamId() {
+async function loadScheduledExamsList() {
   const examsResult = await API.exams.getAll(null, "SCHEDULED");
-  if (!examsResult.ok) return null;
+  if (!examsResult.ok) return [];
 
-  const exams = examsResult.exams || [];
-  const upcoming = exams.find(exam => !isExamExpired(exam));
+  return (examsResult.exams || []).filter(exam => !isExamExpired(exam));
+}
+
+async function findDefaultUpcomingExamId() {
+  EXAMS_CACHE = await loadScheduledExamsList();
+  const upcoming = EXAMS_CACHE[0];
   return upcoming ? Number(upcoming.exam_id) : null;
 }
 
@@ -351,6 +356,12 @@ async function loadSelectedExam(examBookings) {
   }
 
   const exam = examResult.exam;
+
+  if (isExamExpired(exam)) {
+    container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">The selected exam has already expired.</p>`;
+    return;
+  }
+
   const slotRes = await API.examSlots.getByExamId(SELECTED_EXAM_ID);
 
   let slots = [];
@@ -367,7 +378,7 @@ function renderSelectedExamCard(exam, slots, examBookings) {
   const examExpired = isExamExpired(exam);
 
   const myBookingForThisExam = examBookings.find(
-    b => String(b.exam_id) === String(exam.exam_id) && b.status !== "CANCELLED"
+    b => String(b.exam_id) === String(exam.exam_id) && b.status !== "CANCELLED" && b.status !== "DENIED"
   );
 
   const badgeClass = examExpired
@@ -557,7 +568,9 @@ function renderPracticeSessions(practiceBookings) {
           ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
           : b.status === "COMPLETED"
             ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-            : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
+            : b.status === "DENIED"
+              ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+              : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
 
     return `
       <div class="bg-white dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-600 rounded-xl p-5">
@@ -627,6 +640,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       student.firstName ||
       student.fullName ||
       "Student";
+  }
+
+  const profileImageEl = document.getElementById("studentProfileImage");
+  if (profileImageEl && student.profile_image_url) {
+    profileImageEl.src = `http://localhost:3000${student.profile_image_url}?t=${Date.now()}`;
   }
 
   const logoutBtn = document.getElementById("logoutBtn");

@@ -3,6 +3,10 @@ const router = express.Router();
 const { promisePool } = require("../config/database");
 const { authenticateToken } = require("../middleware/auth");
 
+/* -------------------------------------------------- */
+/* Helpers */
+/* -------------------------------------------------- */
+
 function normalizeDateOnly(value) {
     if (!value) return null;
 
@@ -35,11 +39,14 @@ function buildDateTime(dateValue, timeValue) {
     return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
-// ==========================================
-// GET ALL BOOKINGS
-// ==========================================
+/* -------------------------------------------------- */
+/* GET BOOKINGS */
+/* -------------------------------------------------- */
+
 router.get("/", authenticateToken, async (req, res) => {
     try {
+        const { module_id, exam_id, status, slot_type } = req.query;
+
         let query = `
             SELECT
                 sr.request_id,
@@ -53,10 +60,15 @@ router.get("/", authenticateToken, async (req, res) => {
                 sr.updated_at,
 
                 prs.purpose,
+
                 esr.exam_id,
                 esr.slot_id,
 
                 e.exam_name,
+                e.module_id,
+
+                m.module_code,
+                m.module_name,
 
                 s.first_name,
                 s.last_name,
@@ -83,6 +95,9 @@ router.get("/", authenticateToken, async (req, res) => {
             LEFT JOIN exams e
                 ON esr.exam_id = e.exam_id
 
+            LEFT JOIN modules m
+                ON e.module_id = m.module_id
+
             LEFT JOIN students s
                 ON sr.student_user_id = s.student_id
 
@@ -91,13 +106,35 @@ router.get("/", authenticateToken, async (req, res) => {
 
             LEFT JOIN lab_machines lm
                 ON sa.machine_id = lm.machine_id
+
+            WHERE 1 = 1
         `;
 
         const params = [];
 
         if (req.user.role === "student") {
-            query += ` WHERE sr.student_user_id = ?`;
+            query += ` AND sr.student_user_id = ?`;
             params.push(req.user.id);
+        }
+
+        if (module_id) {
+            query += ` AND e.module_id = ?`;
+            params.push(Number(module_id));
+        }
+
+        if (exam_id) {
+            query += ` AND esr.exam_id = ?`;
+            params.push(Number(exam_id));
+        }
+
+        if (status) {
+            query += ` AND sr.status = ?`;
+            params.push(String(status).toUpperCase());
+        }
+
+        if (slot_type) {
+            query += ` AND sr.slot_type = ?`;
+            params.push(String(slot_type).toUpperCase());
         }
 
         query += `
@@ -108,22 +145,24 @@ router.get("/", authenticateToken, async (req, res) => {
 
         const [rows] = await promisePool.query(query, params);
 
-        res.json({
+        return res.json({
             ok: true,
             bookings: rows
         });
+
     } catch (error) {
         console.error("Get bookings error:", error);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             error: "Failed to fetch bookings"
         });
     }
 });
 
-// ==========================================
-// CREATE BOOKING (Student)
-// ==========================================
+/* -------------------------------------------------- */
+/* CREATE BOOKING */
+/* -------------------------------------------------- */
+
 router.post("/", authenticateToken, async (req, res) => {
     const connection = await promisePool.getConnection();
 
@@ -146,31 +185,37 @@ router.post("/", authenticateToken, async (req, res) => {
         } = req.body;
 
         const studentId = req.user.id;
+
         const normalizedSlotType = String(slotType || "").toUpperCase();
         const normalizedBookingDate = normalizeDateOnly(bookingDate);
         const normalizedStartTime = normalizeTimeValue(startTime);
         const normalizedEndTime = normalizeTimeValue(endTime);
 
-        if (!normalizedSlotType || !normalizedBookingDate || !normalizedStartTime || !normalizedEndTime) {
+        if (
+            !normalizedSlotType ||
+            !normalizedBookingDate ||
+            !normalizedStartTime ||
+            !normalizedEndTime
+        ) {
             return res.status(400).json({
                 ok: false,
                 error: "Required fields missing"
             });
         }
 
-        const bookingStartDateTime = buildDateTime(normalizedBookingDate, normalizedStartTime);
+        const bookingStart = buildDateTime(normalizedBookingDate, normalizedStartTime);
 
-        if (!bookingStartDateTime) {
+        if (!bookingStart) {
             return res.status(400).json({
                 ok: false,
                 error: "Invalid booking date or time"
             });
         }
 
-        if (bookingStartDateTime.getTime() < Date.now()) {
+        if (bookingStart.getTime() < Date.now()) {
             return res.status(400).json({
                 ok: false,
-                error: "You cannot create a booking for a past date or time"
+                error: "Cannot book past date/time"
             });
         }
 
@@ -192,8 +237,8 @@ router.post("/", authenticateToken, async (req, res) => {
                 INNER JOIN exam_slot_requests esr
                     ON sr.request_id = esr.request_id
                 WHERE sr.student_user_id = ?
-                AND esr.exam_id = ?
-                AND sr.status IN ('PENDING', 'APPROVED')
+                  AND esr.exam_id = ?
+                  AND sr.status IN ('PENDING', 'APPROVED')
                 LIMIT 1
                 `,
                 [studentId, examId]
@@ -203,7 +248,7 @@ router.post("/", authenticateToken, async (req, res) => {
                 await connection.rollback();
                 return res.status(409).json({
                     ok: false,
-                    error: "You already have an active exam slot request."
+                    error: "You already have an active exam slot request"
                 });
             }
 
@@ -217,7 +262,6 @@ router.post("/", authenticateToken, async (req, res) => {
                     TIME_FORMAT(ets.end_time, '%H:%i') AS end_time,
                     ets.max_machines,
                     ets.is_active,
-                    e.exam_name,
                     DATE_FORMAT(e.exam_date, '%Y-%m-%d') AS exam_date,
                     TIME_FORMAT(e.end_time, '%H:%i') AS exam_end_time,
                     e.is_active AS exam_is_active
@@ -334,11 +378,7 @@ router.post("/", authenticateToken, async (req, res) => {
             await connection.query(
                 `
                 INSERT INTO exam_slot_requests
-                (
-                    request_id,
-                    exam_id,
-                    slot_id
-                )
+                (request_id, exam_id, slot_id)
                 VALUES (?, ?, ?)
                 `,
                 [requestId, examId, slotId]
@@ -347,11 +387,12 @@ router.post("/", authenticateToken, async (req, res) => {
 
         await connection.commit();
 
-        res.status(201).json({
+        return res.status(201).json({
             ok: true,
             message: "Slot request created successfully",
             requestId
         });
+
     } catch (error) {
         try {
             await connection.rollback();
@@ -361,7 +402,7 @@ router.post("/", authenticateToken, async (req, res) => {
 
         console.error("Create booking error:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             error: error.message || "Failed to create booking request"
         });
@@ -370,10 +411,13 @@ router.post("/", authenticateToken, async (req, res) => {
     }
 });
 
-// ==========================================
-// UPDATE STATUS (Admin)
-// ==========================================
+/* -------------------------------------------------- */
+/* UPDATE STATUS (Admin only) */
+/* -------------------------------------------------- */
+
 router.put("/:id/status", authenticateToken, async (req, res) => {
+    const connection = await promisePool.getConnection();
+
     try {
         if (req.user.role !== "admin") {
             return res.status(403).json({
@@ -382,54 +426,198 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
             });
         }
 
-        const requestId = req.params.id;
-        const { status } = req.body;
+        const requestId = Number(req.params.id);
+        const { status, machineId } = req.body;
 
-        await promisePool.query(
+        const validStatuses = [
+            "PENDING",
+            "APPROVED",
+            "DENIED",
+            "CANCELLED",
+            "COMPLETED"
+        ];
+
+        const normalizedStatus = String(status || "").toUpperCase();
+
+        if (!validStatuses.includes(normalizedStatus)) {
+            return res.status(400).json({
+                ok: false,
+                error: "Invalid status value"
+            });
+        }
+
+        const [bookingRows] = await connection.query(
             `
-            UPDATE slot_requests
-            SET status = ?
-            WHERE request_id = ?
+            SELECT
+                sr.request_id,
+                sr.status,
+                sr.slot_type,
+                esr.slot_id
+            FROM slot_requests sr
+            LEFT JOIN exam_slot_requests esr
+                ON sr.request_id = esr.request_id
+            WHERE sr.request_id = ?
+            LIMIT 1
             `,
-            [status, requestId]
+            [requestId]
         );
 
-        res.json({
+        if (bookingRows.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                error: "Booking not found"
+            });
+        }
+
+        const booking = bookingRows[0];
+
+        await connection.beginTransaction();
+
+        if (normalizedStatus === "APPROVED") {
+            if (!machineId) {
+                await connection.rollback();
+                return res.status(400).json({
+                    ok: false,
+                    error: "machineId is required when approving a booking"
+                });
+            }
+
+            const numericMachineId = Number(machineId);
+
+            const [machineRows] = await connection.query(
+                `
+                SELECT machine_id, status
+                FROM lab_machines
+                WHERE machine_id = ?
+                LIMIT 1
+                `,
+                [numericMachineId]
+            );
+
+            if (machineRows.length === 0) {
+                await connection.rollback();
+                return res.status(404).json({
+                    ok: false,
+                    error: "Selected machine not found"
+                });
+            }
+
+            if (machineRows[0].status !== "ready") {
+                await connection.rollback();
+                return res.status(400).json({
+                    ok: false,
+                    error: "Selected machine is not ready"
+                });
+            }
+
+            await connection.query(
+                `
+                INSERT INTO slot_allocations
+                (
+                    request_id,
+                    machine_id,
+                    approved_by,
+                    approved_at
+                )
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON DUPLICATE KEY UPDATE
+                    machine_id = VALUES(machine_id),
+                    approved_by = VALUES(approved_by),
+                    approved_at = CURRENT_TIMESTAMP
+                `,
+                [requestId, numericMachineId, req.user.id]
+            );
+        }
+
+        await connection.query(
+            `
+            UPDATE slot_requests
+            SET status = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE request_id = ?
+            `,
+            [normalizedStatus, requestId]
+        );
+
+        await connection.commit();
+
+        return res.json({
             ok: true,
             message: "Status updated successfully"
         });
+
     } catch (error) {
+        try {
+            await connection.rollback();
+        } catch (rollbackError) {
+            console.error("Rollback error:", rollbackError);
+        }
+
         console.error("Update status error:", error);
-        res.status(500).json({
+
+        return res.status(500).json({
             ok: false,
             error: "Failed to update status"
         });
+    } finally {
+        connection.release();
     }
 });
 
-// ==========================================
-// CANCEL REQUEST
-// ==========================================
+/* -------------------------------------------------- */
+/* CANCEL BOOKING */
+/* -------------------------------------------------- */
+
 router.delete("/:id", authenticateToken, async (req, res) => {
     try {
-        const requestId = req.params.id;
+        const requestId = Number(req.params.id);
 
-        await promisePool.query(
+        const [rows] = await promisePool.query(
             `
-            UPDATE slot_requests
-            SET status = 'CANCELLED'
+            SELECT student_user_id
+            FROM slot_requests
             WHERE request_id = ?
             `,
             [requestId]
         );
 
-        res.json({
+        if (rows.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                error: "Booking not found"
+            });
+        }
+
+        const ownerId = Number(rows[0].student_user_id);
+
+        if (
+            req.user.role !== "admin" &&
+            Number(req.user.id) !== ownerId
+        ) {
+            return res.status(403).json({
+                ok: false,
+                error: "Not authorized to cancel this booking"
+            });
+        }
+
+        await promisePool.query(
+            `
+            UPDATE slot_requests
+            SET status = 'CANCELLED',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE request_id = ?
+            `,
+            [requestId]
+        );
+
+        return res.json({
             ok: true,
             message: "Booking cancelled successfully"
         });
+
     } catch (error) {
         console.error("Cancel booking error:", error);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             error: "Failed to cancel booking"
         });

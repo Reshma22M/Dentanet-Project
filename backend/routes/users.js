@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { promisePool } = require("../config/database");
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, authorizeRole } = require("../middleware/auth");
+const { uploadProfileImage } = require("../middleware/upload");
 const {
   validateEmail,
   validateFullName,
@@ -176,11 +177,11 @@ async function handleUpdateUser(req, res, accountType, id) {
   }
 
   if (accountType === "admin" && req.user.role === "admin" && !isPrimaryAdmin(req)) {
-  return res.status(403).json({
-    success: false,
-    error: "Only the primary admin can edit admin accounts",
-  });
-}
+    return res.status(403).json({
+      success: false,
+      error: "Only the primary admin can edit admin accounts",
+    });
+  }
 
   const existingUser = await getUserByType(accountType, id);
   if (!existingUser) {
@@ -194,19 +195,34 @@ async function handleUpdateUser(req, res, accountType, id) {
     email,
     firstName,
     lastName,
+    first_name,
+    last_name,
     registrationNumber,
+    registration_number,
     staffId,
+    staff_id,
     department,
     departmentId,
+    department_id,
     isActive,
     profileImageUrl,
+    profile_image_url,
     mustChangePassword,
   } = req.body;
 
   const nextFirstName =
-    firstName !== undefined ? String(firstName).trim() : existingUser.first_name;
+    firstName !== undefined
+      ? String(firstName).trim()
+      : first_name !== undefined
+      ? String(first_name).trim()
+      : existingUser.first_name;
+
   const nextLastName =
-    lastName !== undefined ? String(lastName).trim() : existingUser.last_name;
+    lastName !== undefined
+      ? String(lastName).trim()
+      : last_name !== undefined
+      ? String(last_name).trim()
+      : existingUser.last_name;
 
   const nameValidation = validateFullName(
     `${nextFirstName} ${nextLastName}`.trim()
@@ -242,9 +258,12 @@ async function handleUpdateUser(req, res, accountType, id) {
   if (!adminMode) {
     if (
       registrationNumber !== undefined ||
+      registration_number !== undefined ||
       staffId !== undefined ||
+      staff_id !== undefined ||
       department !== undefined ||
       departmentId !== undefined ||
+      department_id !== undefined ||
       isActive !== undefined ||
       mustChangePassword !== undefined
     ) {
@@ -253,6 +272,16 @@ async function handleUpdateUser(req, res, accountType, id) {
         error: "You can only update your basic profile details",
       });
     }
+  }
+
+  let resolvedProfileImage = existingUser.profile_image_url;
+
+  if (req.file) {
+    resolvedProfileImage = `/uploads/profiles/${req.file.filename}`;
+  } else if (profileImageUrl !== undefined) {
+    resolvedProfileImage = profileImageUrl;
+  } else if (profile_image_url !== undefined) {
+    resolvedProfileImage = profile_image_url;
   }
 
   if (accountType === "admin") {
@@ -281,7 +310,7 @@ async function handleUpdateUser(req, res, accountType, id) {
         nextLastName,
         updateIsActive,
         updateMustChangePassword,
-        profileImageUrl !== undefined ? profileImageUrl : existingUser.profile_image_url,
+        resolvedProfileImage,
         id,
       ]
     );
@@ -291,8 +320,9 @@ async function handleUpdateUser(req, res, accountType, id) {
     const updateIsActive =
       adminMode && isActive !== undefined ? Boolean(isActive) : existingUser.is_active;
 
-    if (registrationNumber !== undefined) {
-      const rn = validateStudentRegistrationNumber(registrationNumber);
+    const finalRegistrationNumber = registrationNumber ?? registration_number;
+    if (finalRegistrationNumber !== undefined) {
+      const rn = validateStudentRegistrationNumber(finalRegistrationNumber);
       if (!rn.valid) {
         return res.status(400).json({
           success: false,
@@ -315,10 +345,9 @@ async function handleUpdateUser(req, res, accountType, id) {
       nextRegistrationNumber = rn.sanitized;
     }
 
-    if (department !== undefined || departmentId !== undefined) {
-      const resolvedDepartmentId = await resolveDepartmentId(
-        departmentId || department
-      );
+    const finalDepartment = departmentId ?? department_id ?? department;
+    if (finalDepartment !== undefined) {
+      const resolvedDepartmentId = await resolveDepartmentId(finalDepartment);
 
       if (!resolvedDepartmentId) {
         return res.status(400).json({
@@ -341,7 +370,7 @@ async function handleUpdateUser(req, res, accountType, id) {
         nextRegistrationNumber,
         nextDepartmentId,
         updateIsActive,
-        profileImageUrl !== undefined ? profileImageUrl : existingUser.profile_image_url,
+        resolvedProfileImage,
         id,
       ]
     );
@@ -356,8 +385,9 @@ async function handleUpdateUser(req, res, accountType, id) {
         ? Boolean(mustChangePassword)
         : existingUser.must_change_password;
 
-    if (staffId !== undefined) {
-      const normalizedStaffId = String(staffId).trim().toUpperCase();
+    const finalStaffId = staffId ?? staff_id;
+    if (finalStaffId !== undefined) {
+      const normalizedStaffId = String(finalStaffId).trim().toUpperCase();
 
       const [dup] = await promisePool.query(
         "SELECT lecturer_id FROM lecturers WHERE staff_id = ? AND lecturer_id <> ? LIMIT 1",
@@ -374,10 +404,9 @@ async function handleUpdateUser(req, res, accountType, id) {
       nextStaffId = normalizedStaffId;
     }
 
-    if (department !== undefined || departmentId !== undefined) {
-      const resolvedDepartmentId = await resolveDepartmentId(
-        departmentId || department
-      );
+    const finalDepartment = departmentId ?? department_id ?? department;
+    if (finalDepartment !== undefined) {
+      const resolvedDepartmentId = await resolveDepartmentId(finalDepartment);
 
       if (!resolvedDepartmentId) {
         return res.status(400).json({
@@ -401,7 +430,7 @@ async function handleUpdateUser(req, res, accountType, id) {
         nextDepartmentId,
         updateIsActive,
         updateMustChangePassword,
-        profileImageUrl !== undefined ? profileImageUrl : existingUser.profile_image_url,
+        resolvedProfileImage,
         id,
       ]
     );
@@ -425,11 +454,11 @@ async function handleDeactivateUser(req, res, accountType, id) {
   }
 
   if (accountType === "admin" && !isPrimaryAdmin(req)) {
-  return res.status(403).json({
-    success: false,
-    error: "Only the primary admin can deactivate admin accounts",
-  });
-}
+    return res.status(403).json({
+      success: false,
+      error: "Only the primary admin can deactivate admin accounts",
+    });
+  }
 
   if (accountType === "admin" && id === 1) {
     return res.status(400).json({
@@ -623,27 +652,42 @@ router.get("/:accountType/:id", authenticateToken, async (req, res) => {
   }
 });
 
-router.put("/:accountType/:id", authenticateToken, async (req, res) => {
-  try {
-    const accountType = normalizeAccountType(req.params.accountType);
-    const id = parseInt(req.params.id, 10);
+router.put(
+  "/:accountType/:id",
+  authenticateToken,
+  (req, res, next) => {
+    uploadProfileImage.single("profile_image")(req, res, function (err) {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          error: err.message || "Profile image upload failed",
+        });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      const accountType = normalizeAccountType(req.params.accountType);
+      const id = parseInt(req.params.id, 10);
 
-    if (!accountType || Number.isNaN(id)) {
-      return res.status(400).json({
+      if (!accountType || Number.isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid account type or id",
+        });
+      }
+
+      return await handleUpdateUser(req, res, accountType, id);
+    } catch (error) {
+      console.error("Update user error:", error);
+      return res.status(500).json({
         success: false,
-        error: "Invalid account type or id",
+        error: "Failed to update user",
       });
     }
-
-    return await handleUpdateUser(req, res, accountType, id);
-  } catch (error) {
-    console.error("Update user error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to update user",
-    });
   }
-});
+);
 
 router.delete("/:accountType/:id", authenticateToken, async (req, res) => {
   try {
@@ -668,7 +712,7 @@ router.delete("/:accountType/:id", authenticateToken, async (req, res) => {
 });
 
 // -----------------------------
-// Legacy routes using ?accountType= or body.accountType
+// Legacy routes
 // -----------------------------
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
@@ -688,28 +732,6 @@ router.get("/:id", authenticateToken, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Failed to fetch user",
-    });
-  }
-});
-
-router.put("/:id", authenticateToken, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const accountType = normalizeAccountType(req.body.accountType || req.query.accountType);
-
-    if (!accountType || Number.isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: "accountType is required",
-      });
-    }
-
-    return await handleUpdateUser(req, res, accountType, id);
-  } catch (error) {
-    console.error("Legacy update user error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to update user",
     });
   }
 });
@@ -735,5 +757,51 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+
+router.patch(
+  "/:type/:id/restore",
+  authenticateToken,
+  authorizeRole("admin"),
+  async (req, res) => {
+    try {
+      const { type, id } = req.params;
+
+      const validTypes = {
+        student: "students",
+        lecturer: "lecturers",
+        admin: "admins"
+      };
+
+      const table = validTypes[type];
+
+      if (!table) {
+        return res.status(400).json({
+          error: "Invalid user type"
+        });
+      }
+
+      const idColumn =
+        type === "student" ? "student_id" :
+        type === "lecturer" ? "lecturer_id" :
+        "admin_id";
+
+      await promisePool.query(
+        `UPDATE ${table}
+         SET is_active = 1, updated_at = CURRENT_TIMESTAMP
+         WHERE ${idColumn} = ?`,
+        [id]
+      );
+
+      res.json({
+        message: "User restored successfully"
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        error: "Restore failed"
+      });
+    }
+  }
+);
 
 module.exports = router;

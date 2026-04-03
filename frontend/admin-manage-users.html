@@ -181,7 +181,7 @@ body {
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-dark-border">
+                <tbody id="activeUsersTableBody" class="divide-y divide-slate-100 dark:divide-dark-border"> 
                     <tr>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading users...</td>
                     </tr>
@@ -189,6 +189,42 @@ body {
             </table>
         </div>
     </div>
+
+<div class="mt-8">
+    <button
+        id="togglePastUsersBtn"
+        class="hidden inline-flex items-center gap-2 text-sm font-semibold text-[#6D5CB3] hover:text-[#554799] transition-colors"
+        type="button"
+    >
+        <span class="material-symbols-outlined text-base">history</span>
+        <span>View Past Users</span>
+    </button>
+
+    <div
+        id="pastUsersSection"
+        class="hidden mt-4 bg-white dark:bg-dark-card rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden"
+    >
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/50">
+            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Past Users</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Inactive accounts are moved here.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-dark-border">
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID / Batch</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="inactiveUsersTableBody" class="divide-y divide-slate-100 dark:divide-dark-border"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
     <!-- Low-priority admin creation section -->
     <section id="createAdminSection" class="mt-10 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
@@ -427,6 +463,14 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
+function isUserActive(user) {
+    return user.is_active === true || user.is_active === 1 || user.is_active === "1";
+}
+
+function isUserInactive(user) {
+    return !isUserActive(user);
+}
+
 function getBatchFromUser(user) {
     if (user.account_type !== "student" || !user.identifier) return "";
     const parts = String(user.identifier).split("/");
@@ -476,13 +520,23 @@ function updateAdminCreationHint() {
 }
 
 function renderUsers(users) {
-    const tbody = document.getElementById("usersTableBody");
+    const activeUsers = users.filter(isUserActive);
+    const inactiveUsers = allUsers.filter(isUserInactive);
+
+    renderActiveUsersTable(activeUsers);
+    renderPastUsersTable(inactiveUsers);
+}
+
+function renderActiveUsersTable(users) {
+    const tbody = document.getElementById("activeUsersTableBody");
+
+    if (!tbody) return;
 
     if (!users.length) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                    No users found.
+                    No active users found.
                 </td>
             </tr>
         `;
@@ -491,15 +545,20 @@ function renderUsers(users) {
 
     tbody.innerHTML = users.map(user => {
         const name = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "N/A";
-        const roleLabel = user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1) : "N/A";
+        const roleLabel = user.account_type
+            ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1)
+            : "N/A";
+
         const batch = getBatchFromUser(user);
         const idOrBatch = user.account_type === "student"
-            ? `${escapeHtml(user.identifier || "-")}${batch ? ` <span class="text-xs text-slate-400 block mt-1">Batch ${escapeHtml(batch)}</span>` : ""}`
+            ? `${escapeHtml(user.identifier || "-")}${batch ? `<span class="text-xs text-slate-400 block mt-1">Batch ${escapeHtml(batch)}</span>` : ""}`
             : escapeHtml(user.identifier || "-");
 
-        const statusBadge = user.is_active
-            ? `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>`
-            : `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Inactive</span>`;
+        const statusBadge = `
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+               Active
+            </span>
+            `;
 
         const isAdminRow = user.account_type === "admin";
         const isPrimaryAdminLoggedIn = currentAdmin && Number(currentAdmin.id) === 1;
@@ -511,48 +570,170 @@ function renderUsers(users) {
 
         const actionButtons = canManageThisAdminRow
             ? `
-        <div class="flex justify-end gap-2">
-            <button
-                class="edit-user-btn px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 text-xs font-semibold"
-                data-id="${escapeHtml(user.id)}"
-                data-account-type="${escapeHtml(user.account_type)}"
-            >
-                Edit
-            </button>
-            <button
-                class="deactivate-user-btn px-3 py-1.5 rounded-lg ${disableDeactivate
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500"
-                    : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"} text-xs font-semibold"
-                data-id="${escapeHtml(user.id)}"
-                data-account-type="${escapeHtml(user.account_type)}"
-                ${disableDeactivate ? "disabled" : ""}
-            >
-                Remove
-            </button>
-        </div>
-      `
-    : `
-        <div class="flex justify-end">
-            <span class="text-xs text-slate-400 dark:text-slate-500 italic">
-                Primary admin only
-            </span>
-        </div>
-      `;
+                <div class="flex justify-end gap-2">
+                    <button
+                        class="edit-user-btn px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 text-xs font-semibold"
+                        data-id="${escapeHtml(user.id)}"
+                        data-account-type="${escapeHtml(user.account_type)}"
+                    >
+                        Edit
+                    </button>
+                    <button
+                        class="deactivate-user-btn px-3 py-1.5 rounded-lg ${
+                            disableDeactivate
+                                ? "bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500"
+                                : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+                        } text-xs font-semibold"
+                        data-id="${escapeHtml(user.id)}"
+                        data-account-type="${escapeHtml(user.account_type)}"
+                        ${disableDeactivate ? "disabled" : ""}
+                    >
+                        Remove
+                    </button>
+                </div>
+            `
+            : `
+                <div class="flex justify-end">
+                    <span class="text-xs text-slate-400 dark:text-slate-500 italic">
+                        Primary admin only
+                    </span>
+                </div>
+            `;
 
         return `
-            <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium dark:text-slate-200">${escapeHtml(name)}</td>
+            <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors align-middle">
+                <td class="px-6 py-4 text-sm font-medium text-slate-800 dark:text-slate-200">${escapeHtml(name)}</td>
                 <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(roleLabel)}</td>
-                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(user.email || "-")}</td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 break-all">${escapeHtml(user.email || "-")}</td>
                 <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${idOrBatch}</td>
                 <td class="px-6 py-4 text-sm">${statusBadge}</td>
-                <td class="px-6 py-4 text-sm">${actionButtons}</td>
+                <td class="px-6 py-4 text-sm text-right">${actionButtons}</td>
             </tr>
         `;
     }).join("");
 
     attachRowActionListeners();
 }
+
+function renderUserTable(tableId, users) {
+
+    const tableBody = document.getElementById(tableId);
+
+    if (!tableBody) return;
+
+    if (!users.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-6 text-slate-400">
+                    No users found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = users.map(user => {
+
+        const isInactive = user.is_active === 0;
+
+        return `
+            <tr class="${isInactive ? "opacity-60" : ""}">
+
+                <td class="px-4 py-3 font-medium">
+                    ${escapeHtml(user.name)}
+                </td>
+
+                <td>${escapeHtml(user.account_type)}</td>
+
+                <td>${escapeHtml(user.email)}</td>
+
+                <td>${escapeHtml(user.identifier || "-")}</td>
+
+                <td>
+                    ${
+                        isInactive
+                        ? `<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">
+                            Inactive
+                          </span>`
+                        : `<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">
+                            Active
+                          </span>`
+                    }
+                </td>
+
+                <td>
+                    ${
+                        isInactive
+                        ? `<span class="text-xs italic text-slate-400">
+                            Past user
+                          </span>`
+                        : `<button class="edit-user-btn ...">Edit</button>
+                           <button class="deactivate-user-btn ...">Remove</button>`
+                    }
+                </td>
+
+            </tr>
+        `;
+
+    }).join("");
+
+}
+
+function renderPastUsersTable(users) {
+    const tableBody = document.getElementById("inactiveUsersTableBody");
+    const section = document.getElementById("pastUsersSection");
+    const toggleBtn = document.getElementById("togglePastUsersBtn");
+
+    if (!tableBody) return;
+
+    if (!users.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+                    No past users found.
+                </td>
+            </tr>
+        `;
+        if (toggleBtn) toggleBtn.classList.add("hidden");
+        if (section) section.classList.add("hidden");
+        return;
+    }
+
+    if (toggleBtn) {
+        toggleBtn.classList.remove("hidden");
+        toggleBtn.innerHTML = `
+            <span class="material-symbols-outlined text-base">history</span>
+            <span>View Past Users (${users.length})</span>
+        `;
+    }
+
+    tableBody.innerHTML = users.map(user => {
+        const name = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "N/A";
+        const roleLabel = user.account_type
+            ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1)
+            : "N/A";
+
+        const batch = getBatchFromUser(user);
+        const idOrBatch = user.account_type === "student"
+            ? `${escapeHtml(user.identifier || "-")}${batch ? `<span class="text-xs text-slate-400 block mt-1">Batch ${escapeHtml(batch)}</span>` : ""}`
+            : escapeHtml(user.identifier || "-");
+
+        return `
+            <tr class="border-b border-slate-100 dark:border-slate-800 align-middle">
+                <td class="px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300">${escapeHtml(name)}</td>
+                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(roleLabel)}</td>
+                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 break-all">${escapeHtml(user.email || "-")}</td>
+                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">${idOrBatch}</td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                        Inactive
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
 
 function applyFilters() {
     const search = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -913,6 +1094,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         }, 1200);
     });
 
+document.getElementById("togglePastUsersBtn").addEventListener("click", () => {
+    const section = document.getElementById("pastUsersSection");
+    const icon = document.querySelector("#togglePastUsersBtn .material-symbols-outlined");
+
+    section.classList.toggle("hidden");
+
+    if (icon) {
+        icon.textContent = section.classList.contains("hidden") ? "history" : "expand_less";
+    }
+});
     await loadUsers();
 });
 </script>

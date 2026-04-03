@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Module Details - DentaNet</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1E3A8A",
+            accent: "#3B82F6",
+            "bg-main": "#F1F5F9",
+            "bg-sidebar": "#0F172A"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          },
+          boxShadow: {
+            soft: "0 8px 30px rgba(15, 23, 42, 0.06)"
+          }
+        }
+      }
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer base {
+      body { @apply font-sans; }
+    }
+
+    .sidebar-link {
+      @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all;
+    }
+
+    .sidebar-active {
+      @apply bg-white text-slate-900 font-semibold shadow-sm;
+    }
+
+    .dashboard-card {
+      @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-soft;
+    }
+
+    .tab-btn {
+      @apply px-4 py-3 rounded-xl text-sm font-semibold transition-all border border-transparent;
+    }
+
+    .tab-btn-active {
+      @apply bg-primary text-white shadow;
+    }
+
+    .tab-btn-inactive {
+      @apply bg-slate-100 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600;
+    }
+
+    .badge {
+      @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    }
+
+    .badge-active {
+      @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300;
+    }
+
+    .section-title {
+      @apply text-lg font-bold text-slate-900 dark:text-white;
+    }
+
+    .muted {
+      @apply text-sm text-slate-500 dark:text-slate-400;
+    }
+
+    .subtab-btn {
+      @apply px-4 py-2 rounded-lg text-sm font-semibold transition-all border border-transparent;
+    }
+
+    .subtab-btn-active {
+      @apply bg-primary text-white;
+    }
+
+    .subtab-btn-inactive {
+      @apply bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300;
+    }
+
+    .empty-box {
+      @apply rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 p-8 text-center bg-slate-50 dark:bg-slate-900/30;
+    }
+
+    .resource-card {
+      @apply rounded-2xl border border-slate-200 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900/30;
+    }
+  </style>
+</head>
+
+<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200">
+
+  <div class="min-h-screen">
+
+    <header class="fixed top-0 left-0 right-0 h-16 bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 z-50">
+      <div class="h-full flex items-center justify-between px-4 lg:px-8">
+        <div class="flex items-center gap-3">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-20 w-auto object-contain"/>
+        </div>
+
+        <div class="hidden md:flex items-center gap-8">
+          <button onclick="toggleDarkMode && toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+          </button>
+
+          <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">
+            Log Out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
+      <div class="mb-10">
+        <h2 class="text-lg font-bold text-white">LMS</h2>
+        <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
+      </div>
+
+      <nav class="space-y-2">
+        <a class="sidebar-link" href="admin-dashboard.html" id="backDashboardLink">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+
+        <a class="sidebar-link sidebar-active" href="#">
+          <span class="material-symbols-outlined">menu_book</span>
+          <span>Module Details</span>
+        </a>
+
+        <a class="sidebar-link" href="admin-manage-users.html" id="manageUsersLink">
+          <span class="material-symbols-outlined">group</span>
+          <span>Manage Users</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto pt-6 border-t border-white/10">
+        <a class="sidebar-link" href="#">
+          <span class="material-symbols-outlined">help</span>
+          <span>Help and Support</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
+      <main class="flex-1 px-4 md:px-8 xl:px-10 py-8">
+
+        <div class="flex flex-col xl:flex-row justify-between items-start gap-6 mb-8">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-2">Module Workspace</p>
+            <h1 id="moduleTitle" class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Module</h1>
+            <p id="moduleCodeLine" class="text-slate-500 dark:text-slate-400 font-medium">Loading module...</p>
+          </div>
+
+          <div class="dashboard-card p-4 flex items-center gap-4 min-w-[320px]">
+            <img id="moduleHeroImage" src="public/images/admin.jpg" alt="Module Image" class="w-20 h-20 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"/>
+            <div class="flex-1">
+              <p id="moduleHeroName" class="text-sm font-bold text-slate-900 dark:text-white">Module</p>
+              <p id="moduleHeroStatus" class="text-xs text-slate-500 font-semibold uppercase mt-1">Active</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="dashboard-card p-6 mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <p class="muted">Module Code</p>
+              <p id="summaryModuleCode" class="mt-1 font-bold text-slate-900 dark:text-white">-</p>
+            </div>
+            <div>
+              <p class="muted">Created By</p>
+              <p id="summaryCreatedBy" class="mt-1 font-bold text-slate-900 dark:text-white">-</p>
+            </div>
+            <div>
+              <p class="muted">Status</p>
+              <div class="mt-1">
+                <span id="summaryStatus" class="badge badge-active">Active</span>
+              </div>
+            </div>
+            <div>
+              <p class="muted">Created At</p>
+              <p id="summaryCreatedAt" class="mt-1 font-bold text-slate-900 dark:text-white">-</p>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <p class="muted">Description</p>
+            <p id="moduleDescription" class="mt-2 leading-7 text-slate-700 dark:text-slate-300">No description available.</p>
+          </div>
+        </section>
+
+        <section class="mb-6 flex flex-wrap gap-3">
+          <button class="tab-btn tab-btn-active" data-tab="overview">Overview</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="lecturers">Lecturers</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="students">Students</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="exams">Exams</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="bookings">Lab Slot Bookings</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="evaluations">Evaluations</button>
+          <button class="tab-btn tab-btn-inactive" data-tab="materials">Materials</button>
+        </section>
+
+        <section id="tab-overview" class="tab-panel space-y-8">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Module Overview</h2>
+            <p class="muted mt-2">
+              This module acts as the main workspace for exams, materials, submissions, evaluations, and lab slot activity.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900/30">
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">Exams</p>
+                <p class="muted mt-2">Create and manage all module-related practical exams here.</p>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900/30">
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">Materials</p>
+                <p class="muted mt-2">Store lecturer materials and student shared study resources under this module.</p>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900/30">
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">Lab Work</p>
+                <p class="muted mt-2">Track slot bookings, submissions, and evaluations connected to this module.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-lecturers" class="tab-panel hidden">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Lecturers</h2>
+            <p class="muted mt-2">Assigned lecturers for this module will be connected here next.</p>
+
+            <div class="empty-box mt-6">
+              <span class="material-symbols-outlined text-4xl text-slate-400">person</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Lecturer assignment will be connected next</p>
+              <p class="muted mt-1">We’ll link this to the module lecturer table and show enrolled lecturers here.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-students" class="tab-panel hidden">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Students</h2>
+            <p class="muted mt-2">Students enrolled into this module will appear here.</p>
+
+            <div class="empty-box mt-6">
+              <span class="material-symbols-outlined text-4xl text-slate-400">school</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Student enrollment view will be connected next</p>
+              <p class="muted mt-1">This will use your module enrollment table and module key join flow.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-exams" class="tab-panel hidden">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Exams</h2>
+            <p class="muted mt-2">Exams created under this module will be shown here.</p>
+
+            <div class="empty-box mt-6">
+              <span class="material-symbols-outlined text-4xl text-slate-400">quiz</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Exam list will be connected next</p>
+              <p class="muted mt-1">This section will display exams, slots, and exam-based submission access for this module.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-bookings" class="tab-panel hidden">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Lab Slot Bookings</h2>
+            <p class="muted mt-2">Bookings related to this module’s practice and exam activity will appear here.</p>
+
+            <div class="empty-box mt-6">
+              <span class="material-symbols-outlined text-4xl text-slate-400">calendar_view_week</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Module booking view will be connected next</p>
+              <p class="muted mt-1">Your current booking flow is exam and request based, so we’ll map those bookings into the module using exam relationships.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-evaluations" class="tab-panel hidden">
+          <div class="dashboard-card p-6">
+            <h2 class="section-title">Evaluations</h2>
+            <p class="muted mt-2">AI and lecturer evaluations connected to submissions under this module will appear here.</p>
+
+            <div class="empty-box mt-6">
+              <span class="material-symbols-outlined text-4xl text-slate-400">grading</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Evaluation view will be connected next</p>
+              <p class="muted mt-1">This will be linked through submissions and exams that belong to this module.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-materials" class="tab-panel hidden space-y-8">
+
+          <div class="flex flex-wrap gap-3">
+            <button class="subtab-btn subtab-btn-active" data-material-tab="lecturer-materials">Lecturer Materials</button>
+            <button class="subtab-btn subtab-btn-inactive" data-material-tab="student-materials">Student Shared Materials</button>
+          </div>
+
+          <div id="material-subtab-lecturer-materials" class="material-subtab">
+            <div class="dashboard-card overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Lecturer Materials</h2>
+                  <p class="muted mt-1">Official study resources uploaded for this module.</p>
+                </div>
+                <button id="refreshLecturerMaterialsBtn" class="text-sm font-semibold text-primary hover:underline">Refresh</button>
+              </div>
+
+              <div id="lecturerMaterialsList" class="p-6 space-y-4">
+                <p class="muted">Loading materials...</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="material-subtab-student-materials" class="material-subtab hidden">
+            <div class="dashboard-card overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Student Shared Materials</h2>
+                  <p class="muted mt-1">Resources students share with each other under this module.</p>
+                </div>
+                <button id="refreshStudentMaterialsBtn" class="text-sm font-semibold text-primary hover:underline">Refresh</button>
+              </div>
+
+              <div id="studentSharedMaterialsList" class="p-6 space-y-4">
+                <p class="muted">Loading shared materials...</p>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+
+      <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        © 2026 DentaNet LMS.
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+    const FILE_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://localhost:3000/api";
+    let currentModuleId = null;
+
+    function getModuleIdFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("module_id");
+    }
+
+    function buildFileUrl(path) {
+      if (!path) return null;
+      if (path.startsWith("http://") || path.startsWith("https://")) return path;
+      if (path.startsWith("/")) return `${FILE_BASE_URL}${path}`;
+      return path;
+    }
+
+    function setActiveMainTab(tabName) {
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.classList.remove("tab-btn-active");
+        btn.classList.remove("tab-btn-inactive");
+
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add("tab-btn-active");
+        } else {
+          btn.classList.add("tab-btn-inactive");
+        }
+      });
+
+      document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.add("hidden"));
+      const activePanel = document.getElementById(`tab-${tabName}`);
+      if (activePanel) activePanel.classList.remove("hidden");
+    }
+
+    function setActiveMaterialTab(tabName) {
+      document.querySelectorAll("[data-material-tab]").forEach(btn => {
+        btn.classList.remove("subtab-btn-active");
+        btn.classList.remove("subtab-btn-inactive");
+
+        if (btn.dataset.materialTab === tabName) {
+          btn.classList.add("subtab-btn-active");
+        } else {
+          btn.classList.add("subtab-btn-inactive");
+        }
+      });
+
+      document.querySelectorAll(".material-subtab").forEach(panel => panel.classList.add("hidden"));
+      const activePanel = document.getElementById(`material-subtab-${tabName}`);
+      if (activePanel) activePanel.classList.remove("hidden");
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function loadModule() {
+      const moduleId = getModuleIdFromQuery();
+      currentModuleId = moduleId;
+
+      if (!moduleId) {
+        document.getElementById("moduleTitle").textContent = "Module Not Found";
+        document.getElementById("moduleCodeLine").textContent = "No module id was provided.";
+        return;
+      }
+
+      try {
+        const result = await API.modules.getById(moduleId);
+
+        if (!result.ok || !result.module) {
+          document.getElementById("moduleTitle").textContent = "Module Not Found";
+          document.getElementById("moduleCodeLine").textContent = result.error || "Failed to load module.";
+          return;
+        }
+
+        const module = result.module;
+        const fullAdminName = `${module.admin_first_name || ""} ${module.admin_last_name || ""}`.trim() || "-";
+        const isActive = module.is_active === true || module.is_active === 1 || module.is_active === "1";
+
+        document.getElementById("moduleTitle").textContent = module.module_name || "Module";
+        document.getElementById("moduleCodeLine").textContent = module.module_code || "-";
+        document.getElementById("moduleHeroName").textContent = module.module_name || "Module";
+        document.getElementById("moduleHeroStatus").textContent = isActive ? "Active" : "Inactive";
+        document.getElementById("summaryModuleCode").textContent = module.module_code || "-";
+        document.getElementById("summaryCreatedBy").textContent = fullAdminName;
+        document.getElementById("summaryCreatedAt").textContent = formatDate(module.created_at);
+        document.getElementById("moduleDescription").textContent = module.description || "No description available.";
+        document.getElementById("moduleHeroImage").src = module.module_image_url || DEFAULT_MODULE_IMAGE;
+
+        const statusEl = document.getElementById("summaryStatus");
+        statusEl.textContent = isActive ? "Active" : "Inactive";
+        statusEl.className = `badge ${isActive ? "badge-active" : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"}`;
+      } catch (error) {
+        console.error("Load module error:", error);
+        document.getElementById("moduleTitle").textContent = "Module Not Found";
+        document.getElementById("moduleCodeLine").textContent = "Something went wrong while loading the module.";
+      }
+    }
+
+  async function loadStudents() {
+  const container = document.querySelector("#tab-students .dashboard-card");
+
+  if (!container || !currentModuleId) return;
+
+  container.innerHTML = `
+    <h2 class="section-title">Students</h2>
+    <p class="muted mt-2">Loading students...</p>
+  `;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/modules/${currentModuleId}/members`,
+      {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      container.innerHTML = `
+        <div class="empty-box">
+          <p class="font-semibold">Unable to load students</p>
+          <p class="muted">${result.error || "Failed to load students."}</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!result.students.length) {
+      container.innerHTML = `
+        <div class="empty-box">
+          <span class="material-symbols-outlined text-4xl">school</span>
+          <p class="mt-3 font-semibold">No students enrolled</p>
+          <p class="muted">Students who join this module will appear here.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <h2 class="section-title mb-4">Students</h2>
+
+      <div class="space-y-3">
+        ${result.students.map(s => `
+          <div class="resource-card">
+            <p class="font-bold">${s.first_name} ${s.last_name}</p>
+            <p class="muted">Reg No: ${s.registration_number}</p>
+            <p class="muted">Email: ${s.email}</p>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
+
+    async function loadLecturers() {
+  const container = document.querySelector("#tab-lecturers .dashboard-card");
+
+  if (!container || !currentModuleId) return;
+
+  container.innerHTML = `
+    <h2 class="section-title">Lecturers</h2>
+    <p class="muted mt-2">Loading lecturers...</p>
+  `;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/modules/${currentModuleId}/members`,
+      {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      container.innerHTML = `
+        <div class="empty-box">
+          <p class="font-semibold">Unable to load lecturers</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!result.lecturers.length) {
+      container.innerHTML = `
+        <div class="empty-box">
+          <span class="material-symbols-outlined text-4xl">person</span>
+          <p class="mt-3 font-semibold">No lecturers assigned</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <h2 class="section-title mb-4">Lecturers</h2>
+
+      <div class="space-y-3">
+        ${result.lecturers.map(l => `
+          <div class="resource-card">
+            <p class="font-bold">${l.first_name} ${l.last_name}</p>
+            <p class="muted">Staff ID: ${l.staff_id}</p>
+            <p class="muted">Email: ${l.email}</p>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
+
+    async function loadLecturerMaterials() {
+      const list = document.getElementById("lecturerMaterialsList");
+      if (!list || !currentModuleId) return;
+
+      list.innerHTML = `<p class="muted">Loading materials...</p>`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/materials?module_id=${encodeURIComponent(currentModuleId)}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("authToken") || ""}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.ok) {
+          list.innerHTML = `
+            <div class="empty-box">
+              <p class="font-semibold text-slate-900 dark:text-white">Unable to load materials</p>
+              <p class="muted mt-1">${escapeHtml(result.error || "Failed to load lecturer materials.")}</p>
+            </div>
+          `;
+          return;
+        }
+
+        if (!result.materials || result.materials.length === 0) {
+          list.innerHTML = `
+            <div class="empty-box">
+              <span class="material-symbols-outlined text-4xl text-slate-400">upload_file</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">No lecturer materials found</p>
+              <p class="muted mt-1">Materials uploaded under this module will appear here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = result.materials.map(material => {
+          const resourceLink = material.file_url
+            ? buildFileUrl(material.file_url)
+            : material.external_url;
+
+          return `
+            <div class="resource-card">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <p class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Material")}</p>
+                  <p class="muted mt-1">Type: ${escapeHtml(material.material_type_name || "Material")}</p>
+                  <p class="muted mt-1">Uploaded: ${formatDate(material.created_at)}</p>
+                </div>
+
+                ${resourceLink ? `
+                  <a href="${escapeHtml(resourceLink)}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                    Open
+                    <span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+                  </a>
+                ` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        console.error("Load lecturer materials error:", error);
+        list.innerHTML = `
+          <div class="empty-box">
+            <p class="font-semibold text-slate-900 dark:text-white">Unable to load materials</p>
+            <p class="muted mt-1">Something went wrong while loading lecturer materials.</p>
+          </div>
+        `;
+      }
+    }
+
+    async function loadStudentSharedMaterials() {
+      const list = document.getElementById("studentSharedMaterialsList");
+      if (!list || !currentModuleId) return;
+
+      list.innerHTML = `<p class="muted">Loading shared materials...</p>`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/student-materials?module_id=${encodeURIComponent(currentModuleId)}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("authToken") || ""}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.ok) {
+          list.innerHTML = `
+            <div class="empty-box">
+              <p class="font-semibold text-slate-900 dark:text-white">Unable to load shared materials</p>
+              <p class="muted mt-1">${escapeHtml(result.error || "Failed to load student shared materials.")}</p>
+            </div>
+          `;
+          return;
+        }
+
+        if (!result.materials || result.materials.length === 0) {
+          list.innerHTML = `
+            <div class="empty-box">
+              <span class="material-symbols-outlined text-4xl text-slate-400">library_books</span>
+              <p class="mt-3 font-semibold text-slate-900 dark:text-white">No student shared materials found</p>
+              <p class="muted mt-1">Resources shared by students under this module will appear here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = result.materials.map(material => {
+          const resourceLink = material.file_url
+            ? buildFileUrl(material.file_url)
+            : material.external_url;
+
+          const sharedBy = `${material.student_first_name || ""} ${material.student_last_name || ""}`.trim() || "Student";
+
+          return `
+            <div class="resource-card">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <p class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Material")}</p>
+                  <p class="muted mt-1">Shared by: ${escapeHtml(sharedBy)}</p>
+                  <p class="muted mt-1">Registration No.: ${escapeHtml(material.registration_number || "-")}</p>
+                  <p class="muted mt-1">Type: ${escapeHtml(material.material_type_name || "Material")}</p>
+                  <p class="muted mt-1">Uploaded: ${formatDate(material.created_at)}</p>
+                  ${material.description ? `<p class="muted mt-2">${escapeHtml(material.description)}</p>` : ""}
+                </div>
+
+                ${resourceLink ? `
+                  <a href="${escapeHtml(resourceLink)}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                    Open
+                    <span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+                  </a>
+                ` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        console.error("Load student shared materials error:", error);
+        list.innerHTML = `
+          <div class="empty-box">
+            <p class="font-semibold text-slate-900 dark:text-white">Unable to load shared materials</p>
+            <p class="muted mt-1">Something went wrong while loading student shared materials.</p>
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await requireAuth();
+      if (!user) return;
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => API.auth.logout());
+      }
+
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => setActiveMainTab(btn.dataset.tab));
+      });
+
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+
+          const tab = btn.dataset.tab;
+
+          setActiveMainTab(tab);
+
+          if (tab === "students") {
+            loadStudents();
+          }
+
+          if (tab === "lecturers") {
+            loadLecturers();
+          }
+
+        });
+      });
+
+      const refreshLecturerMaterialsBtn = document.getElementById("refreshLecturerMaterialsBtn");
+      if (refreshLecturerMaterialsBtn) {
+        refreshLecturerMaterialsBtn.addEventListener("click", loadLecturerMaterials);
+      }
+
+      const refreshStudentMaterialsBtn = document.getElementById("refreshStudentMaterialsBtn");
+      if (refreshStudentMaterialsBtn) {
+        refreshStudentMaterialsBtn.addEventListener("click", loadStudentSharedMaterials);
+      }
+
+      setActiveMainTab("overview");
+      setActiveMaterialTab("lecturer-materials");
+
+      await loadModule();
+      await loadLecturerMaterials();
+    });
+  </script>
+</body>
+</html>

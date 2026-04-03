@@ -49,7 +49,6 @@
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
-  <!-- TOP NAV -->
   <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
     <div class="px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
@@ -63,7 +62,7 @@
           </button>
 
           <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
-            <img alt="Lecturer Profile Small" src="public/images/lec.jpeg" />
+            <img id="lecturerProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
           </div>
         </div>
       </div>
@@ -71,7 +70,6 @@
   </nav>
 
   <div class="flex pt-16 min-h-screen">
-    <!-- SIDEBAR -->
     <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
       <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
         <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html">
@@ -117,25 +115,23 @@
       </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="flex-1 lg:ml-64 bg-slate-50 dark:bg-slate-950">
       <div class="p-8 max-w-7xl mx-auto">
         <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Lab Slot Monitoring</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400">View exam and practice slot occupancy, recent requests, and machine deployment.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">View exam slot occupancy, recent requests, and current machine deployment.</p>
           </div>
         </div>
 
-        <!-- Overview -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl mb-8 shadow-sm flex gap-4 items-start">
+        <div id="overviewCard" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl mb-8 shadow-sm flex gap-4 items-start">
           <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
             <span class="material-symbols-outlined">info</span>
           </div>
           <div>
             <h3 class="font-bold text-slate-900 dark:text-white">Lab Slot Overview</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
-              Practical exam date: <span class="font-bold">February 15, 2026</span> • Session capacity: <span class="font-bold">20 students per slot</span>
+            <p id="overviewText" class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              Loading latest scheduled exam details...
             </p>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 italic">
               Read-only monitoring for lecturer view.
@@ -143,7 +139,6 @@
           </div>
         </div>
 
-        <!-- Slot cards -->
         <div class="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold">
           <span class="material-symbols-outlined text-primary">analytics</span>
           <h2>Exam Slot Capacity Monitoring</h2>
@@ -153,7 +148,6 @@
           <p class="text-slate-500">Loading slot data...</p>
         </div>
 
-        <!-- Recent booking requests -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm mb-10">
           <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">event_note</span>
@@ -166,6 +160,7 @@
                 <tr class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider">
                   <th class="px-6 py-4">Student</th>
                   <th class="px-6 py-4">Type</th>
+                  <th class="px-6 py-4">Exam / Purpose</th>
                   <th class="px-6 py-4">Date</th>
                   <th class="px-6 py-4">Time</th>
                   <th class="px-6 py-4">Status</th>
@@ -174,14 +169,13 @@
               </thead>
               <tbody id="bookingTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                 <tr>
-                  <td colspan="6" class="px-6 py-4 text-slate-500">Loading bookings...</td>
+                  <td colspan="7" class="px-6 py-4 text-slate-500">Loading bookings...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Machine deployment -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
           <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -235,36 +229,76 @@
   </footer>
 
 <script>
-const EXAM_DATE = "2026-02-15";
-
-const examSlots = [
-  { start: "08:00:00", end: "09:00:00", label: "8:00 AM - 9:00 AM", session: "Morning Session" },
-  { start: "09:00:00", end: "10:00:00", label: "9:00 AM - 10:00 AM", session: "Morning Session" },
-  { start: "10:00:00", end: "11:00:00", label: "10:00 AM - 11:00 AM", session: "Morning Session" },
-  { start: "11:00:00", end: "12:00:00", label: "11:00 AM - 12:00 PM", session: "Morning Session" },
-  { start: "13:00:00", end: "14:00:00", label: "1:00 PM - 2:00 PM", session: "Afternoon Session" },
-  { start: "14:00:00", end: "15:00:00", label: "2:00 PM - 3:00 PM", session: "Afternoon Session" }
-];
+let latestScheduledExam = null;
+let latestSlots = [];
+let latestBookings = [];
 
 function formatTime(timeStr) {
   if (!timeStr) return "";
-  const [h, m] = timeStr.split(":");
+  const [h, m] = String(timeStr).split(":");
   const hour = parseInt(h, 10);
   const suffix = hour >= 12 ? "PM" : "AM";
   const formattedHour = hour % 12 || 12;
   return `${formattedHour}:${m} ${suffix}`;
 }
 
-function renderSlotCards(bookings) {
-  const container = document.getElementById("slotCardsContainer");
-  const examBookings = bookings.filter(b => b.slot_type === "EXAM" && b.status === "APPROVED");
+function formatDate(dateStr) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString();
+}
 
-  container.innerHTML = examSlots.map(slot => {
-    const bookedCount = examBookings.filter(
-      b => b.booking_date === EXAM_DATE && b.start_time === slot.start
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildOverviewCard(exam, slots) {
+  const overviewText = document.getElementById("overviewText");
+
+  if (!overviewText) return;
+
+  if (!exam) {
+    overviewText.textContent = "No scheduled exams are available right now.";
+    return;
+  }
+
+  const totalCapacity = slots.reduce((sum, slot) => sum + Number(slot.max_machines || 0), 0);
+
+  overviewText.innerHTML = `
+    Practical exam date: <span class="font-bold">${formatDate(exam.exam_date)}</span>
+    • Available slots: <span class="font-bold">${slots.length}</span>
+    • Total slot capacity: <span class="font-bold">${totalCapacity}</span>
+  `;
+}
+
+function renderSlotCards(slots, bookings) {
+  const container = document.getElementById("slotCardsContainer");
+
+  if (!container) return;
+
+  if (!slots.length) {
+    container.innerHTML = `<p class="text-slate-500">No exam slots available right now.</p>`;
+    return;
+  }
+
+  const approvedExamBookings = bookings.filter(
+    b => b.slot_type === "EXAM" && b.status === "APPROVED"
+  );
+
+  container.innerHTML = slots.map(slot => {
+    const bookedCount = approvedExamBookings.filter(
+      b => String(b.slot_id) === String(slot.slot_id)
     ).length;
 
-    const isFull = bookedCount >= 20;
+    const capacity = Number(slot.max_machines || 0);
+    const isFull = capacity > 0 && bookedCount >= capacity;
+
     let badge = "Scheduled";
     let badgeClass = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
     let barClass = "bg-green-500";
@@ -273,19 +307,20 @@ function renderSlotCards(bookings) {
       badge = "Full";
       badgeClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       barClass = "bg-red-500";
-    } else if (bookedCount >= 15) {
+    } else if (bookedCount >= Math.max(capacity - 2, 1)) {
+      badge = "Almost Full";
       badgeClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
       barClass = "bg-amber-500";
     }
 
-    const width = Math.min((bookedCount / 20) * 100, 100);
+    const width = capacity ? Math.min((bookedCount / capacity) * 100, 100) : 0;
 
     return `
       <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border ${isFull ? "border-red-200 dark:border-red-900/30" : "border-slate-200 dark:border-slate-800"} hover:shadow-lg hover:shadow-primary/5 transition-all">
         <div class="flex justify-between items-start mb-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${slot.label}</h3>
-            <p class="text-slate-500 text-sm">${slot.session}</p>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</h3>
+            <p class="text-slate-500 text-sm">${formatDate(slot.slot_date)}</p>
           </div>
           <span class="px-2 py-1 ${badgeClass} rounded text-xs font-bold uppercase tracking-wider">${badge}</span>
         </div>
@@ -293,7 +328,7 @@ function renderSlotCards(bookings) {
         <div class="mb-6">
           <div class="flex justify-between text-xs mb-1">
             <span class="text-slate-500">Current Occupancy</span>
-            <span class="font-bold ${isFull ? "text-red-600" : bookedCount >= 15 ? "text-amber-600" : "text-green-600"}">${bookedCount}/20 Students</span>
+            <span class="font-bold ${isFull ? "text-red-600" : bookedCount >= Math.max(capacity - 2, 1) ? "text-amber-600" : "text-green-600"}">${bookedCount}/${capacity} Students</span>
           </div>
           <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
             <div class="${barClass} h-full" style="width:${width}%"></div>
@@ -312,19 +347,22 @@ function renderSlotCards(bookings) {
 function renderBookingTable(bookings) {
   const tbody = document.getElementById("bookingTableBody");
 
+  if (!tbody) return;
+
   if (!bookings.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-slate-500">No booking requests found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-slate-500">No booking requests found.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = bookings.map(b => `
     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${b.first_name || ""} ${b.last_name || ""}</td>
-      <td class="px-6 py-4">${b.slot_type}</td>
-      <td class="px-6 py-4">${b.booking_date}</td>
+      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${escapeHtml(b.first_name || "")} ${escapeHtml(b.last_name || "")}</td>
+      <td class="px-6 py-4">${escapeHtml(b.slot_type)}</td>
+      <td class="px-6 py-4">${b.slot_type === "EXAM" ? escapeHtml(b.exam_name || "-") : escapeHtml(b.purpose || "-")}</td>
+      <td class="px-6 py-4">${formatDate(b.booking_date)}</td>
       <td class="px-6 py-4">${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
-      <td class="px-6 py-4">${b.status}</td>
-      <td class="px-6 py-4">${b.machine_code || "-"}</td>
+      <td class="px-6 py-4">${escapeHtml(b.status)}</td>
+      <td class="px-6 py-4">${escapeHtml(b.machine_code || "-")}</td>
     </tr>
   `).join("");
 }
@@ -333,6 +371,8 @@ function renderMachineTable(bookings) {
   const tbody = document.getElementById("machineTableBody");
   const approved = bookings.filter(b => b.status === "APPROVED" && b.machine_code);
 
+  if (!tbody) return;
+
   if (!approved.length) {
     tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-slate-500">No active machine allocations found.</td></tr>`;
     return;
@@ -340,7 +380,7 @@ function renderMachineTable(bookings) {
 
   tbody.innerHTML = approved.map(b => `
     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${b.machine_code}</td>
+      <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${escapeHtml(b.machine_code)}</td>
       <td class="px-6 py-4">
         <span class="px-3 py-1 ${
           b.machine_status === "maintenance"
@@ -349,34 +389,74 @@ function renderMachineTable(bookings) {
               ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
               : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
         } rounded-full text-xs font-bold">
-          ${b.machine_status || "ready"}
+          ${escapeHtml(b.machine_status || "ready")}
         </span>
       </td>
-      <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">${b.first_name || ""} ${b.last_name || ""}</td>
+      <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">${escapeHtml(b.first_name || "")} ${escapeHtml(b.last_name || "")}</td>
       <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
     </tr>
   `).join("");
+}
+
+async function loadExamAndSlots() {
+  const examsResult = await API.exams.getAll(null, "SCHEDULED");
+
+  if (!examsResult.ok) {
+    document.getElementById("slotCardsContainer").innerHTML = `<p class="text-red-600">${examsResult.error || "Failed to load scheduled exams"}</p>`;
+    return;
+  }
+
+  const exams = examsResult.exams || [];
+  latestScheduledExam = exams[0] || null;
+
+  if (!latestScheduledExam) {
+    buildOverviewCard(null, []);
+    document.getElementById("slotCardsContainer").innerHTML = `<p class="text-slate-500">No scheduled exams found.</p>`;
+    return;
+  }
+
+  const slotsResult = await API.examSlots.getByExamId(latestScheduledExam.exam_id);
+
+  if (!slotsResult.ok) {
+    buildOverviewCard(latestScheduledExam, []);
+    document.getElementById("slotCardsContainer").innerHTML = `<p class="text-red-600">${slotsResult.error || "Failed to load exam slots"}</p>`;
+    return;
+  }
+
+  latestSlots = slotsResult.slots || [];
+  buildOverviewCard(latestScheduledExam, latestSlots);
 }
 
 async function loadBookings() {
   const result = await API.bookings.getAll();
 
   if (!result.ok) {
-    document.getElementById("slotCardsContainer").innerHTML = `<p class="text-red-600">${result.error || "Failed to load booking data"}</p>`;
-    document.getElementById("bookingTableBody").innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-red-600">Failed to load bookings</td></tr>`;
+    document.getElementById("bookingTableBody").innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-red-600">Failed to load bookings</td></tr>`;
     document.getElementById("machineTableBody").innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-red-600">Failed to load machine deployment</td></tr>`;
     return;
   }
 
-  const bookings = result.bookings || [];
-  renderSlotCards(bookings);
-  renderBookingTable(bookings);
-  renderMachineTable(bookings);
+  latestBookings = result.bookings || [];
+
+  let relevantBookings = latestBookings;
+
+  if (latestScheduledExam) {
+    relevantBookings = latestBookings.filter(b => String(b.exam_id) === String(latestScheduledExam.exam_id) || b.slot_type === "PRACTICE");
+  }
+
+  renderSlotCards(latestSlots, relevantBookings);
+  renderBookingTable(relevantBookings);
+  renderMachineTable(relevantBookings);
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
   const user = await requireAuth("lecturer");
   if (!user) return;
+
+  const profileImageEl = document.getElementById("lecturerProfileImage");
+  if (profileImageEl && user.profile_image_url) {
+    profileImageEl.src = `http://localhost:3000${user.profile_image_url}?t=${Date.now()}`;
+  }
 
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
@@ -385,8 +465,9 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
   }
 
-  loadBookings();
+  await loadExamAndSlots();
+  await loadBookings();
 });
 </script>
 </body>
-</html> 
+</html>

@@ -318,385 +318,418 @@
     <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
   </button>
 
-  <script>
-    const API_BASE = 'http://localhost:3000';
-    const urlParams = new URLSearchParams(window.location.search);
-    const examId = urlParams.get('exam_id');
-    const requestId = urlParams.get('request_id');
+<script>
 
-    let submissionMode = null;
-    if (examId) {
-      submissionMode = 'EXAM';
-    } else if (requestId) {
-      submissionMode = 'PRACTICE';
-    }
+const API_BASE = 'http://localhost:3000';
 
-    let selectedFiles = [];
-    let pageData = null;
-    let submissionHistory = [];
+const urlParams = new URLSearchParams(window.location.search);
+const examId = urlParams.get('exam_id');
+const requestId = urlParams.get('request_id');
 
-    const alertBox = document.getElementById('alertBox');
-    const examNameInput = document.getElementById('examName');
-    const examDateInput = document.getElementById('examDate');
-    const examTimeInput = document.getElementById('examTime');
-    const attemptSummaryInput = document.getElementById('attemptSummary');
-    const commentsInput = document.getElementById('caseDescription');
-    const imageInput = document.getElementById('imageInput');
-    const selectedFilesDiv = document.getElementById('selectedFiles');
-    const historyTableBody = document.getElementById('historyTableBody');
-    const submitBtn = document.getElementById('submitBtn');
-    const clearBtn = document.getElementById('clearBtn');
+let submissionMode = null;
 
-    function getToken() {
-      return localStorage.getItem('token');
-    }
+if (examId) submissionMode = 'EXAM';
+if (requestId) submissionMode = 'PRACTICE';
 
-    function showAlert(message, type = 'error') {
-      const text = typeof message === 'string'
-        ? message
-        : (message?.message || 'Something went wrong');
+let selectedFiles = [];
+let pageData = null;
+let submissionHistory = [];
 
-      alertBox.classList.remove(
-        'hidden',
-        'bg-red-100', 'text-red-700', 'border', 'border-red-200',
-        'bg-green-100', 'text-green-700', 'border-green-200'
+const alertBox = document.getElementById('alertBox');
+const examNameInput = document.getElementById('examName');
+const examDateInput = document.getElementById('examDate');
+const examTimeInput = document.getElementById('examTime');
+const attemptSummaryInput = document.getElementById('attemptSummary');
+const commentsInput = document.getElementById('caseDescription');
+const imageInput = document.getElementById('imageInput');
+const selectedFilesDiv = document.getElementById('selectedFiles');
+const historyTableBody = document.getElementById('historyTableBody');
+const submitBtn = document.getElementById('submitBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+function getToken() {
+  return localStorage.getItem('token');
+}
+
+function showAlert(message, type = 'error') {
+
+  alertBox.classList.remove('hidden');
+
+  if (type === 'success') {
+
+    alertBox.className =
+      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200";
+
+  } else {
+
+    alertBox.className =
+      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
+
+  }
+
+  alertBox.textContent = message;
+}
+
+function formatDate(dateValue) {
+
+  if (!dateValue) return "-";
+
+  const date = new Date(dateValue);
+
+  return date.toLocaleDateString(
+    "en-US",
+    { year:"numeric", month:"long", day:"numeric" }
+  );
+}
+
+function formatTime(timeValue) {
+
+  if (!timeValue) return "-";
+
+  const [h,m] = timeValue.split(":");
+
+  const hour = parseInt(h);
+
+  const suffix = hour >= 12 ? "PM":"AM";
+
+  const formattedHour = hour % 12 || 12;
+
+  return `${formattedHour}:${m} ${suffix}`;
+}
+
+/* ===========================
+   LOAD PAGE DATA
+=========================== */
+
+async function loadSubmissionPage() {
+
+  try {
+
+    if (!submissionMode) {
+
+      showAlert(
+        "Open this page from submission hub."
       );
 
-      if (type === 'success') {
-        alertBox.classList.add('bg-green-100', 'text-green-700', 'border', 'border-green-200');
-      } else {
-        alertBox.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-200');
-      }
-
-      alertBox.textContent = text;
+      return;
     }
 
-    function clearAlert() {
-      alertBox.classList.add('hidden');
-      alertBox.textContent = '';
+    const token = getToken();
+
+    if (!token) {
+
+      showAlert("User not logged in");
+
+      return;
     }
 
-    function formatDate(dateValue) {
-      if (!dateValue) return '-';
-      const date = new Date(dateValue);
-      if (Number.isNaN(date.getTime())) return dateValue;
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+    let endpoint;
+
+    if (submissionMode === "EXAM") {
+
+      endpoint =
+        `${API_BASE}/submissions/exam/${examId}`;
+
+    } else {
+
+      endpoint =
+        `${API_BASE}/submissions/practice/${requestId}`;
+
+    }
+
+    const response =
+      await fetch(endpoint,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
       });
+
+    const data =
+      await response.json();
+
+    if (!response.ok)
+      throw new Error(data.error);
+
+    pageData =
+      submissionMode === "EXAM"
+      ? data.exam
+      : data.practice;
+
+    submissionHistory =
+      data.history || [];
+
+    renderPageData();
+    renderHistory();
+
+  } catch(error){
+
+    showAlert(
+      error.message ||
+      "Failed to load submission"
+    );
+  }
+}
+
+/* ===========================
+   RENDER PAGE DATA
+=========================== */
+
+function renderPageData(){
+
+  if (!pageData) return;
+
+  if (submissionMode === "EXAM") {
+
+    examNameInput.value =
+      pageData.exam_name;
+
+    examDateInput.value =
+      formatDate(pageData.slot_date);
+
+    examTimeInput.value =
+      `${formatTime(pageData.exam_start_time)}
+       - ${formatTime(pageData.exam_end_time)}`;
+
+  }
+
+  else {
+
+    examNameInput.value =
+      pageData.purpose || "Practice";
+
+    examDateInput.value =
+      formatDate(pageData.booking_date);
+
+    examTimeInput.value =
+      `${formatTime(pageData.start_time)}
+       - ${formatTime(pageData.end_time)}`;
+
+  }
+
+  attemptSummaryInput.value =
+    `${submissionHistory.length} submission`;
+
+}
+
+/* ===========================
+   FILE HANDLING
+=========================== */
+
+function renderSelectedFiles(){
+
+  if (!selectedFiles.length){
+
+    selectedFilesDiv.innerHTML =
+      `<p class="text-sm text-gray-500">
+        No files selected yet.
+      </p>`;
+
+    return;
+  }
+
+  selectedFilesDiv.innerHTML =
+    selectedFiles.map((file,i)=>`
+
+<div class="flex justify-between border rounded-xl px-4 py-3">
+
+<span>${file.name}</span>
+
+<button
+onclick="removeFile(${i})"
+class="text-red-500 text-sm font-semibold">
+
+Remove
+
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+window.removeFile=function(index){
+
+  selectedFiles.splice(index,1);
+
+  renderSelectedFiles();
+
+};
+
+imageInput.addEventListener(
+"change",
+(event)=>{
+
+  const newFiles =
+    Array.from(event.target.files);
+
+  for (const file of newFiles){
+
+    if (
+      !["image/jpeg","image/png"]
+      .includes(file.type)
+    ){
+
+      showAlert(
+        "Only JPG or PNG allowed"
+      );
+
+      return;
     }
 
-    function formatTime(timeValue) {
-      if (!timeValue) return '-';
-      const [h, m] = String(timeValue).split(':');
-      const hour = parseInt(h, 10);
-      const suffix = hour >= 12 ? 'PM' : 'AM';
-      const formattedHour = hour % 12 || 12;
-      return `${formattedHour}:${m} ${suffix}`;
+    if (file.size > 10*1024*1024){
+
+      showAlert(
+        "File too large"
+      );
+
+      return;
     }
 
-    function getDisplayName() {
-      if (!pageData) return '-';
-      if (submissionMode === 'EXAM') return pageData.exam_name || '-';
-      return pageData.purpose || 'Practice Session';
+    selectedFiles.push(file);
+
+  }
+
+  if (selectedFiles.length>3){
+
+    selectedFiles =
+      selectedFiles.slice(0,3);
+
+    showAlert(
+      "Max 3 images allowed"
+    );
+  }
+
+  renderSelectedFiles();
+
+});
+/* ===========================
+   SUBMIT
+=========================== */
+
+async function submitCurrentItem(){
+
+  try{
+
+    if (!selectedFiles.length){
+
+      showAlert(
+        "Please select images"
+      );
+
+      return;
     }
 
-    function updateStaticLabels() {
-      const pageTitle = document.getElementById('pageTitle');
-      const pageSubtitle = document.getElementById('pageSubtitle');
-      const nameLabel = document.getElementById('nameLabel');
-      const dateLabel = document.getElementById('dateLabel');
-      const timeLabel = document.getElementById('timeLabel');
-      const historyNameHeader = document.getElementById('historyNameHeader');
+    submitBtn.disabled=true;
+    submitBtn.textContent="Submitting...";
 
-      if (submissionMode === 'PRACTICE') {
-        pageTitle.textContent = 'Practice Session Submission';
-        pageSubtitle.textContent = 'Upload up to 3 images and submit them for evaluation.';
-        nameLabel.textContent = 'Practice Session';
-        dateLabel.textContent = 'Session Date';
-        timeLabel.textContent = 'Session Time';
-        historyNameHeader.textContent = 'Practice Session';
-        submitBtn.textContent = 'Submit Practice Session';
-      } else {
-        pageTitle.textContent = 'Practical Examination Submission';
-        pageSubtitle.textContent = 'Upload up to 3 images and submit them for evaluation.';
-        nameLabel.textContent = 'Examination';
-        dateLabel.textContent = 'Scheduled Date';
-        timeLabel.textContent = 'Scheduled Time';
-        historyNameHeader.textContent = 'Examination';
-        submitBtn.textContent = 'Submit Practical Examination';
-      }
-    }
+    const formData=new FormData();
 
-    function updateStatusCard() {
-      document.getElementById('statusExamName').textContent = getDisplayName();
-      document.getElementById('statusSubmissionCount').textContent = String(submissionHistory.length);
+    formData.append(
+      "requestId",
+      pageData.request_id
+    );
 
-      const latest = submissionHistory[0];
-      const latestStatus = latest
-        ? (latest.pass_fail || latest.decision || latest.api_status || 'Pending Review')
-        : 'No Submission Yet';
+    formData.append(
+      "submissionType",
+      submissionMode
+    );
 
-      document.getElementById('statusLatest').textContent = latestStatus;
-    }
+    formData.append(
+      "comments",
+      commentsInput.value
+    );
 
-    function renderPageData() {
-      if (!pageData) return;
-
-      examNameInput.value = getDisplayName();
-
-      if (submissionMode === 'EXAM') {
-        examDateInput.value = formatDate(pageData.slot_date || pageData.booking_date);
-        examTimeInput.value = `${formatTime(pageData.exam_start_time || pageData.start_time)} - ${formatTime(pageData.exam_end_time || pageData.end_time)}`;
-      } else {
-        examDateInput.value = formatDate(pageData.booking_date);
-        examTimeInput.value = `${formatTime(pageData.start_time)} - ${formatTime(pageData.end_time)}`;
-      }
-
-      attemptSummaryInput.value = `${submissionHistory.length} submission${submissionHistory.length === 1 ? '' : 's'}`;
-      updateStatusCard();
-    }
-
-    function renderSelectedFiles() {
-      if (!selectedFiles.length) {
-        selectedFilesDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">No files selected yet.</p>';
-        return;
-      }
-
-      selectedFilesDiv.innerHTML = selectedFiles.map((file, index) => `
-        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
-          <div class="min-w-0">
-            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${file.name}</p>
-            <p class="text-xs text-gray-500">${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-          </div>
-          <button type="button" class="text-red-500 text-sm font-semibold hover:underline ml-4" onclick="removeSelectedFile(${index})">
-            Remove
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function renderHistory() {
-      if (!submissionHistory.length) {
-        historyTableBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="px-4 py-8 text-sm text-gray-500 text-center">No submissions yet.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      historyTableBody.innerHTML = submissionHistory.map(item => {
-        let resultText = '-';
-        let statusText = 'Pending Review';
-
-        if (submissionMode === 'EXAM') {
-          resultText =
-            item.published_grade != null ? item.published_grade :
-            item.final_grade != null ? item.final_grade :
-            '-';
-          statusText = item.pass_fail || item.decision || 'Pending Review';
-        } else {
-          resultText =
-            item.final_grade != null ? item.final_grade :
-            item.api_score != null ? item.api_score :
-            '-';
-          statusText = item.pass_fail || item.api_status || 'Pending Evaluation';
-        }
-
-        return `
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
-            <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${getDisplayName()}</td>
-            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${item.attempt_number || '-'}</td>
-            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${statusText}</td>
-            <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">${resultText}</td>
-            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">${item.submitted_at ? formatDate(item.submitted_at) : '-'}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    window.removeSelectedFile = function(index) {
-      selectedFiles.splice(index, 1);
-      renderSelectedFiles();
-    };
-
-    imageInput.addEventListener('change', (event) => {
-      const newFiles = Array.from(event.target.files || []);
-      if (!newFiles.length) return;
-
-      for (const file of newFiles) {
-        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-          showAlert('Only JPG and PNG images are allowed.');
-          imageInput.value = '';
-          return;
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-          showAlert(`"${file.name}" exceeds the 10MB file size limit.`);
-          imageInput.value = '';
-          return;
-        }
-
-        const alreadyExists = selectedFiles.some(existing =>
-          existing.name === file.name &&
-          existing.size === file.size &&
-          existing.lastModified === file.lastModified
-        );
-
-        if (!alreadyExists) {
-          selectedFiles.push(file);
-        }
-      }
-
-      if (selectedFiles.length > 3) {
-        selectedFiles = selectedFiles.slice(0, 3);
-        showAlert('You can upload a maximum of 3 images.');
-      } else {
-        clearAlert();
-      }
-
-      imageInput.value = '';
-      renderSelectedFiles();
+    selectedFiles.forEach(file=>{
+      formData.append("images",file);
     });
 
-    async function loadSubmissionPage() {
-      try {
-        if (!submissionMode) {
-          showAlert('Open this page from the dashboard or from a selected submission item.');
-          submitBtn.disabled = true;
-          submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-          examNameInput.value = 'No item selected';
-          examDateInput.value = '-';
-          examTimeInput.value = '-';
-          attemptSummaryInput.value = '-';
-          return;
-        }
-
-        const token = getToken();
-        let endpoint = '';
-
-        if (submissionMode === 'EXAM') {
-          endpoint = `${API_BASE}/submissions/exam/${examId}`;
-        } else {
-          endpoint = `${API_BASE}/submissions/practice/${requestId}`;
-        }
-
-        const response = await fetch(endpoint, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load submission data');
-        }
-
-        pageData = submissionMode === 'EXAM' ? data.exam : data.practice;
-        submissionHistory = data.history || [];
-
-        updateStaticLabels();
-        renderPageData();
-        renderHistory();
-      } catch (error) {
-        showAlert(error.message || 'Failed to load submission data');
-      }
-    }
-
-    async function submitCurrentItem() {
-      try {
-        clearAlert();
-
-        if (!submissionMode || !pageData) {
-          showAlert('No submission item was selected.');
-          return;
-        }
-
-        if (!selectedFiles.length) {
-          showAlert('Please select at least one image.');
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
-
-        const formData = new FormData();
-        formData.append('requestId', pageData.request_id);
-        formData.append('submissionType', submissionMode);
-        formData.append('comments', commentsInput.value.trim());
-
-        selectedFiles.forEach(file => {
-          formData.append('images', file);
-        });
-
-        const response = await fetch(`${API_BASE}/submissions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${getToken()}`
+    const response=
+      await fetch(
+        `${API_BASE}/submissions`,
+        {
+          method:"POST",
+          headers:{
+            Authorization:
+              `Bearer ${getToken()}`
           },
-          body: formData
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Submission failed');
+          body:formData
         }
+      );
 
-        showAlert('Submission completed successfully.', 'success');
-        selectedFiles = [];
-        commentsInput.value = '';
-        renderSelectedFiles();
-        await loadSubmissionPage();
-      } catch (error) {
-        showAlert(error.message || 'Submission failed');
-      } finally {
-        submitBtn.disabled = false;
-        updateStaticLabels();
-      }
-    }
+    const data=
+      await response.json();
 
-    clearBtn.addEventListener('click', () => {
-      selectedFiles = [];
-      commentsInput.value = '';
-      imageInput.value = '';
-      renderSelectedFiles();
-      clearAlert();
-    });
+    if (!response.ok)
+      throw new Error(data.error);
 
-    submitBtn.addEventListener('click', submitCurrentItem);
+    showAlert(
+      "Submission successful",
+      "success"
+    );
 
-    document.addEventListener('DOMContentLoaded', async function () {
-      if (typeof requireAuth !== "function") {
-        alert("api.js failed to load correctly.");
-        return;
-      }
+    selectedFiles=[];
+    commentsInput.value="";
 
-      const user = await requireAuth("student");
-      if (!user) return;
+    renderSelectedFiles();
 
-      const fullName =
-        user.fullName ||
-        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-        "Student";
+    await loadSubmissionPage();
 
-      const nameEl = document.getElementById("studentProfileName");
-      if (nameEl) nameEl.textContent = fullName;
+  }
 
-      const logoutBtn = document.getElementById("logoutBtn");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          API.auth.logout();
-        };
-      }
+  catch(error){
 
-      updateStaticLabels();
-      renderSelectedFiles();
-      loadSubmissionPage();
-    });
-  </script>
+    showAlert(
+      error.message ||
+      "Submission failed"
+    );
+
+  }
+
+  finally{
+
+    submitBtn.disabled=false;
+    submitBtn.textContent="Submit";
+
+  }
+
+}
+
+/* ===========================
+   BUTTONS
+=========================== */
+
+submitBtn.addEventListener(
+"click",
+submitCurrentItem
+);
+
+clearBtn.addEventListener(
+"click",
+()=>{
+  selectedFiles=[];
+  commentsInput.value="";
+
+  renderSelectedFiles();
+}
+);
+
+/* ===========================
+   INIT
+=========================== */
+
+document.addEventListener(
+"DOMContentLoaded",
+async ()=>{
+
+  const user=
+    await requireAuth("student");
+
+  if (!user) return;
+
+  loadSubmissionPage();
+
+});
+</script>
 </body>
 </html>

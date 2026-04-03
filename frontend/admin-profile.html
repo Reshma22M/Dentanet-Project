@@ -1,253 +1,455 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Profile - DentaNet</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Profile - DentaNet</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="assets/js/api.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/api.js"></script>
 
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        primary: "#1E3A8A",
-        accent: "#3B82F6",
-        "bg-main": "#F1F5F9",
-        "bg-sidebar": "#0F172A"
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1E3A8A",
+            accent: "#3B82F6",
+            "bg-main": "#F1F5F9",
+            "bg-sidebar": "#0F172A",
+            "card-border": "#E2E8F0"
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+            sans: ["Inter", "sans-serif"]
+          },
+          boxShadow: {
+            soft: "0 8px 30px rgba(15, 23, 42, 0.06)"
+          }
+        }
       }
-    }
-  }
-};
-</script>
+    };
+  </script>
 
+  <style type="text/tailwindcss">
+    @layer base {
+      body { @apply font-sans; }
+    }
+
+    .sidebar-link {
+      @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all;
+    }
+
+    .sidebar-active {
+      @apply bg-white text-slate-900 font-semibold shadow-sm;
+    }
+
+    .dashboard-card {
+      @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-soft;
+    }
+
+    .field-label {
+      @apply block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2;
+    }
+
+    .input-field {
+      @apply w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary;
+    }
+
+    .input-readonly {
+      @apply w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 py-3 text-sm text-slate-500 dark:text-slate-400;
+    }
+
+    .btn-primary {
+      @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-accent text-white px-6 py-3 text-sm font-semibold transition-all;
+    }
+
+    .btn-secondary {
+      @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-6 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-all;
+    }
+
+    .info-chip {
+      @apply inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-700/60 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300;
+    }
+  </style>
 </head>
 
-<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200">
 
-<!-- TOP NAV -->
-<nav class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+  <div class="min-h-screen">
 
-    <img src="blue-logo.svg" class="h-24"/>
+    <header class="fixed top-0 left-0 right-0 h-16 bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 z-50">
+      <div class="h-full flex items-center justify-between px-4 lg:px-8">
+        <div class="flex items-center gap-3">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-20 w-auto object-contain"/>
+        </div>
 
-    <button id="logoutBtn"
-      class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-lg text-sm font-semibold">
-      Log Out
-    </button>
+        <div class="hidden md:flex items-center gap-8">
+          <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-dashboard.html">Dashboard</a>
+          <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-manage-users.html">Manage Users</a>
 
+          <button onclick="toggleDarkMode && toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+          </button>
+
+          <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">
+            Log Out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
+      <div class="mb-10">
+        <h2 class="text-lg font-bold text-white">LMS</h2>
+        <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
+      </div>
+
+      <nav class="space-y-2">
+        <a class="sidebar-link" href="admin-dashboard.html">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+
+        <a class="sidebar-link" href="admin-manage-users.html">
+          <span class="material-symbols-outlined">group</span>
+          <span>Manage Users</span>
+        </a>
+
+        <a class="sidebar-link sidebar-active" href="admin-profile.html">
+          <span class="material-symbols-outlined">person</span>
+          <span>My Profile</span>
+        </a>
+
+        <a class="sidebar-link" href="master-schedule.html">
+          <span class="material-symbols-outlined">event_note</span>
+          <span>Calendar</span>
+        </a>
+
+        <a class="sidebar-link" href="admin-settings.html">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto pt-6 border-t border-white/10">
+        <a class="sidebar-link" href="#">
+          <span class="material-symbols-outlined">help</span>
+          <span>Help and Support</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
+      <main class="flex-1 px-4 md:px-8 xl:px-10 py-8">
+
+        <div class="flex flex-col xl:flex-row justify-between items-start gap-6 mb-8">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-2">Administration</p>
+            <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Admin Profile</h1>
+            <p class="text-slate-500 dark:text-slate-400 font-medium">
+              Review and update your account details.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <span class="info-chip">
+              <span class="material-symbols-outlined text-[16px]">shield</span>
+              Administrator
+            </span>
+            <span class="info-chip">
+              <span class="material-symbols-outlined text-[16px]">verified_user</span>
+              Secure Account
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <section class="xl:col-span-1">
+            <div class="dashboard-card p-6 sticky top-24">
+              <div class="flex flex-col items-center text-center">
+                <img
+                  id="profilePreview"
+                  src="public/images/admin.jpg"
+                  alt="Admin Profile"
+                  class="w-28 h-28 rounded-3xl object-cover border-4 border-primary/10 shadow-sm"
+                />
+
+                <h2 id="profileDisplayName" class="mt-5 text-xl font-bold text-slate-900 dark:text-white">
+                  Admin User
+                </h2>
+
+                <p id="profileDisplayEmail" class="mt-1 text-sm text-slate-500 dark:text-slate-400 break-all">
+                  -
+                </p>
+
+                <div class="mt-5 w-full space-y-3 text-sm">
+                  <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <span class="text-slate-500 dark:text-slate-400">Role</span>
+                    <span class="font-semibold text-slate-900 dark:text-white">Admin</span>
+                  </div>
+
+                  <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <span class="text-slate-500 dark:text-slate-400">Status</span>
+                    <span class="font-semibold text-emerald-600">Active</span>
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 dark:text-slate-400">Access</span>
+                    <span class="font-semibold text-slate-900 dark:text-white">Full Control</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="xl:col-span-2">
+            <div class="dashboard-card overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Profile Details</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Keep your profile information up to date.
+                </p>
+              </div>
+
+              <form id="adminProfileForm" class="p-6 space-y-6">
+                <input type="hidden" id="adminId"/>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label class="field-label" for="firstName">First Name</label>
+                    <input id="firstName" type="text" class="input-field" required />
+                  </div>
+
+                  <div>
+                    <label class="field-label" for="lastName">Last Name</label>
+                    <input id="lastName" type="text" class="input-field" required />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="field-label" for="email">Email Address</label>
+                  <input id="email" type="email" class="input-readonly" readonly />
+                </div>
+
+                <div>
+                  <label class="field-label" for="profileImage">Profile Picture</label>
+                  <input
+                    id="profileImage"
+                    type="file"
+                    accept="image/*"
+                    class="input-field"
+                  />
+                  <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Accepted formats: JPG, PNG, WEBP. Maximum file size: 5 MB.
+                  </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+                  <div id="statusMsg" class="text-sm font-medium text-slate-500"></div>
+
+                  <div class="flex gap-3">
+                    <a href="admin-dashboard.html" class="btn-secondary">Back to Dashboard</a>
+                    <button type="submit" id="saveBtn" class="btn-primary">
+                      <span class="material-symbols-outlined text-[18px]">save</span>
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        © 2026 DentaNet Admin Hub. Clinical Excellence Through Data Management.
+      </footer>
+    </div>
   </div>
-</nav>
 
-<div class="flex min-h-screen">
+  <script>
+    const DEFAULT_PROFILE_IMAGE = "public/images/admin.jpg";
+    const FILE_BASE_URL = "http://localhost:3000";
 
-<!-- SIDEBAR -->
-<aside class="w-72 bg-bg-sidebar p-6 text-slate-300 hidden lg:flex flex-col">
+    function setStatus(message, type = "default") {
+      const status = document.getElementById("statusMsg");
+      status.textContent = message;
 
-  <nav class="space-y-2">
+      if (type === "error") {
+        status.className = "text-sm font-medium text-rose-600";
+      } else if (type === "success") {
+        status.className = "text-sm font-medium text-emerald-600";
+      } else {
+        status.className = "text-sm font-medium text-slate-500";
+      }
+    }
 
-    <a href="admin-dashboard.html"
-      class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10">
-      <span class="material-symbols-outlined">dashboard</span>
-      Dashboard
-    </a>
+    function buildImageUrl(imagePath) {
+      if (!imagePath) return DEFAULT_PROFILE_IMAGE;
+      if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+      if (imagePath.startsWith("/")) return `${FILE_BASE_URL}${imagePath}?t=${Date.now()}`;
+      return imagePath;
+    }
 
-    <a href="admin-manage-users.html"
-      class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10">
-      <span class="material-symbols-outlined">group</span>
-      Manage Users
-    </a>
+    function updateProfilePreview({ firstName, lastName, email, imageUrl }) {
+      const fullName = `${firstName || ""} ${lastName || ""}`.trim() || "Admin User";
 
-    <a href="admin-profile.html"
-      class="flex items-center gap-3 p-3 rounded-lg bg-primary text-white">
-      <span class="material-symbols-outlined">person</span>
-      My Profile
-    </a>
+      document.getElementById("profileDisplayName").textContent = fullName;
+      document.getElementById("profileDisplayEmail").textContent = email || "-";
+      document.getElementById("profilePreview").src = imageUrl || DEFAULT_PROFILE_IMAGE;
+    }
 
-  </nav>
+    async function loadAdminProfile() {
+      const result = await API.users.getMe();
 
-</aside>
+      if (!result.success || !result.user || result.user.account_type !== "admin") {
+        setStatus(result.error || "Failed to load profile.", "error");
+        return null;
+      }
 
-<!-- MAIN -->
-<main class="flex-1 p-6 md:p-10">
+      const admin = result.user;
 
-<div class="max-w-4xl mx-auto space-y-8">
+      document.getElementById("adminId").value = admin.id || "";
+      document.getElementById("firstName").value = admin.first_name || "";
+      document.getElementById("lastName").value = admin.last_name || "";
+      document.getElementById("email").value = admin.email || "";
 
-<!-- HEADER -->
-<div>
-  <h1 class="text-3xl font-extrabold">Admin Profile</h1>
-  <p class="text-slate-500">Update your account information</p>
-</div>
+      updateProfilePreview({
+        firstName: admin.first_name || "",
+        lastName: admin.last_name || "",
+        email: admin.email || "",
+        imageUrl: buildImageUrl(admin.profile_image_url)
+      });
 
-<!-- PROFILE CARD -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border p-6 shadow-sm">
+      const cachedUser = {
+        ...getCurrentUser(),
+        ...admin,
+        firstName: admin.first_name || "",
+        lastName: admin.last_name || "",
+        profile_image_url: admin.profile_image_url || null
+      };
+      localStorage.setItem("user", JSON.stringify(cachedUser));
 
-<form id="adminProfileForm"
-  class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      return admin;
+    }
 
-<input type="hidden" id="adminId"/>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const authUser = await requireAuth("admin");
+      if (!authUser) return;
 
-<!-- FIRST NAME -->
-<div>
-<label class="block text-sm font-semibold mb-2">
-First Name
-</label>
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => API.auth.logout());
+      }
 
-<input id="firstName"
-  type="text"
-  class="w-full border rounded-xl px-4 py-3"
-  required>
-</div>
+      await loadAdminProfile();
 
-<!-- LAST NAME -->
-<div>
-<label class="block text-sm font-semibold mb-2">
-Last Name
-</label>
+      document.getElementById("firstName").addEventListener("input", () => {
+        updateProfilePreview({
+          firstName: document.getElementById("firstName").value.trim(),
+          lastName: document.getElementById("lastName").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          imageUrl: document.getElementById("profilePreview").src
+        });
+      });
 
-<input id="lastName"
-  type="text"
-  class="w-full border rounded-xl px-4 py-3"
-  required>
-</div>
+      document.getElementById("lastName").addEventListener("input", () => {
+        updateProfilePreview({
+          firstName: document.getElementById("firstName").value.trim(),
+          lastName: document.getElementById("lastName").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          imageUrl: document.getElementById("profilePreview").src
+        });
+      });
 
-<!-- EMAIL -->
-<div class="md:col-span-2">
+      document.getElementById("profileImage").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-<label class="block text-sm font-semibold mb-2">
-Email
-</label>
+        const previewUrl = URL.createObjectURL(file);
 
-<input id="email"
-  type="email"
-  class="w-full border rounded-xl px-4 py-3 bg-slate-100"
-  readonly>
-
-</div>
-
-<!-- PROFILE IMAGE -->
-<div class="md:col-span-2">
-
-<label class="block text-sm font-semibold mb-2">
-Profile Picture
-</label>
-
-<input type="file"
-  id="profileImage"
-  accept="image/*"
-  class="w-full border rounded-xl px-4 py-3">
-
-</div>
-
-<!-- BUTTON -->
-<div class="md:col-span-2 flex items-center gap-3">
-
-<button type="submit"
-  class="bg-primary text-white px-6 py-3 rounded-xl font-semibold">
-
-Save Changes
-
-</button>
-
-<span id="statusMsg"
-  class="text-sm"></span>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-</main>
-
-</div>
-
-<!-- SCRIPT -->
-<script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-
-  const admin = await requireAuth("admin");
-  if (!admin) return;
-
-  document.getElementById("adminId").value =
-    admin.id || "";
-
-  document.getElementById("firstName").value =
-    admin.firstName || "";
-
-  document.getElementById("lastName").value =
-    admin.lastName || "";
-
-  document.getElementById("email").value =
-    admin.email || "";
-
-  document
-    .getElementById("logoutBtn")
-    .addEventListener("click", () => {
-      API.auth.logout();
+        updateProfilePreview({
+          firstName: document.getElementById("firstName").value.trim(),
+          lastName: document.getElementById("lastName").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          imageUrl: previewUrl
+        });
+      });
     });
 
-});
+    document.getElementById("adminProfileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
+      const id = document.getElementById("adminId").value.trim();
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const imageFile = document.getElementById("profileImage").files[0];
+      const saveBtn = document.getElementById("saveBtn");
 
-/* UPDATE PROFILE */
+      if (!id) {
+        setStatus("Profile could not be loaded.", "error");
+        return;
+      }
 
-document
-.getElementById("adminProfileForm")
-.addEventListener("submit", async (e) => {
+      saveBtn.disabled = true;
+      saveBtn.classList.add("opacity-60", "cursor-not-allowed");
+      setStatus("Saving changes...");
 
-  e.preventDefault();
+      try {
+        const formData = new FormData();
+        formData.append("first_name", firstName);
+        formData.append("last_name", lastName);
 
-  const id =
-    document.getElementById("adminId").value;
+        if (imageFile) {
+          formData.append("profile_image", imageFile);
+        }
 
-  const firstName =
-    document.getElementById("firstName").value;
+        const result = await API.users.updateWithImage("admin", id, formData);
 
-  const lastName =
-    document.getElementById("lastName").value;
+        if (!result.success) {
+          setStatus(result.error || "Failed to update profile.", "error");
+          return;
+        }
 
-  const status =
-    document.getElementById("statusMsg");
+        const updatedUser = result.user || {};
 
-  status.textContent = "Saving...";
+        const savedUser = {
+          ...getCurrentUser(),
+          ...updatedUser,
+          firstName: updatedUser.first_name || firstName,
+          lastName: updatedUser.last_name || lastName,
+          profile_image_url: updatedUser.profile_image_url || null
+        };
+        localStorage.setItem("user", JSON.stringify(savedUser));
 
-  const result =
-    await API.users.update(id,{
-      firstName,
-      lastName
+        document.getElementById("firstName").value = updatedUser.first_name || firstName;
+        document.getElementById("lastName").value = updatedUser.last_name || lastName;
+        document.getElementById("email").value = updatedUser.email || document.getElementById("email").value;
+        document.getElementById("profileImage").value = "";
+
+        updateProfilePreview({
+          firstName: updatedUser.first_name || firstName,
+          lastName: updatedUser.last_name || lastName,
+          email: updatedUser.email || document.getElementById("email").value,
+          imageUrl: buildImageUrl(updatedUser.profile_image_url)
+        });
+
+        setStatus("Profile updated successfully.", "success");
+      } catch (error) {
+        console.error("Admin profile update error:", error);
+        setStatus("An unexpected error occurred while updating the profile.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("opacity-60", "cursor-not-allowed");
+      }
     });
-
-  if (!result.ok){
-
-    status.textContent =
-      result.error || "Update failed";
-
-    status.className =
-      "text-red-600 text-sm";
-
-    return;
-
-  }
-
-  status.textContent =
-    "Profile updated successfully";
-
-  status.className =
-    "text-green-600 text-sm";
-
-});
-
-</script>
-
+  </script>
 </body>
 </html>

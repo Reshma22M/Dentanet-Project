@@ -810,5 +810,126 @@ CREATE TABLE retake_requests (
     ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
-DELETE FROM students
-WHERE student_id = 3;
+USE dentanet_lms;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ------------------------------------------------------------
+-- 1) Change modules.created_by to admin
+-- ------------------------------------------------------------
+
+-- Drop old foreign key first
+ALTER TABLE modules
+DROP FOREIGN KEY fk_modules_created_by;
+
+-- Re-add it pointing to admins
+ALTER TABLE modules
+ADD CONSTRAINT fk_modules_created_by
+  FOREIGN KEY (created_by) REFERENCES admins(admin_id)
+  ON DELETE CASCADE;
+-- ------------------------------------------------------------
+-- 3) Add student study materials table
+-- ------------------------------------------------------------
+CREATE TABLE student_study_materials (
+  student_material_id INT AUTO_INCREMENT PRIMARY KEY,
+  module_id INT NOT NULL,
+  uploaded_by_student_id INT NOT NULL,
+  material_type_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  file_url VARCHAR(500) NULL,
+  external_url VARCHAR(500) NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_student_materials_module
+    FOREIGN KEY (module_id) REFERENCES modules(module_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_student_materials_student
+    FOREIGN KEY (uploaded_by_student_id) REFERENCES students(student_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_student_materials_type
+    FOREIGN KEY (material_type_id) REFERENCES material_types(material_type_id)
+    ON DELETE RESTRICT,
+
+  INDEX idx_student_materials_module (module_id),
+  INDEX idx_student_materials_student (uploaded_by_student_id),
+  INDEX idx_student_materials_type (material_type_id),
+  INDEX idx_student_materials_active (is_active),
+  INDEX idx_student_materials_created (created_at)
+) ENGINE=InnoDB;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+USE dentanet_lms;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ------------------------------------------------------------
+-- Module lecturers
+-- ------------------------------------------------------------
+CREATE TABLE module_lecturers (
+  module_lecturer_id INT AUTO_INCREMENT PRIMARY KEY,
+  module_id INT NOT NULL,
+  lecturer_id INT NOT NULL,
+  enrolled_by_admin_id INT NULL,
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+  CONSTRAINT fk_module_lecturers_module
+    FOREIGN KEY (module_id) REFERENCES modules(module_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_module_lecturers_lecturer
+    FOREIGN KEY (lecturer_id) REFERENCES lecturers(lecturer_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_module_lecturers_admin
+    FOREIGN KEY (enrolled_by_admin_id) REFERENCES admins(admin_id)
+    ON DELETE SET NULL,
+
+  UNIQUE KEY uq_module_lecturer (module_id, lecturer_id),
+
+  INDEX idx_module_lecturers_module (module_id),
+  INDEX idx_module_lecturers_lecturer (lecturer_id),
+  INDEX idx_module_lecturers_active (is_active)
+) ENGINE=InnoDB;
+
+-- ------------------------------------------------------------
+-- Module students
+-- ------------------------------------------------------------
+CREATE TABLE module_students (
+  module_student_id INT AUTO_INCREMENT PRIMARY KEY,
+  module_id INT NOT NULL,
+  student_id INT NOT NULL,
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+  CONSTRAINT fk_module_students_module
+    FOREIGN KEY (module_id) REFERENCES modules(module_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_module_students_student
+    FOREIGN KEY (student_id) REFERENCES students(student_id)
+    ON DELETE CASCADE,
+
+  UNIQUE KEY uq_module_student (module_id, student_id),
+
+  INDEX idx_module_students_module (module_id),
+  INDEX idx_module_students_student (student_id),
+  INDEX idx_module_students_active (is_active)
+) ENGINE=InnoDB;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+ALTER TABLE modules
+ADD COLUMN module_image_url VARCHAR(500) NULL AFTER description;
+
+ALTER TABLE module_students
+DROP COLUMN module_student_id;
+
+ALTER TABLE module_lecturers
+DROP COLUMN module_lecturer_id;
