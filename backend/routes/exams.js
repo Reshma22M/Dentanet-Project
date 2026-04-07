@@ -57,6 +57,22 @@ async function getModuleById(moduleId) {
   return rows[0] || null;
 }
 
+async function isLecturerEnrolledInModule(moduleId, lecturerId) {
+  const [rows] = await promisePool.query(
+    `
+    SELECT lecturer_id
+    FROM module_lecturers
+    WHERE module_id = ?
+      AND lecturer_id = ?
+      AND is_active = TRUE
+    LIMIT 1
+    `,
+    [moduleId, lecturerId]
+  );
+
+  return rows.length > 0;
+}
+
 function isValidStatus(status) {
   return ["DRAFT", "SCHEDULED", "OPEN", "CLOSED"].includes(status);
 }
@@ -159,9 +175,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
 
 // --------------------------------------------------
 // CREATE exam (lecturer only)
-// Exams must be created under a module.
-// Optional rule enforced: lecturer can only create exams
-// under modules created by that lecturer.
+// Lecturer must be enrolled in the module.
 // --------------------------------------------------
 router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) => {
   try {
@@ -196,10 +210,12 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
       });
     }
 
-    if (Number(module.created_by) !== numericLecturerId) {
+    const enrolled = await isLecturerEnrolledInModule(numericModuleId, numericLecturerId);
+
+    if (!enrolled) {
       return res.status(403).json({
         ok: false,
-        error: "You can only create exams under modules created by you",
+        error: "You can only create exams under modules you are enrolled in",
       });
     }
 
@@ -294,6 +310,7 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
 // --------------------------------------------------
 // UPDATE exam (lecturer only)
 // Lecturer can only update exams created by them.
+// If moving exam to another module, lecturer must be enrolled there too.
 // --------------------------------------------------
 router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res) => {
   try {
@@ -342,10 +359,12 @@ router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res
       });
     }
 
-    if (Number(module.created_by) !== Number(req.user.id)) {
+    const enrolled = await isLecturerEnrolledInModule(finalModuleId, Number(req.user.id));
+
+    if (!enrolled) {
       return res.status(403).json({
         ok: false,
-        error: "You can only assign exams to modules created by you",
+        error: "You can only assign exams to modules you are enrolled in",
       });
     }
 

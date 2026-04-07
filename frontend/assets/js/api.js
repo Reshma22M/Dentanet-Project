@@ -429,62 +429,166 @@ const API = {
         }
     },
 
-    modules: {
-        getAll: async () => {
-            const response = await fetch(`${API_BASE_URL}/modules`, {
-                headers: getAuthHeaders()
+    studyMaterials: {
+    getAll: async (moduleId = null, materialTypeId = null) => {
+        const params = new URLSearchParams();
+
+        if (moduleId) params.append("module_id", moduleId);
+        if (materialTypeId) params.append("material_type_id", materialTypeId);
+
+        const url = `${API_BASE_URL}/study-materials${params.toString() ? `?${params.toString()}` : ""}`;
+
+        const response = await fetch(url, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    getById: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/study-materials/${id}`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    upload: (formData, onProgress = null) => {
+        return new Promise((resolve, reject) => {
+            const token = getAuthToken();
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("POST", `${API_BASE_URL}/study-materials`);
+
+            if (token) {
+                xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+            }
+
+            xhr.upload.addEventListener("progress", (event) => {
+                if (event.lengthComputable && onProgress) {
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    onProgress(percent);
+                }
             });
 
-            return await parseResponse(response);
-        },
+            xhr.onload = () => {
+                try {
+                    const data = JSON.parse(xhr.responseText);
 
-        getById: async (id) => {
-            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-                headers: getAuthHeaders()
-            });
-
-            return await parseResponse(response);
-        },
-
-        create: async (moduleData) => {
-
-            const user = getCurrentUser();
-
-            const payload = {
-                ...moduleData,
-                created_by: user?.id   // 🔥 REQUIRED FIX
+                    resolve({
+                        ok: xhr.status >= 200 && xhr.status < 300,
+                        status: xhr.status,
+                        ...data
+                    });
+                } catch (error) {
+                    resolve({
+                        ok: false,
+                        status: xhr.status,
+                        error: "Invalid server response"
+                    });
+                }
             };
 
-            const response = await fetch(`${API_BASE_URL}/modules`, {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(payload)
-            });
+            xhr.onerror = () => {
+                reject(new Error("Network error during upload"));
+            };
 
-            return await parseResponse(response);
-        },
-
-        update: async (id, moduleData) => {
-
-            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-                method: "PUT",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(moduleData)
-            });
-
-            return await parseResponse(response);
-        },
-
-        delete: async (id) => {
-
-            const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
-                method: "DELETE",
-                headers: getAuthHeaders()
-            });
-
-            return await parseResponse(response);
-        }
+            xhr.send(formData);
+        });
     },
+
+    update: async (id, formData) => {
+        const token = getAuthToken();
+
+        const response = await fetch(`${API_BASE_URL}/study-materials/${id}`, {
+            method: "PUT",
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: formData
+        });
+
+        return await parseResponse(response);
+    },
+
+    delete: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/study-materials/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    }
+},
+
+    modules: {
+    getAll: async () => {
+        const response = await fetch(`${API_BASE_URL}/modules`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    getById: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    getMembers: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}/members`, {
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    create: async (moduleData) => {
+        const response = await fetch(`${API_BASE_URL}/modules`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(moduleData)
+        });
+
+        return await parseResponse(response);
+    },
+
+    update: async (id, moduleData) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(moduleData)
+        });
+
+        return await parseResponse(response);
+    },
+
+    delete: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
+    uploadImage: async (formData) => {
+        const token = getAuthToken();
+
+        const response = await fetch(`${API_BASE_URL}/modules/image`, {
+            method: "POST",
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: formData
+        });
+
+        return await parseResponse(response);
+    }
+},
 
 
         exams: {

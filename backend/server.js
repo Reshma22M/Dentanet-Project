@@ -10,6 +10,19 @@ const { pool } = require("./config/database");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// During development, allow relaxed Content Security Policy to support
+// dynamic scripts (Tailwind CDN, inline scripts) that may use eval.
+// This is temporary and only applied when NODE_ENV !== 'production'.
+if ((process.env.NODE_ENV || 'development') !== 'production') {
+  app.use((req, res, next) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data:; img-src 'self' data: http: https:; style-src 'self' 'unsafe-inline' http: https:; font-src 'self' data: http: https:"
+    );
+    next();
+  });
+}
+
 // -----------------------------
 // Routes
 // -----------------------------

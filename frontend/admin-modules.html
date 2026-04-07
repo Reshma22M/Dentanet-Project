@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Modules - DentaNet</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="assets/css/common.css" rel="stylesheet"/>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/api.js"></script>
+
+<script>
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                primary: "#1E3A8A",
+                accent: "#3B82F6",
+                "bg-main": "#F1F5F9",
+                "bg-sidebar": "#0F172A"
+            },
+            fontFamily: {
+                sans: ["Inter", "sans-serif"]
+            },
+            borderRadius: {
+                DEFAULT: "0.75rem",
+                xl: "1rem",
+                "2xl": "1.25rem"
+            },
+            boxShadow: {
+                soft: "0 8px 30px rgba(15, 23, 42, 0.06)"
+            }
+        }
+    }
+};
+</script>
+
+<style type="text/tailwindcss">
+@layer base {
+    body { @apply font-sans; }
+}
+
+.sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all;
+}
+
+.sidebar-active {
+    @apply bg-white text-slate-900 font-semibold shadow-sm;
+}
+
+.page-card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-soft;
+}
+
+.module-card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-soft hover:shadow-lg transition-all;
+}
+
+.input-field {
+    @apply w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary;
+}
+
+.field-label {
+    @apply block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2;
+}
+
+.btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-accent text-white px-5 py-3 text-sm font-semibold transition-all;
+}
+
+.btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-all;
+}
+
+.btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-sm font-semibold transition-all;
+}
+
+.badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-active {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300;
+}
+
+.badge-inactive {
+    @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300;
+}
+
+.drawer-backdrop {
+    @apply fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[80] hidden;
+}
+
+.drawer-panel {
+    @apply fixed top-0 right-0 h-full w-full sm:w-[640px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-[90] translate-x-full transition-transform duration-300 ease-out flex flex-col;
+}
+
+.drawer-panel.drawer-open {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    @apply px-6 py-5 border-b border-slate-200 dark:border-slate-700;
+}
+
+.drawer-body {
+    @apply flex-1 overflow-y-auto px-6 py-6;
+}
+
+.drawer-footer {
+    @apply px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0;
+}
+</style>
+</head>
+
+<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200">
+
+<div class="min-h-screen">
+    <header class="fixed top-0 left-0 right-0 h-16 bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 z-50">
+        <div class="h-full flex items-center justify-between px-4 lg:px-8">
+            <div class="flex items-center gap-3">
+                <img src="blue-logo.svg" alt="DentaNet Logo" class="h-20 w-auto object-contain"/>
+            </div>
+
+            <div class="hidden md:flex items-center gap-8">
+                <button onclick="toggleDarkMode && toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all">
+                    <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                    <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+                </button>
+
+                <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
+        <div class="mb-10">
+            <h2 class="text-lg font-bold text-white">LMS</h2>
+            <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
+        </div>
+
+        <nav class="space-y-2">
+            <a class="sidebar-link" href="admin-dashboard.html">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="sidebar-link" href="admin-manage-users.html">
+                <span class="material-symbols-outlined">group</span>
+                <span>Manage Users</span>
+            </a>
+
+            <a class="sidebar-link sidebar-active" href="admin-modules.html">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span>Modules</span>
+            </a>
+
+            <a class="sidebar-link" href="master-schedule.html">
+                <span class="material-symbols-outlined">event_note</span>
+                <span>Calendar</span>
+            </a>
+
+            <a class="sidebar-link" href="Admin-labslot-timetable.html">
+                <span class="material-symbols-outlined">calendar_view_week</span>
+                <span>Lab Timetable</span>
+            </a>
+
+            <a class="sidebar-link" href="admin-api-monitor.html">
+                <span class="material-symbols-outlined">monitoring</span>
+                <span>AI Evaluation</span>
+            </a>
+
+            <a class="sidebar-link" href="admin-settings.html">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-white/10">
+            <a class="sidebar-link" href="#">
+                <span class="material-symbols-outlined">help</span>
+                <span>Help and Support</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
+        <main class="flex-1 px-4 md:px-8 xl:px-10 py-8">
+            <div class="flex flex-col xl:flex-row justify-between items-start gap-6 mb-8">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-2">Administration</p>
+                    <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Modules Management</h1>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">
+                        Create, edit, and manage all modules from a single admin workspace.
+                    </p>
+                </div>
+
+                <div class="page-card p-4 flex items-center gap-4 min-w-[300px]">
+                    <a href="admin-profile.html" class="shrink-0">
+                        <img id="adminProfileImage" alt="Admin Profile" class="w-16 h-16 rounded-2xl border-2 border-primary object-cover" src="public/images/admin.jpg"/>
+                    </a>
+                    <div class="flex-1">
+                        <p id="adminName" class="text-sm font-bold text-slate-900 dark:text-white">Admin User</p>
+                        <p class="text-xs text-slate-500 font-bold uppercase mt-1">Administrator</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pageMessage" class="hidden mb-6 rounded-xl px-4 py-3 text-sm font-medium"></div>
+
+            <section class="page-card overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">All Modules</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            Admin can create, update, and remove modules here. Modules remain the main LMS container. :contentReference[oaicite:0]{index=0}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                        <input id="moduleSearchInput" type="text" placeholder="Search by module code or name" class="input-field sm:w-[280px]"/>
+
+                        <button id="refreshModulesBtn" type="button" class="btn-secondary">
+                            <span class="material-symbols-outlined text-[18px]">refresh</span>
+                            Refresh
+                        </button>
+
+                        <button id="openCreateModuleBtn" type="button" class="btn-primary">
+                            <span class="material-symbols-outlined text-[18px]">library_add</span>
+                            Create Module
+                        </button>
+                    </div>
+                </div>
+
+                <div id="modulesGrid" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="col-span-full text-sm text-slate-500">Loading modules...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            © 2026 DentaNet Admin Hub.
+        </footer>
+    </div>
+</div>
+
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+<aside id="moduleDrawer" class="drawer-panel" aria-hidden="true">
+    <div class="drawer-header">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 id="drawerTitle" class="text-2xl font-bold text-slate-900 dark:text-white">Create Module</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Save module details and module card image.
+                </p>
+            </div>
+
+            <button id="closeDrawerBtn" type="button" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+
+    <form id="moduleForm" class="flex flex-col h-full">
+        <div class="drawer-body space-y-6">
+            <input type="hidden" id="editingModuleId"/>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label class="field-label">Module Code</label>
+                    <input id="moduleCodeInput" name="module_code" type="text" class="input-field" placeholder="e.g. CAVITY101" required />
+                </div>
+
+                <div>
+                    <label class="field-label">Module Name</label>
+                    <input id="moduleNameInput" name="module_name" type="text" class="input-field" placeholder="e.g. Cavity Preparation" required />
+                </div>
+            </div>
+
+            <div>
+                <label class="field-label">Description</label>
+                <textarea id="moduleDescriptionInput" name="description" rows="4" class="input-field" placeholder="Short description about the module"></textarea>
+            </div>
+
+            <div>
+                <label class="field-label">Module Card Image URL</label>
+                <input id="moduleImageInput" name="module_image_url" type="text" class="input-field" placeholder="/uploads/modules/example.jpg or https://..." />
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                    <span class="text-sm text-slate-500 dark:text-slate-400">Or upload an image</span>
+                    <input id="moduleImageFileInput" type="file" accept="image/*" class="text-sm text-slate-500" />
+                    <span id="moduleImageUploadStatus" class="text-xs text-slate-400"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input id="moduleIsActiveInput" type="checkbox" class="h-4 w-4" checked />
+                <label for="moduleIsActiveInput" class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Module is active
+                </label>
+            </div>
+
+            <div>
+                <label class="field-label">Preview</label>
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-900/40">
+                    <img id="moduleImagePreview" src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80" alt="Module Preview" class="w-full h-56 object-cover"/>
+                    <div class="p-4">
+                        <h4 id="previewModuleName" class="font-bold text-slate-900 dark:text-white">Module Name Preview</h4>
+                        <p id="previewModuleCode" class="text-sm text-primary font-semibold mt-1">MODULE101</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="moduleFormMessage" class="hidden rounded-xl px-4 py-3 text-sm font-medium"></div>
+        </div>
+
+        <div class="drawer-footer">
+            <button type="button" id="cancelDrawerBtn" class="btn-secondary">Cancel</button>
+            <button type="submit" id="submitModuleBtn" class="btn-primary">
+                <span class="material-symbols-outlined text-[18px]">save</span>
+                Save Module
+            </button>
+        </div>
+    </form>
+</aside>
+
+<script>
+const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+let allModules = [];
+let currentMode = "create";
+
+document.addEventListener("DOMContentLoaded", function () {
+    setupLogout();
+    setupDrawer();
+    setupModulePreviewBindings();
+    setupSearch();
+    initializePage();
+});
+
+async function initializePage() {
+    const admin = await requireAuth("admin");
+    if (!admin) return;
+
+    const fullName =
+        admin.fullName ||
+        `${admin.firstName || admin.first_name || ""} ${admin.lastName || admin.last_name || ""}`.trim() ||
+        "Admin";
+
+    const profileImage =
+        admin.profile_image_url
+        ? `http://localhost:3000${admin.profile_image_url}?t=${Date.now()}`
+        : "public/images/admin.jpg";
+
+    setText("adminName", fullName);
+
+    const adminProfileImage = document.getElementById("adminProfileImage");
+    if (adminProfileImage) adminProfileImage.src = profileImage;
+
+    await loadModules();
+}
+
+function setupLogout() {
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (!logoutBtn) return;
+    logoutBtn.addEventListener("click", function () {
+        API.auth.logout();
+    });
+}
+
+function setupSearch() {
+    const searchInput = document.getElementById("moduleSearchInput");
+    const refreshBtn = document.getElementById("refreshModulesBtn");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            renderModules(this.value.trim());
+        });
+    }
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", async function () {
+            await loadModules();
+        });
+    }
+}
+
+async function loadModules() {
+    const container = document.getElementById("modulesGrid");
+    if (!container) return;
+
+    container.innerHTML = `<div class="col-span-full text-sm text-slate-500">Loading modules...</div>`;
+
+    try {
+        const result = await API.modules.getAll();
+
+        if (!(result.ok && Array.isArray(result.modules))) {
+            container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+            return;
+        }
+
+        allModules = [...result.modules].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        renderModules(document.getElementById("moduleSearchInput")?.value?.trim() || "");
+    } catch (error) {
+        console.error("Failed to load modules:", error);
+        container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+    }
+}
+
+function renderModules(searchTerm = "") {
+    const container = document.getElementById("modulesGrid");
+    if (!container) return;
+
+    const term = searchTerm.toLowerCase();
+    const filtered = allModules.filter(module => {
+        const code = String(module.module_code || "").toLowerCase();
+        const name = String(module.module_name || "").toLowerCase();
+        return code.includes(term) || name.includes(term);
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 p-10 text-center">
+                <span class="material-symbols-outlined text-4xl text-slate-400">library_books</span>
+                <p class="mt-3 font-semibold text-slate-900 dark:text-white">No modules found</p>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Create a module or change the search.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(module => {
+        const imageUrl = buildModuleImageUrl(module.module_image_url);
+        const isActive = normalizeBool(module.is_active);
+        const badgeClass = isActive ? "badge badge-active" : "badge badge-inactive";
+        const badgeText = isActive ? "Active" : "Inactive";
+
+        return `
+            <div class="module-card">
+                <img
+                    src="${escapeAttribute(imageUrl)}"
+                    alt="${escapeAttribute(module.module_name || "Module image")}"
+                    class="w-full h-48 object-cover"
+                    onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
+                />
+                <div class="p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold tracking-wider uppercase text-primary">
+                                ${escapeHtml(module.module_code || "-")}
+                            </p>
+                            <h3 class="mt-1 text-lg font-bold text-slate-900 dark:text-white">
+                                ${escapeHtml(module.module_name || "Untitled Module")}
+                            </h3>
+                        </div>
+                        <span class="${badgeClass}">${badgeText}</span>
+                    </div>
+
+                    <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 line-clamp-3 min-h-[60px]">
+                        ${escapeHtml(module.description || "No description provided yet.")}
+                    </p>
+
+                    <div class="mt-4 text-xs text-slate-400">
+                        Created ${formatDate(module.created_at)}
+                    </div>
+
+                    <div class="mt-5 flex items-center justify-between gap-3 flex-wrap">
+                        <a
+                        href="module-details.html?module_id=${encodeURIComponent(module.module_id)}"
+                        onclick="sessionStorage.setItem('selectedModuleId', '${module.module_id}')"
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                        >
+                        Open Module
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="openEditModule(${module.module_id})" class="btn-secondary px-4 py-2">
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                                Edit
+                            </button>
+                            <button type="button" onclick="deleteModule(${module.module_id}, '${escapeJsString(module.module_name || "")}')" class="btn-danger">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function setupDrawer() {
+    const drawer = document.getElementById("moduleDrawer");
+    const backdrop = document.getElementById("drawerBackdrop");
+    const openBtn = document.getElementById("openCreateModuleBtn");
+    const closeBtn = document.getElementById("closeDrawerBtn");
+    const cancelBtn = document.getElementById("cancelDrawerBtn");
+    const form = document.getElementById("moduleForm");
+
+    if (openBtn) {
+        openBtn.addEventListener("click", openCreateModule);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeDrawer);
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", closeDrawer);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener("click", closeDrawer);
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            closeDrawer();
+        }
+    });
+
+    if (form) {
+        form.addEventListener("submit", handleModuleSubmit);
+    }
+}
+
+function openCreateModule() {
+    currentMode = "create";
+    resetModuleForm();
+    setText("drawerTitle", "Create Module");
+    const submitBtn = document.getElementById("submitModuleBtn");
+    if (submitBtn) {
+        submitBtn.innerHTML = `
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            Save Module
+        `;
+    }
+    openDrawer();
+}
+
+function openEditModule(moduleId) {
+    const module = allModules.find(m => Number(m.module_id) === Number(moduleId));
+    if (!module) return;
+
+    currentMode = "edit";
+    resetModuleForm();
+
+    setText("drawerTitle", "Edit Module");
+    document.getElementById("editingModuleId").value = module.module_id;
+    document.getElementById("moduleCodeInput").value = module.module_code || "";
+    document.getElementById("moduleNameInput").value = module.module_name || "";
+    document.getElementById("moduleDescriptionInput").value = module.description || "";
+    document.getElementById("moduleImageInput").value = module.module_image_url || "";
+    document.getElementById("moduleIsActiveInput").checked = normalizeBool(module.is_active);
+
+    setText("previewModuleCode", (module.module_code || "MODULE101").toUpperCase());
+    setText("previewModuleName", module.module_name || "Module Name Preview");
+
+    const preview = document.getElementById("moduleImagePreview");
+    if (preview) preview.src = buildModuleImageUrl(module.module_image_url);
+
+    const submitBtn = document.getElementById("submitModuleBtn");
+    if (submitBtn) {
+        submitBtn.innerHTML = `
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            Save Changes
+        `;
+    }
+
+    openDrawer();
+}
+
+function openDrawer() {
+    const drawer = document.getElementById("moduleDrawer");
+    const backdrop = document.getElementById("drawerBackdrop");
+
+    if (backdrop) backdrop.classList.remove("hidden");
+    if (drawer) {
+        drawer.classList.add("drawer-open");
+        drawer.setAttribute("aria-hidden", "false");
+    }
+}
+
+function closeDrawer() {
+    const drawer = document.getElementById("moduleDrawer");
+    const backdrop = document.getElementById("drawerBackdrop");
+
+    if (drawer) {
+        drawer.classList.remove("drawer-open");
+        drawer.setAttribute("aria-hidden", "true");
+    }
+
+    if (backdrop) {
+        backdrop.classList.add("hidden");
+    }
+
+    resetModuleForm();
+}
+
+function resetModuleForm() {
+    const form = document.getElementById("moduleForm");
+    const messageBox = document.getElementById("moduleFormMessage");
+    const uploadStatus = document.getElementById("moduleImageUploadStatus");
+    const fileInput = document.getElementById("moduleImageFileInput");
+    const editingId = document.getElementById("editingModuleId");
+
+    if (form) form.reset();
+    if (fileInput) fileInput.value = "";
+    if (editingId) editingId.value = "";
+
+    const activeInput = document.getElementById("moduleIsActiveInput");
+    if (activeInput) activeInput.checked = true;
+
+    if (uploadStatus) uploadStatus.textContent = "";
+    if (messageBox) {
+        messageBox.className = "hidden rounded-xl px-4 py-3 text-sm font-medium";
+        messageBox.textContent = "";
+    }
+
+    setText("previewModuleCode", "MODULE101");
+    setText("previewModuleName", "Module Name Preview");
+
+    const preview = document.getElementById("moduleImagePreview");
+    if (preview) preview.src = DEFAULT_MODULE_IMAGE;
+}
+
+function setupModulePreviewBindings() {
+    const codeInput = document.getElementById("moduleCodeInput");
+    const nameInput = document.getElementById("moduleNameInput");
+    const imageInput = document.getElementById("moduleImageInput");
+    const fileInput = document.getElementById("moduleImageFileInput");
+    const uploadStatus = document.getElementById("moduleImageUploadStatus");
+
+    if (codeInput) {
+        codeInput.addEventListener("input", function () {
+            setText("previewModuleCode", this.value.trim().toUpperCase() || "MODULE101");
+        });
+    }
+
+    if (nameInput) {
+        nameInput.addEventListener("input", function () {
+            setText("previewModuleName", this.value.trim() || "Module Name Preview");
+        });
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener("input", function () {
+            const preview = document.getElementById("moduleImagePreview");
+            if (!preview) return;
+            preview.src = buildModuleImageUrl(this.value.trim());
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", async function () {
+            if (!this.files || !this.files.length) return;
+
+            const file = this.files[0];
+            if (!file) return;
+
+            if (uploadStatus) uploadStatus.textContent = "Uploading...";
+
+            try {
+                const fd = new FormData();
+                fd.append("image", file);
+
+                const result = await API.modules.uploadImage(fd);
+
+                if (result.ok && result.file_url) {
+                    const imageInputEl = document.getElementById("moduleImageInput");
+                    const preview = document.getElementById("moduleImagePreview");
+
+                    if (imageInputEl) imageInputEl.value = result.file_url;
+                    if (preview) preview.src = `http://localhost:3000${result.file_url}`;
+                    if (uploadStatus) uploadStatus.textContent = "Uploaded";
+                } else {
+                    if (uploadStatus) uploadStatus.textContent = "Upload failed";
+                    showFormMessage(result.error || "Image upload failed", "error");
+                }
+            } catch (error) {
+                console.error("Image upload error:", error);
+                if (uploadStatus) uploadStatus.textContent = "Upload failed";
+                showFormMessage("Image upload failed", "error");
+            }
+        });
+    }
+}
+
+async function handleModuleSubmit(event) {
+    event.preventDefault();
+
+    const moduleId = document.getElementById("editingModuleId")?.value?.trim();
+    const code = document.getElementById("moduleCodeInput")?.value?.trim();
+    const name = document.getElementById("moduleNameInput")?.value?.trim();
+    const description = document.getElementById("moduleDescriptionInput")?.value?.trim();
+    const imageUrl = document.getElementById("moduleImageInput")?.value?.trim();
+    const isActive = document.getElementById("moduleIsActiveInput")?.checked;
+    const submitBtn = document.getElementById("submitModuleBtn");
+
+    if (!code || !name) {
+        showFormMessage("Module code and module name are required.", "error");
+        return;
+    }
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+            Saving...
+        `;
+
+        const payload = {
+            module_code: code.toUpperCase(),
+            module_name: name,
+            description: description || null,
+            module_image_url: imageUrl || null,
+            is_active: !!isActive
+        };
+
+        let result;
+
+        if (currentMode === "edit" && moduleId) {
+            result = await API.modules.update(moduleId, payload);
+        } else {
+            result = await API.modules.create(payload);
+        }
+
+        if (!result || !result.ok) {
+            showFormMessage(result?.error || "Failed to save module.", "error");
+            return;
+        }
+
+        const successMessage = currentMode === "edit"
+            ? "Module updated successfully."
+            : "Module created successfully.";
+
+        showFormMessage(successMessage, "success");
+        await loadModules();
+
+        setTimeout(() => {
+            closeDrawer();
+            showPageMessage(successMessage, "success");
+        }, 500);
+    } catch (error) {
+        console.error("Save module error:", error);
+        showFormMessage("Something went wrong while saving the module.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = currentMode === "edit"
+            ? `<span class="material-symbols-outlined text-[18px]">save</span>Save Changes`
+            : `<span class="material-symbols-outlined text-[18px]">save</span>Save Module`;
+    }
+}
+
+async function deleteModule(moduleId, moduleName) {
+    const confirmed = confirm(`Are you sure you want to remove "${moduleName || "this module"}"?`);
+    if (!confirmed) return;
+
+    try {
+        const result = await API.modules.delete(moduleId);
+
+        if (!result || !result.ok) {
+            showPageMessage(result?.error || "Failed to remove module.", "error");
+            return;
+        }
+
+        showPageMessage("Module removed successfully.", "success");
+        await loadModules();
+    } catch (error) {
+        console.error("Delete module error:", error);
+        showPageMessage("Failed to remove module.", "error");
+    }
+}
+
+function showPageMessage(message, type = "success") {
+    const box = document.getElementById("pageMessage");
+    if (!box) return;
+
+    box.classList.remove("hidden");
+    box.textContent = message;
+
+    if (type === "success") {
+        box.className = "mb-6 rounded-xl px-4 py-3 text-sm font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
+    } else {
+        box.className = "mb-6 rounded-xl px-4 py-3 text-sm font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+    }
+}
+
+function showFormMessage(message, type = "success") {
+    const box = document.getElementById("moduleFormMessage");
+    if (!box) return;
+
+    box.classList.remove("hidden");
+    box.textContent = message;
+
+    if (type === "success") {
+        box.className = "rounded-xl px-4 py-3 text-sm font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
+    } else {
+        box.className = "rounded-xl px-4 py-3 text-sm font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+    }
+}
+
+function buildModuleImageUrl(value) {
+    if (!value) return DEFAULT_MODULE_IMAGE;
+    if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
+    return `http://localhost:3000${value}`;
+}
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if ("value" in el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+        el.value = value;
+    } else {
+        el.textContent = value;
+    }
+}
+
+function normalizeBool(value) {
+    return value === true || value === 1 || value === "1";
+}
+
+function formatDate(value) {
+    if (!value) return "No date";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "No date";
+    return date.toLocaleDateString();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value);
+}
+
+function escapeJsString(value) {
+    return String(value ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"');
+}
+</script>
+</body>
+</html>

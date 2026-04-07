@@ -93,109 +93,70 @@
       </nav>
     </aside>
 
-    <main class="flex-1 p-6 md:p-10">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Student Dashboard</h1>
-          <p id="studentWelcomeText" class="text-gray-500 dark:text-gray-400">Welcome back! Here's what's happening today.</p>
-        </div>
+<main class="flex-1 p-6 md:p-10">
+  <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Student Dashboard</h1>
+      <p id="studentWelcomeText" class="text-gray-500 dark:text-gray-400">
+        Welcome back! Select a module to continue.
+      </p>
+    </div>
 
-        <a href="student-profile.html" class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3 hover:opacity-90 transition">
-          <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
-          <div>
-            <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
-            <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
-          </div>
-        </a>
+    <a href="student-profile.html" class="flex items-center gap-3 bg-white dark:bg-card-dark rounded-2xl px-4 py-3 border border-purple-100 dark:border-gray-800 shadow-sm hover:shadow-md transition">
+      <img id="studentProfileImage" alt="Student Profile" class="w-12 h-12 rounded-full border-2 border-purple-100 dark:border-gray-700 object-cover" src="public/images/stu.jpg"/>
+      <div>
+        <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
+        <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
+      </div>
+    </a>
+  </div>
+
+  <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div>
+        <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">My Modules</h2>
+        <p class="text-gray-500 dark:text-gray-400">
+          Open a module to access exams, submissions, bookings, and study materials.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div class="xl:col-span-2 space-y-8">
-          <section>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-            <div class="flex flex-wrap gap-4">
-              <button onclick="window.location.href='submission-hub.html'" class="flex items-center gap-3 px-6 py-4 bg-primary text-white rounded-2xl font-semibold hover:bg-primary-dark transition-all transform hover:-translate-y-1 shadow-lg shadow-purple-200 dark:shadow-none">
-                <span class="material-icons-round">upload_file</span>
-                Submit Practical Exam
-              </button>
-
-              <button onclick="window.location.href='study-materials.html'" class="flex items-center gap-3 px-6 py-4 bg-white dark:bg-card-dark text-primary border border-purple-200 dark:border-gray-700 rounded-2xl font-semibold hover:bg-purple-50 dark:hover:bg-gray-800 transition-all transform hover:-translate-y-1">
-                <span class="material-icons-round">auto_stories</span>
-                Study Materials
-              </button>
-            </div>
-          </section>
-
-          <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Scheduled Exams</h3>
-              <span id="studentExamCount" class="text-primary text-sm font-semibold">0 Exams</span>
-            </div>
-
-            <div id="studentScheduledExams" class="space-y-4">
-              <div class="text-sm text-gray-500 dark:text-gray-400">Loading scheduled exams...</div>
-            </div>
-          </section>
-
-          <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Notifications</h3>
-              <button class="text-primary text-sm font-semibold hover:underline">Mark all as read</button>
-            </div>
-
-            <div class="space-y-4">
-              <div class="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors">
-                <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0">
-                  <span class="material-icons-round">description</span>
-                </div>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900 dark:text-white">Practical Exam Submission</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Deadline reminders and important updates will appear here.</p>
-                </div>
-                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">New</span>
-              </div>
-
-              <div class="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors">
-                <div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
-                  <span class="material-icons-round">alarm</span>
-                </div>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900 dark:text-white">Lab Slot Booking</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Book exam-related slots from the scheduled exam cards above.</p>
-                </div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Info</span>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div class="space-y-8">
-          <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming Events</h3>
-              <span class="material-icons-round text-primary/40">event</span>
-            </div>
-
-            <div class="space-y-6">
-              <div class="flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:border-purple-100 dark:hover:border-gray-700 hover:bg-purple-50/30 dark:hover:bg-gray-800/30 transition-all">
-                <div class="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center shrink-0">
-                  <span class="text-[10px] font-bold text-primary uppercase">APR</span>
-                  <span class="text-lg font-bold text-primary">22</span>
-                </div>
-                <div>
-                  <p class="text-sm font-bold text-gray-900 dark:text-white">Scheduled exam updates</p>
-                  <p class="text-xs text-gray-500">New exams will appear above.</p>
-                </div>
-              </div>
-            </div>
-
-            <button class="w-full mt-8 py-3 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-2xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              View All Events
-            </button>
-          </section>
-        </div>
+      <div class="w-full lg:w-[360px]">
+        <label class="relative block">
+          <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+            search
+          </span>
+          <input
+            id="studentModuleSearchInput"
+            type="text"
+            placeholder="Search modules..."
+            class="w-full bg-gray-50 dark:bg-gray-800 border border-purple-100 dark:border-gray-700 rounded-2xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+          />
+        </label>
       </div>
-    </main>
+    </div>
+  </section>
+
+  <div
+    id="studentModulesGrid"
+    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+  >
+    <div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>
+  </div>
+
+<section class="mt-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming</h3>
+    <span class="material-icons-round text-primary/40">event</span>
+  </div>
+
+  <div id="studentUpcomingPanel" class="space-y-4">
+    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">
+      Loading updates...
+    </div>
+  </div>
+</section>
+
+</main>
   </div>
 
   <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
@@ -224,6 +185,22 @@
   </button>
 
 <script>
+
+const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+let studentModules = [];
+
+function buildModuleImageUrl(value) {
+  if (!value) return DEFAULT_MODULE_IMAGE;
+  if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
+  return `http://localhost:3000${value}`;
+}
+
+function openStudentModule(moduleId) {
+  if (!moduleId) return;
+  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+}
+
   function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
@@ -232,6 +209,7 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
+
 
   function formatExamDate(dateValue) {
     if (!dateValue) return "No date";
@@ -253,141 +231,353 @@
     return `${formattedHour}:${m} ${suffix}`;
   }
 
-  function isExamExpired(exam) {
-    if (!exam || !exam.exam_date || !exam.end_time) return false;
+function openStudentModule(moduleId) {
+  if (!moduleId) return;
+  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+}
 
-    try {
-      const endTime = String(exam.end_time).slice(0, 5);
-      const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
-      return examEnd.getTime() < Date.now();
-    } catch (err) {
-      console.error("Expiry check failed:", err);
-      return false;
-    }
+function renderStudentModules(searchTerm = "") {
+  const container = document.getElementById("studentModulesGrid");
+  if (!container) return;
+
+  const term = String(searchTerm || "").toLowerCase().trim();
+
+  const filtered = studentModules.filter(module => {
+    const code = String(module.module_code || "").toLowerCase();
+    const name = String(module.module_name || "").toLowerCase();
+    return code.includes(term) || name.includes(term);
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="col-span-full bg-white dark:bg-card-dark rounded-3xl border border-purple-100 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
+        No modules found.
+      </div>
+    `;
+    return;
   }
 
-  function openExamBooking(examId) {
-    localStorage.setItem("selectedExamId", String(examId));
-    window.location.href = `lab-slot-booking.html?exam_id=${encodeURIComponent(examId)}`;
+  container.innerHTML = filtered.map(module => `
+    <div
+      class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+      onclick="openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')"
+    >
+      <div class="relative h-44 overflow-hidden">
+        <img
+          src="${buildModuleImageUrl(module.module_image_url)}"
+          alt="${escapeHtml(module.module_name || "Module image")}"
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
+
+        <div class="absolute top-4 left-4">
+          <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
+            ${escapeHtml(module.module_code || "MODULE")}
+          </span>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
+          ${escapeHtml(module.module_name || "Untitled Module")}
+        </h3>
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
+          ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
+        </p>
+
+        <div class="mt-5 flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-primary">
+            Open Module
+          </span>
+
+          <button
+            type="button"
+            onclick="event.stopPropagation(); openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')"
+            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function loadStudentModules() {
+  const container = document.getElementById("studentModulesGrid");
+
+  if (container) {
+    container.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>`;
   }
 
-  async function loadStudentScheduledExams() {
-    try {
-      const result = await API.exams.getAll(null, "SCHEDULED");
-      const exams = result.exams || [];
-      const container = document.getElementById("studentScheduledExams");
-      const countBox = document.getElementById("studentExamCount");
+  try {
+    const result = await API.modules.getAll();
 
-      if (countBox) {
-        countBox.textContent = `${exams.length} Exam${exams.length === 1 ? "" : "s"}`;
-      }
-
-      if (!container) return;
-
-      if (!exams.length) {
-        container.innerHTML = `
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            No scheduled exams yet.
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = exams.map(exam => {
-        const expired = isExamExpired(exam);
-        const badgeText = expired ? "EXPIRED" : (exam.status || "SCHEDULED");
-        const badgeClass = expired ? "text-red-600 font-bold" : "text-primary font-semibold";
-
-        const bookButtonHtml = expired
-          ? `
-            <button
-              disabled
-              class="px-4 py-2.5 bg-red-200 text-red-600 rounded-xl text-sm font-semibold cursor-not-allowed text-center"
-            >
-              Exam Expired
-            </button>
-          `
-          : `
-            <button
-              onclick="openExamBooking(${Number(exam.exam_id)})"
-              class="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center"
-            >
-              Book Exam Slot
-            </button>
-          `;
-
-        return `
-          <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-purple-100 dark:border-gray-700">
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div>
-                <h4 class="font-bold text-gray-900 dark:text-white text-base">
-                  ${escapeHtml(exam.exam_name)}
-                </h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  ${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "")}
-                </p>
-                <p class="text-xs text-primary font-semibold mt-2">
-                  ${formatExamDate(exam.exam_date)} • ${formatExamTime(exam.start_time)} - ${formatExamTime(exam.end_time)}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Status: <span class="${badgeClass}">${badgeText}</span>
-                </p>
-              </div>
-
-              <div class="flex flex-col sm:flex-row gap-3">
-                ${bookButtonHtml}
-
-                <a
-                  href="practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}"
-                  class="px-4 py-2.5 bg-white dark:bg-card-dark text-primary border border-purple-200 dark:border-gray-700 rounded-xl text-sm font-semibold hover:bg-purple-50 dark:hover:bg-gray-800 transition-all text-center"
-                >
-                  Go to Submission
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("");
-    } catch (error) {
-      console.error("Failed to load scheduled exams:", error);
-      const container = document.getElementById("studentScheduledExams");
+    if (!result.ok || !Array.isArray(result.modules)) {
       if (container) {
-        container.innerHTML = `<div class="text-sm text-red-500">Failed to load scheduled exams.</div>`;
+        container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
       }
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", async function () {
-    if (typeof requireAuth !== "function") {
-      alert("api.js failed to load correctly.");
       return;
     }
 
-    const user = await requireAuth("student");
-    if (!user) return;
+    studentModules = result.modules.filter(module =>
+      module.is_active === true ||
+      module.is_active === 1 ||
+      module.is_active === "1"
+    );
 
-    const fullName =
-      user.fullName ||
-      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-      "Student";
-
-    const nameEl = document.getElementById("studentProfileName");
-    const welcomeEl = document.getElementById("studentWelcomeText");
-
-    if (nameEl) nameEl.textContent = fullName;
-    if (welcomeEl) {
-      welcomeEl.textContent = `Welcome back, ${user.firstName || fullName}! Here's what's happening today.`;
+    renderStudentModules(document.getElementById("studentModuleSearchInput")?.value || "");
+  } catch (error) {
+    console.error("Failed to load student modules:", error);
+    if (container) {
+      container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
     }
+  }
+}
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.onclick = function () {
-        API.auth.logout();
-      };
-    }
+/* ===========================
+   RENDER MODULES
+=========================== */
 
-    await loadStudentScheduledExams();
+function renderStudentModules(searchTerm = "") {
+  const container = document.getElementById("studentModulesGrid");
+  if (!container) return;
+
+  const term = String(searchTerm || "").toLowerCase().trim();
+
+  const filtered = studentModules.filter(module => {
+    const code = String(module.module_code || "").toLowerCase();
+    const name = String(module.module_name || "").toLowerCase();
+    return code.includes(term) || name.includes(term);
   });
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="col-span-full bg-white dark:bg-card-dark rounded-3xl border border-purple-100 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
+        No modules found.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(module => `
+    <div
+      class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+      data-module-id="${escapeHtml(module.module_id)}"
+    >
+      <div class="relative h-44 overflow-hidden">
+        <img
+          src="${buildModuleImageUrl(module.module_image_url)}"
+          alt="${escapeHtml(module.module_name || "Module image")}"
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
+
+        <div class="absolute top-4 left-4">
+          <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
+            ${escapeHtml(module.module_code || "MODULE")}
+          </span>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
+          ${escapeHtml(module.module_name || "Untitled Module")}
+        </h3>
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
+          ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
+        </p>
+
+        <div class="mt-5 flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-primary">
+            Open Module
+          </span>
+
+          <button
+            type="button"
+            class="open-module-btn px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+            data-module-id="${escapeHtml(module.module_id)}"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("[data-module-id]").forEach(el => {
+    el.addEventListener("click", function (event) {
+      const moduleId = this.getAttribute("data-module-id");
+      if (!moduleId) return;
+      openStudentModule(moduleId);
+    });
+  });
+
+  container.querySelectorAll(".open-module-btn").forEach(btn => {
+    btn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const moduleId = this.getAttribute("data-module-id");
+      if (!moduleId) return;
+      openStudentModule(moduleId);
+    });
+  });
+}
+
+async function loadStudentUpcoming() {
+  const panel = document.getElementById("studentUpcomingPanel");
+  if (!panel) return;
+
+  try {
+    const result = await API.exams.getAll(null, "SCHEDULED");
+    const exams = Array.isArray(result.exams) ? result.exams.slice(0, 3) : [];
+
+    if (!exams.length) {
+      panel.innerHTML = `
+        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">
+          No upcoming scheduled exams right now.
+        </div>
+      `;
+      return;
+    }
+
+    panel.innerHTML = exams.map(exam => `
+      <div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-purple-50 dark:hover:bg-gray-800 transition-all">
+        <div>
+          <p class="font-semibold text-gray-900 dark:text-white">
+            ${escapeHtml(exam.exam_name || "Scheduled Exam")}
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            ${escapeHtml(exam.module_code || "")} ${exam.module_name ? `- ${escapeHtml(exam.module_name)}` : ""}
+          </p>
+          <p class="text-xs text-primary font-semibold mt-1">
+            ${formatExamDate(exam.exam_date)} • ${formatExamTime(exam.start_time)} - ${formatExamTime(exam.end_time)}
+          </p>
+        </div>
+      </div>
+    `).join("");
+  } catch (error) {
+    console.error("Failed to load upcoming exams:", error);
+    panel.innerHTML = `
+      <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-red-500">
+        Failed to load updates.
+      </div>
+    `;
+  }
+}
+/* ===========================
+   LOAD MODULES
+=========================== */
+
+async function loadStudentModules() {
+
+  const container =
+    document.getElementById(
+      "studentModulesGrid"
+    );
+
+  try {
+
+    const result =
+      await API.modules.getAll();
+
+    if (!result.ok) {
+
+      container.innerHTML =
+        `<div class="text-red-500">
+          Failed to load modules
+        </div>`;
+
+      return;
+
+    }
+
+    studentModules =
+      result.modules || [];
+
+    renderStudentModules();
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    container.innerHTML =
+      `<div class="text-red-500">
+        Failed to load modules
+      </div>`;
+
+  }
+
+}
+
+
+/* ===========================
+   OPEN MODULE
+=========================== */
+
+function openStudentModule(moduleId) {
+  if (!moduleId) return;
+  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+}
+
+
+/* ===========================
+   INIT
+=========================== */
+
+document.addEventListener("DOMContentLoaded", async function () {
+  if (typeof requireAuth !== "function") {
+    alert("api.js failed to load correctly.");
+    return;
+  }
+
+  const user = await requireAuth("student");
+  if (!user) return;
+
+  const fullName =
+    user.fullName ||
+    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+    "Student";
+
+  const nameEl = document.getElementById("studentProfileName");
+  const welcomeEl = document.getElementById("studentWelcomeText");
+  const profileImageEl = document.getElementById("studentProfileImage");
+  const searchInput = document.getElementById("studentModuleSearchInput");
+
+  if (nameEl) nameEl.textContent = fullName;
+
+  if (welcomeEl) {
+    welcomeEl.textContent = `Welcome back, ${user.firstName || fullName}! Select a module to continue.`;
+  }
+
+  if (profileImageEl && user.profile_image_url) {
+    profileImageEl.src = `http://localhost:3000${user.profile_image_url}?t=${Date.now()}`;
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      renderStudentModules(this.value);
+    });
+  }
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.onclick = function () {
+      API.auth.logout();
+    };
+  }
+
+  await loadStudentModules();
+  await loadStudentUpcoming();
+});
+
 </script>
 </body>
 </html>

@@ -1,8 +1,48 @@
 const express = require("express");
 const router = express.Router();
 
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 const { promisePool } = require("../config/database");
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, authorizeRole } = require("../middleware/auth");
+
+// --------------------------------------------------
+// Upload folder for module images
+// --------------------------------------------------
+const modulesUploadDir = path.join(__dirname, "../uploads/modules");
+
+if (!fs.existsSync(modulesUploadDir)) {
+  fs.mkdirSync(modulesUploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(modulesUploadDir)) {
+      fs.mkdirSync(modulesUploadDir, { recursive: true });
+    }
+    cb(null, modulesUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid image type"));
+    }
+  }
+});
 
 // ======================================================
 // GET ALL MODULES
@@ -19,10 +59,8 @@ router.get("/", authenticateToken, async (req, res) => {
         m.is_active,
         m.created_at,
         m.updated_at,
-
         a.first_name AS admin_first_name,
         a.last_name AS admin_last_name
-
       FROM modules m
       LEFT JOIN admins a
         ON m.created_by = a.admin_id
@@ -43,73 +81,19 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-
-// ======================================================
-// GET MODULE MEMBERS
-// ======================================================
-router.get("/:id/members", authenticateToken, async (req, res) => {
-  try {
-    const moduleId = req.params.id;
-
-    // Check if module exists
-    const [moduleExists] = await promisePool.query(
-      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE`,
-      [moduleId]
-    );
-
-    if (moduleExists.length === 0) {
-      return res.status(404).json({
-        ok: false,
-        error: "Module not found"
-      });
-    }
-
-    const [students] = await promisePool.query(`
-      SELECT
-        s.student_id,
-        s.first_name,
-        s.last_name,
-        s.email,
-        s.registration_number
-      FROM module_students ms
-      JOIN students s
-        ON ms.student_id = s.student_id
-      WHERE ms.module_id = ? AND ms.is_active = TRUE
-    `, [moduleId]);
-
-    const [lecturers] = await promisePool.query(`
-      SELECT
-        l.lecturer_id,
-        l.first_name,
-        l.last_name,
-        l.email,
-        l.staff_id
-      FROM module_lecturers ml
-      JOIN lecturers l
-        ON ml.lecturer_id = l.lecturer_id
-      WHERE ml.module_id = ? AND ml.is_active = TRUE
-    `, [moduleId]);
-
-    res.json({
-      ok: true,
-      students,
-      lecturers
-    });
-  } catch (error) {
-    console.error("Get module members error:", error);
-    return res.status(500).json({
-      ok: false,
-      error: "Failed to fetch module members"
-    });
-  }
-});
-
 // ======================================================
 // GET MODULE BY ID
 // ======================================================
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const moduleId = Number(req.params.id);
+
+    if (!moduleId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id"
+      });
+    }
 
     const [rows] = await promisePool.query(`
       SELECT
@@ -121,10 +105,8 @@ router.get("/:id", authenticateToken, async (req, res) => {
         m.is_active,
         m.created_at,
         m.updated_at,
-
         a.first_name AS admin_first_name,
         a.last_name AS admin_last_name
-
       FROM modules m
       LEFT JOIN admins a
         ON m.created_by = a.admin_id
@@ -148,6 +130,78 @@ router.get("/:id", authenticateToken, async (req, res) => {
     return res.status(500).json({
       ok: false,
       error: "Failed to fetch module"
+    });
+  }
+});
+
+// ======================================================
+// GET MODULE MEMBERS
+// ======================================================
+router.get("/:id/members", authenticateToken, async (req, res) => {
+  try {
+    const moduleId = Number(req.params.id);
+
+    if (!moduleId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id"
+      });
+    }
+
+    const [moduleExists] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE LIMIT 1`,
+      [moduleId]
+    );
+
+    if (moduleExists.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "Module not found"
+      });
+    }
+
+    const [students] = await promisePool.query(`
+      SELECT
+        s.student_id,
+        s.first_name,
+        s.last_name,
+        s.email,
+        s.registration_number,
+        ms.enrolled_at
+      FROM module_students ms
+      JOIN students s
+        ON ms.student_id = s.student_id
+      WHERE ms.module_id = ?
+        AND ms.is_active = TRUE
+      ORDER BY ms.enrolled_at DESC
+    `, [moduleId]);
+
+    const [lecturers] = await promisePool.query(`
+      SELECT
+        l.lecturer_id,
+        l.first_name,
+        l.last_name,
+        l.email,
+        l.staff_id,
+        ml.enrolled_at
+      FROM module_lecturers ml
+      JOIN lecturers l
+        ON ml.lecturer_id = l.lecturer_id
+      WHERE ml.module_id = ?
+        AND ml.is_active = TRUE
+      ORDER BY ml.enrolled_at DESC
+    `, [moduleId]);
+
+    return res.json({
+      ok: true,
+      students,
+      lecturers
+    });
+  } catch (error) {
+    console.error("Get module members error:", error);
+    return res.status(500).json({
+      ok: false,
+      error: "Failed to fetch module members"
     });
   }
 });
@@ -180,6 +234,8 @@ router.post("/", authenticateToken, async (req, res) => {
 
     const normalizedCode = String(module_code).trim().toUpperCase();
     const normalizedName = String(module_name).trim();
+    const normalizedDescription = description ? String(description).trim() : null;
+    const normalizedImageUrl = module_image_url ? String(module_image_url).trim() : null;
 
     const [duplicateRows] = await promisePool.query(
       `SELECT module_id FROM modules WHERE module_code = ? LIMIT 1`,
@@ -207,8 +263,8 @@ router.post("/", authenticateToken, async (req, res) => {
     `, [
       normalizedCode,
       normalizedName,
-      description || null,
-      module_image_url || null,
+      normalizedDescription,
+      normalizedImageUrl,
       req.user.id
     ]);
 
@@ -240,16 +296,15 @@ router.put("/:id", authenticateToken, async (req, res) => {
 
     const moduleId = Number(req.params.id);
 
-    const {
-      module_name,
-      module_code,
-      description,
-      module_image_url,
-      is_active
-    } = req.body;
+    if (!moduleId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id"
+      });
+    }
 
     const [existingRows] = await promisePool.query(
-      `SELECT module_id FROM modules WHERE module_id = ? LIMIT 1`,
+      `SELECT * FROM modules WHERE module_id = ? LIMIT 1`,
       [moduleId]
     );
 
@@ -260,20 +315,43 @@ router.put("/:id", authenticateToken, async (req, res) => {
       });
     }
 
-    if (module_code) {
-      const normalizedCode = String(module_code).trim().toUpperCase();
+    const existingModule = existingRows[0];
 
-      const [duplicateRows] = await promisePool.query(
-        `SELECT module_id FROM modules WHERE module_code = ? AND module_id <> ? LIMIT 1`,
-        [normalizedCode, moduleId]
-      );
+    const nextModuleName =
+      req.body.module_name !== undefined
+        ? String(req.body.module_name).trim()
+        : existingModule.module_name;
 
-      if (duplicateRows.length > 0) {
-        return res.status(409).json({
-          ok: false,
-          error: "Module code already exists"
-        });
-      }
+    const nextModuleCode =
+      req.body.module_code !== undefined
+        ? String(req.body.module_code).trim().toUpperCase()
+        : existingModule.module_code;
+
+    const nextDescription =
+      req.body.description !== undefined
+        ? (req.body.description ? String(req.body.description).trim() : null)
+        : existingModule.description;
+
+    const nextImageUrl =
+      req.body.module_image_url !== undefined
+        ? (req.body.module_image_url ? String(req.body.module_image_url).trim() : null)
+        : existingModule.module_image_url;
+
+    const nextIsActive =
+      req.body.is_active !== undefined
+        ? Boolean(req.body.is_active)
+        : existingModule.is_active;
+
+    const [duplicateRows] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_code = ? AND module_id <> ? LIMIT 1`,
+      [nextModuleCode, moduleId]
+    );
+
+    if (duplicateRows.length > 0) {
+      return res.status(409).json({
+        ok: false,
+        error: "Module code already exists"
+      });
     }
 
     await promisePool.query(`
@@ -287,11 +365,11 @@ router.put("/:id", authenticateToken, async (req, res) => {
         updated_at = CURRENT_TIMESTAMP
       WHERE module_id = ?
     `, [
-      module_name ? String(module_name).trim() : null,
-      module_code ? String(module_code).trim().toUpperCase() : null,
-      description || null,
-      module_image_url || null,
-      Boolean(is_active),
+      nextModuleName,
+      nextModuleCode,
+      nextDescription,
+      nextImageUrl,
+      nextIsActive,
       moduleId
     ]);
 
@@ -322,6 +400,13 @@ router.delete("/:id", authenticateToken, async (req, res) => {
 
     const moduleId = Number(req.params.id);
 
+    if (!moduleId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id"
+      });
+    }
+
     const [result] = await promisePool.query(`
       UPDATE modules
       SET is_active = FALSE,
@@ -348,6 +433,39 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+
+// ======================================================
+// MODULE IMAGE UPLOAD (ADMIN ONLY)
+// ======================================================
+router.post(
+  "/image",
+  authenticateToken,
+  authorizeRole("admin"),
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          ok: false,
+          error: "No image uploaded"
+        });
+      }
+
+      const fileUrl = `/uploads/modules/${req.file.filename}`;
+
+      return res.json({
+        ok: true,
+        file_url: fileUrl
+      });
+    } catch (error) {
+      console.error("Module image upload error:", error);
+      return res.status(500).json({
+        ok: false,
+        error: "Failed to upload image"
+      });
+    }
+  }
+);
 
 // ======================================================
 // STUDENT JOIN MODULE USING MODULE CODE
@@ -405,7 +523,8 @@ router.post("/join", authenticateToken, async (req, res) => {
 
     return res.json({
       ok: true,
-      message: "Joined module successfully"
+      message: "Joined module successfully",
+      module_id: moduleId
     });
   } catch (error) {
     console.error("Student join module error:", error);
@@ -417,7 +536,7 @@ router.post("/join", authenticateToken, async (req, res) => {
 });
 
 // ======================================================
-// LECTURER ENROLL INTO MODULE
+// LECTURER SELF-ENROLL INTO MODULE
 // ======================================================
 router.post("/lecturer/join", authenticateToken, async (req, res) => {
   try {
@@ -434,6 +553,18 @@ router.post("/lecturer/join", authenticateToken, async (req, res) => {
       return res.status(400).json({
         ok: false,
         error: "module_id is required"
+      });
+    }
+
+    const [moduleRows] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE LIMIT 1`,
+      [module_id]
+    );
+
+    if (moduleRows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "Module not found"
       });
     }
 
@@ -463,47 +594,6 @@ router.post("/lecturer/join", authenticateToken, async (req, res) => {
       error: "Failed to enroll lecturer into module"
     });
   }
-});
-
-// ======================================================
-// GET MODULE MEMBERS
-// ======================================================
-router.get("/:id/members", authenticateToken, async (req, res) => {
-
-  const moduleId = req.params.id;
-
-  const [students] = await promisePool.query(`
-    SELECT
-      s.student_id,
-      s.first_name,
-      s.last_name,
-      s.email,
-      s.registration_number
-    FROM module_students ms
-    JOIN students s
-      ON ms.student_id = s.student_id
-    WHERE ms.module_id = ?
-  `,[moduleId]);
-
-  const [lecturers] = await promisePool.query(`
-    SELECT
-      l.lecturer_id,
-      l.first_name,
-      l.last_name,
-      l.email,
-      l.staff_id
-    FROM module_lecturers ml
-    JOIN lecturers l
-      ON ml.lecturer_id = l.lecturer_id
-    WHERE ml.module_id = ?
-  `,[moduleId]);
-
-  res.json({
-    ok: true,
-    students,
-    lecturers
-  });
-
 });
 
 module.exports = router;

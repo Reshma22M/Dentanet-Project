@@ -44,7 +44,7 @@ const allowedMimeTypes = [
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -100,6 +100,22 @@ async function getModuleById(moduleId) {
   );
 
   return rows[0] || null;
+}
+
+async function isLecturerEnrolledInModule(moduleId, lecturerId) {
+  const [rows] = await promisePool.query(
+    `
+    SELECT lecturer_id
+    FROM module_lecturers
+    WHERE module_id = ?
+      AND lecturer_id = ?
+      AND is_active = TRUE
+    LIMIT 1
+    `,
+    [moduleId, lecturerId]
+  );
+
+  return rows.length > 0;
 }
 
 async function getMaterialById(materialId) {
@@ -252,15 +268,19 @@ router.post(
       const numericMaterialTypeId = Number(material_type_id);
       const uploaded_by = Number(req.user.id);
 
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
       const module = await getModuleById(numericModuleId);
       if (!module) {
         return res.status(400).json({
           ok: false,
           error: "Invalid module",
+        });
+      }
+
+      const enrolled = await isLecturerEnrolledInModule(numericModuleId, uploaded_by);
+      if (!enrolled) {
+        return res.status(403).json({
+          ok: false,
+          error: "You can only upload materials to modules you are enrolled in",
         });
       }
 
@@ -303,15 +323,6 @@ router.post(
           error: "Unsupported material type",
         });
       }
-
-      console.log("Uploading material:", {
-        module_id: numericModuleId,
-        material_type_id: numericMaterialTypeId,
-        title: String(title).trim(),
-        uploaded_by,
-        file_url,
-        external_url: finalExternalUrl,
-      });
 
       const [result] = await promisePool.query(
         `
@@ -421,6 +432,14 @@ router.put(
         });
       }
 
+      const enrolled = await isLecturerEnrolledInModule(finalModuleId, Number(req.user.id));
+      if (!enrolled) {
+        return res.status(403).json({
+          ok: false,
+          error: "You can only manage materials inside modules you are enrolled in",
+        });
+      }
+
       const materialType = await getMaterialTypeById(finalMaterialTypeId);
       if (!materialType) {
         return res.status(400).json({
@@ -473,7 +492,8 @@ router.put(
           title = ?,
           file_url = ?,
           external_url = ?,
-          is_active = ?
+          is_active = ?,
+          updated_at = CURRENT_TIMESTAMP
         WHERE material_id = ?
         `,
         [
@@ -537,7 +557,7 @@ router.delete(
       }
 
       await promisePool.query(
-        `UPDATE study_materials SET is_active = FALSE WHERE material_id = ?`,
+        `UPDATE study_materials SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE material_id = ?`,
         [materialId]
       );
 

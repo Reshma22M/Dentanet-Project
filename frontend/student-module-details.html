@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>DentaNet | Student Module Details</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#6366f1",
+            "primary-light": "#8B5CF6",
+            "primary-dark": "#4C1D95",
+            "background-light": "#F5F3FF",
+            "background-dark": "#0F172A",
+            "card-light": "#FFFFFF",
+            "card-dark": "#1E293B",
+            "sidebar-light": "#EDE9FE",
+            "sidebar-dark": "#111827",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .tab-active {
+      background-color: #6366f1;
+      color: white;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.18);
+    }
+    .tab-inactive {
+      background: white;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .dark .tab-inactive {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
+  <nav class="sticky top-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-purple-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+    </div>
+
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
+      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
+      <a class="hover:text-primary transition-colors" href="#">About</a>
+      <a class="hover:text-primary transition-colors" href="#">Contact</a>
+      <button id="logoutBtn" class="px-5 py-2 bg-primary text-white rounded-full font-semibold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-primary-dark transition-all">
+        Log Out
+      </button>
+    </div>
+  </nav>
+
+  <div class="flex min-h-screen">
+    <aside class="w-72 bg-sidebar-light dark:bg-sidebar-dark p-6 hidden lg:block border-r border-purple-100 dark:border-gray-800">
+      <div class="mb-8">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-primary mb-1">LMS</h2>
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">University of Peradeniya</p>
+      </div>
+
+      <nav class="space-y-2">
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="student-dashboard.html">
+          <span class="material-icons-round text-[20px]">dashboard</span>
+          <span class="font-medium">Dashboard</span>
+        </a>
+
+        <a id="sidebarSubmissionLink" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="submission-hub.html">
+          <span class="material-icons-round text-[20px]">assignment</span>
+          <span class="font-medium">Submission</span>
+        </a>
+
+        <a id="sidebarBookingLink" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="lab-slot-booking.html">
+          <span class="material-icons-round text-[20px]">event_available</span>
+          <span class="font-medium">Lab Slot Timetable</span>
+        </a>
+
+        <a id="sidebarMaterialsLink" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="study-materials.html">
+          <span class="material-icons-round text-[20px]">auto_stories</span>
+          <span class="font-medium">Study Materials</span>
+        </a>
+
+        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="grades-feedback.html">
+          <span class="material-icons-round text-[20px]">insights</span>
+          <span class="font-medium">Grades & Feedback</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
+        <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
+        <div>
+          <p class="text-xs text-indigo-100">Welcome back,</p>
+          <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-10">
+      <div id="statusBox" class="hidden mb-6 rounded-2xl px-4 py-3 text-sm font-medium"></div>
+
+      <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-6">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-primary mb-2">Module</p>
+          <h1 id="moduleName" class="text-3xl font-bold text-gray-900 dark:text-white">Loading module...</h1>
+          <p id="moduleCode" class="text-sm text-primary font-semibold mt-2">MODULE</p>
+          <p id="moduleDescription" class="text-gray-500 dark:text-gray-400 mt-3 max-w-3xl">
+            Please wait while module details are loading.
+          </p>
+        </div>
+
+        <a href="student-profile.html" class="flex items-center gap-3 bg-white dark:bg-card-dark rounded-2xl px-4 py-3 border border-purple-100 dark:border-gray-800 shadow-sm hover:shadow-md transition">
+          <img id="topStudentProfileImage" alt="Student Profile" class="w-12 h-12 rounded-full border-2 border-purple-100 dark:border-gray-700 object-cover" src="public/images/stu.jpg"/>
+          <div>
+            <p id="topStudentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
+            <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
+          </div>
+        </a>
+      </div>
+
+      <section class="bg-white dark:bg-card-dark rounded-3xl p-6 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+        <div class="flex flex-wrap gap-3">
+          <button type="button" class="tab-button tab-active px-5 py-2.5 rounded-2xl text-sm font-semibold" data-tab="examsPanel">
+            Exams
+          </button>
+          <button type="button" class="tab-button tab-inactive px-5 py-2.5 rounded-2xl text-sm font-semibold" data-tab="bookingsPanel">
+            Bookings
+          </button>
+          <button type="button" class="tab-button tab-inactive px-5 py-2.5 rounded-2xl text-sm font-semibold" data-tab="submissionsPanel">
+            Submissions
+          </button>
+          <button type="button" class="tab-button tab-inactive px-5 py-2.5 rounded-2xl text-sm font-semibold" data-tab="materialsPanel">
+            Materials
+          </button>
+        </div>
+      </section>
+           <section id="examsPanel" class="tab-panel bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Module Exams</h2>
+        </div>
+
+        <div id="moduleExamsContainer" class="space-y-4">
+          <div class="text-sm text-gray-500 dark:text-gray-400">Loading module exams...</div>
+        </div>
+      </section>
+
+      <section id="bookingsPanel" class="tab-panel hidden bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">My Bookings</h2>
+        </div>
+
+        <div id="moduleBookingsContainer" class="space-y-4">
+          <div class="text-sm text-gray-500 dark:text-gray-400">Loading bookings...</div>
+        </div>
+      </section>
+
+      <section id="submissionsPanel" class="tab-panel hidden bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Submissions</h2>
+        </div>
+
+        <div id="moduleSubmissionsContainer" class="space-y-4">
+          <div class="text-sm text-gray-500 dark:text-gray-400">Loading submission links...</div>
+        </div>
+      </section>
+
+      <section id="materialsPanel" class="tab-panel hidden bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Module Materials</h2>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Lecturer Materials</h3>
+            </div>
+
+            <div id="moduleMaterialsContainer" class="grid grid-cols-1 gap-4">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Loading lecturer materials...</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Student Study Materials</h3>
+              <a
+                id="shareStudyMaterialBtn"
+                href="study-materials.html"
+                class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+              >
+                Share Material
+              </a>
+            </div>
+
+            <div id="moduleStudyMaterialsContainer" class="grid grid-cols-1 gap-4">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Loading student study materials...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col items-center">
+      <div class="flex flex-wrap justify-center gap-8 mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
+        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+        <a class="hover:text-primary transition-colors" href="#">Contact Us</a>
+        <a class="hover:text-primary transition-colors" href="#">For Students</a>
+        <a class="hover:text-primary transition-colors" href="#">For Lecturers</a>
+        <a class="hover:text-primary transition-colors" href="#">Lab Services</a>
+      </div>
+
+      <div class="flex gap-6 mb-8 text-gray-400">
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">facebook</i></a>
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">alternate_email</i></a>
+        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">groups</i></a>
+      </div>
+
+      <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">
+        © 2025 DentaNet LMS. All rights reserved. Professional Dental Education Platform.
+      </p>
+    </div>
+  </footer>
+
+  <button
+    class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center justify-center border border-purple-100 dark:border-gray-700 hover:scale-110 transition-transform"
+    onclick="document.documentElement.classList.toggle('dark')"
+  >
+    <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
+  </button>
+
+  <script>
+    let currentModuleId = null;
+    let currentModule = null;
+    let moduleExams = [];
+    let moduleBookings = [];
+    let moduleMaterials = [];
+    let moduleStudyMaterials = [];
+    let backendBaseUrl = "";
+
+    function initBackendBaseUrl() {
+      backendBaseUrl = typeof API_BASE_URL === "string"
+        ? API_BASE_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:3000";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(dateValue) {
+      if (!dateValue) return "No date";
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return dateValue;
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    }
+
+    function formatTime(timeValue) {
+      if (!timeValue) return "-";
+      const [h, m] = String(timeValue).split(":");
+      const hour = parseInt(h, 10);
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const formattedHour = hour % 12 || 12;
+      return `${formattedHour}:${m} ${suffix}`;
+    }
+
+    function getModuleIdFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("module_id") || sessionStorage.getItem("selectedStudentModuleId") || "";
+    }
+
+    function getMaterialUrl(material) {
+      if (material.external_url) return material.external_url;
+      if (material.file_url) return `${backendBaseUrl}${material.file_url}`;
+      return "#";
+    }
+
+    function getMaterialIcon(material) {
+      const type = String(material.material_type_name || "").toLowerCase();
+      if (type === "youtube") return "smart_display";
+      if (type === "video") return "play_circle";
+      if (type === "pdf") return "picture_as_pdf";
+      if (type === "document") return "description";
+      if (material.external_url) return "link";
+      return "menu_book";
+    }
+
+    function showStatus(message, type = "error") {
+      const box = document.getElementById("statusBox");
+      box.textContent = message;
+      box.classList.remove("hidden", "bg-green-100", "text-green-700", "border-green-200", "bg-red-100", "text-red-700", "border-red-200");
+
+      if (type === "success") {
+        box.className = "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200";
+      } else {
+        box.className = "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
+      }
+    }
+
+    function setModuleLinks() {
+      const bookingLink = `lab-slot-booking.html?module_id=${encodeURIComponent(currentModuleId)}`;
+      const submissionLink = `submission-hub.html?module_id=${encodeURIComponent(currentModuleId)}`;
+      const materialsLink = `study-materials.html?module_id=${encodeURIComponent(currentModuleId)}`;
+
+      document.getElementById("sidebarBookingLink").href = bookingLink;
+      document.getElementById("sidebarSubmissionLink").href = submissionLink;
+      document.getElementById("sidebarMaterialsLink").href = materialsLink;
+      document.getElementById("shareStudyMaterialBtn").href = materialsLink;
+    }
+
+    function setupTabs() {
+      const buttons = Array.from(document.querySelectorAll(".tab-button"));
+      const panels = Array.from(document.querySelectorAll(".tab-panel"));
+
+      buttons.forEach(button => {
+        button.addEventListener("click", () => {
+          const targetId = button.getAttribute("data-tab");
+
+          buttons.forEach(btn => {
+            btn.classList.remove("tab-active");
+            btn.classList.add("tab-inactive");
+          });
+
+          panels.forEach(panel => panel.classList.add("hidden"));
+
+          button.classList.remove("tab-inactive");
+          button.classList.add("tab-active");
+
+          const targetPanel = document.getElementById(targetId);
+          if (targetPanel) targetPanel.classList.remove("hidden");
+        });
+      });
+    }
+
+    function renderEmptyCard(message) {
+      return `
+        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 text-sm text-gray-500 dark:text-gray-400">
+          ${escapeHtml(message)}
+        </div>
+      `;
+    }
+
+    function createMaterialCard(material, isStudentShare = false) {
+      const icon = getMaterialIcon(material);
+      const link = getMaterialUrl(material);
+
+      return `
+        <article class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+          <div class="p-5">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary">${icon}</span>
+                <div>
+                  <h3 class="text-base font-bold text-gray-900 dark:text-white leading-snug">
+                    ${escapeHtml(material.title || "Untitled Material")}
+                  </h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    ${escapeHtml(material.material_type_name || "Unknown type")}
+                  </p>
+                  ${isStudentShare ? `
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim() || "Student")}
+                    </p>
+                  ` : ""}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <span>${formatDate(material.created_at) || "Available now"}</span>
+              <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="text-primary font-semibold hover:underline">
+                Open
+              </a>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderModuleHeader() {
+      if (!currentModule) return;
+
+      document.getElementById("moduleName").textContent =
+        currentModule.module_name || "Untitled Module";
+
+      document.getElementById("moduleCode").textContent =
+        currentModule.module_code || "MODULE";
+
+      document.getElementById("moduleDescription").textContent =
+        currentModule.description || "No description available for this module.";
+    }
+
+    function renderExams() {
+      const container = document.getElementById("moduleExamsContainer");
+
+      if (!Array.isArray(moduleExams) || moduleExams.length === 0) {
+        container.innerHTML = renderEmptyCard("No exams available for this module.");
+        return;
+      }
+
+      container.innerHTML = moduleExams.map(exam => {
+        const bookingLink = `lab-slot-booking.html?module_id=${encodeURIComponent(currentModuleId)}&exam_id=${encodeURIComponent(exam.exam_id)}`;
+
+        return `
+          <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h4 class="font-bold text-gray-900 dark:text-white text-base">
+                  ${escapeHtml(exam.exam_name || "Untitled Exam")}
+                </h4>
+
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  ${escapeHtml(exam.description || "No description provided.")}
+                </p>
+
+                <p class="text-xs text-primary font-semibold mt-2">
+                  ${formatDate(exam.exam_date)} • ${formatTime(exam.start_time)} - ${formatTime(exam.end_time)}
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="${bookingLink}"
+                  class="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center"
+                >
+                  Book Slot
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderBookings() {
+      const container = document.getElementById("moduleBookingsContainer");
+
+      if (!Array.isArray(moduleBookings) || moduleBookings.length === 0) {
+        container.innerHTML = renderEmptyCard("No bookings found for this module.");
+        return;
+      }
+
+      container.innerHTML = moduleBookings.map(booking => `
+        <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div>
+              <h4 class="font-bold text-gray-900 dark:text-white text-base">
+                ${escapeHtml(booking.exam_name || booking.purpose || "Booking")}
+              </h4>
+
+              <p class="text-xs text-primary font-semibold mt-2">
+                ${formatDate(booking.booking_date || booking.slot_date)} • ${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}
+              </p>
+
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Type: <span class="font-semibold">${escapeHtml(booking.slot_type || "-")}</span>
+                &nbsp;•&nbsp;
+                Status: <span class="font-semibold text-primary">${escapeHtml(booking.status || booking.slot_status || "-")}</span>
+              </p>
+
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Machine: ${escapeHtml(booking.machine_code || "Not assigned yet")}
+              </p>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderSubmissions() {
+      const container = document.getElementById("moduleSubmissionsContainer");
+
+      if (!Array.isArray(moduleExams) || moduleExams.length === 0) {
+        container.innerHTML = renderEmptyCard("No submissions available because this module has no exams yet.");
+        return;
+      }
+
+      container.innerHTML = moduleExams.map(exam => {
+        const submissionLink = `submission-hub.html?module_id=${encodeURIComponent(currentModuleId)}&exam_id=${encodeURIComponent(exam.exam_id)}`;
+
+        return `
+          <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h4 class="font-bold text-gray-900 dark:text-white text-base">
+                  ${escapeHtml(exam.exam_name || "Exam Submission")}
+                </h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Open the submission flow for this module exam.
+                </p>
+              </div>
+
+              <a
+                href="${submissionLink}"
+                class="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center"
+              >
+                Open Submission
+              </a>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderMaterials() {
+      const lecturerContainer = document.getElementById("moduleMaterialsContainer");
+      const studentContainer = document.getElementById("moduleStudyMaterialsContainer");
+
+      lecturerContainer.innerHTML = (!Array.isArray(moduleMaterials) || moduleMaterials.length === 0)
+        ? renderEmptyCard("No lecturer materials available for this module.")
+        : moduleMaterials.map(material => createMaterialCard(material, false)).join("");
+
+      studentContainer.innerHTML = (!Array.isArray(moduleStudyMaterials) || moduleStudyMaterials.length === 0)
+        ? renderEmptyCard("No student study materials shared for this module yet.")
+        : moduleStudyMaterials.map(material => createMaterialCard(material, true)).join("");
+    }
+
+    async function loadStudentModuleDetails() {
+      currentModuleId = getModuleIdFromQuery();
+
+      if (!currentModuleId) {
+        showStatus("No module id was provided.");
+        document.getElementById("moduleName").textContent = "Module not found";
+        document.getElementById("moduleDescription").textContent = "No module id was provided.";
+        return;
+      }
+
+      setModuleLinks();
+
+      try {
+        const [
+          moduleResult,
+          examsResult,
+          bookingsResult,
+          materialsResult,
+          studyMaterialsResult
+        ] = await Promise.all([
+          API.modules.getById(currentModuleId),
+          API.exams.getAll(currentModuleId),
+          API.bookings.getAll(),
+          API.materials.getAll(currentModuleId),
+          API.studyMaterials.getAll(currentModuleId)
+        ]);
+
+        if (!moduleResult.ok || !moduleResult.module) {
+          showStatus(moduleResult.error || "Failed to load module details.");
+          document.getElementById("moduleName").textContent = "Module not found";
+          document.getElementById("moduleDescription").textContent =
+            moduleResult.error || "Failed to load module details.";
+          return;
+        }
+
+        currentModule = moduleResult.module;
+        moduleExams = Array.isArray(examsResult.exams) ? examsResult.exams : [];
+        moduleMaterials = Array.isArray(materialsResult.materials) ? materialsResult.materials : [];
+
+        moduleStudyMaterials = Array.isArray(studyMaterialsResult.studyMaterials)
+          ? studyMaterialsResult.studyMaterials
+          : Array.isArray(studyMaterialsResult.materials)
+            ? studyMaterialsResult.materials
+            : [];
+
+        const allBookings = Array.isArray(bookingsResult.bookings) ? bookingsResult.bookings : [];
+        const moduleExamIds = new Set(moduleExams.map(exam => String(exam.exam_id)));
+
+        moduleBookings = allBookings.filter(booking => {
+          const bookingExamId = String(booking.exam_id || "");
+          return moduleExamIds.has(bookingExamId);
+        });
+
+        renderModuleHeader();
+        renderExams();
+        renderBookings();
+        renderSubmissions();
+        renderMaterials();
+      } catch (error) {
+        console.error("Failed to load student module details:", error);
+        showStatus("Failed to load module details.");
+        document.getElementById("moduleName").textContent = "Failed to load module";
+        document.getElementById("moduleDescription").textContent =
+          "An unexpected error occurred while loading this module.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      initBackendBaseUrl();
+      setupTabs();
+
+      if (typeof requireAuth !== "function") {
+        alert("api.js failed to load correctly.");
+        return;
+      }
+
+      const user = await requireAuth("student");
+      if (!user) return;
+
+      const fullName =
+        user.fullName ||
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+        "Student";
+
+      const sidebarName = document.getElementById("studentProfileName");
+      const topName = document.getElementById("topStudentProfileName");
+      const sidebarImage = document.getElementById("studentProfileImage");
+      const topImage = document.getElementById("topStudentProfileImage");
+
+      if (sidebarName) sidebarName.textContent = fullName;
+      if (topName) topName.textContent = fullName;
+
+      if (user.profile_image_url) {
+        const profileUrl = `http://localhost:3000${user.profile_image_url}?t=${Date.now()}`;
+        if (sidebarImage) sidebarImage.src = profileUrl;
+        if (topImage) topImage.src = profileUrl;
+      }
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+          API.auth.logout();
+        });
+      }
+
+      await loadStudentModuleDetails();
+    });
+  </script>
+</body>
+</html>
