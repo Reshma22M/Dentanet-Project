@@ -587,7 +587,17 @@ const API = {
         });
 
         return await parseResponse(response);
-    }
+    },
+
+    join: async (moduleCode) => {
+  const response = await fetch(`${API_BASE_URL}/modules/join`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ module_code: moduleCode })
+  });
+
+
+  return await parseResponse(response);}
 },
 
 
