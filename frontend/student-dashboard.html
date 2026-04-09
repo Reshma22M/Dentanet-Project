@@ -116,12 +116,20 @@
       <div>
         <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">My Modules</h2>
         <p class="text-gray-500 dark:text-gray-400">
-          Open a module to access exams, submissions, bookings, and study materials.
+          Only your enrolled modules are shown here.
         </p>
       </div>
 
-      <div class="w-full lg:w-[360px]">
-        <label class="relative block">
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <button
+          id="viewAllCoursesBtn"
+          type="button"
+          class="px-5 py-3 rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700 transition-all"
+        >
+          View All Courses
+        </button>
+
+        <label class="relative block w-full lg:w-[320px]">
           <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
             search
           </span>
@@ -136,27 +144,62 @@
     </div>
   </section>
 
-  <div
-    id="studentModulesGrid"
-    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-  >
+  <div id="studentModulesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     <div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>
   </div>
 
-<section class="mt-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-  <div class="flex items-center justify-between mb-6">
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming</h3>
-    <span class="material-icons-round text-primary/40">event</span>
-  </div>
-
-  <div id="studentUpcomingPanel" class="space-y-4">
-    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">
-      Loading updates...
+  <section class="mt-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming</h3>
+      <span class="material-icons-round text-primary/40">event</span>
     </div>
-  </div>
-</section>
 
+    <div id="studentUpcomingPanel" class="space-y-4">
+      <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">
+        Loading updates...
+      </div>
+    </div>
+  </section>
 </main>
+
+<div id="enrollModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 px-4">
+  <div class="bg-white dark:bg-gray-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-purple-100 dark:border-gray-800">
+    <h2 class="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+      Enter Enrollment Key
+    </h2>
+
+    <p id="enrollModuleName" class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      Enter the module key to join this course.
+    </p>
+
+    <input
+      id="moduleCodeInput"
+      type="text"
+      placeholder="Enter module code"
+      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 mb-4 text-gray-900 dark:text-white"
+    />
+
+    <div class="flex justify-end gap-3">
+      <button
+        type="button"
+        onclick="closeEnrollModal()"
+        class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onclick="submitEnrollment()"
+        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold"
+      >
+        Join Module
+      </button>
+    </div>
+
+    <p id="enrollError" class="text-sm text-red-500 mt-3 hidden"></p>
+  </div>
+</div>
   </div>
 
   <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
@@ -184,10 +227,51 @@
     <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
   </button>
 
-<script>
+<div id="enrollModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 px-4">
+  <div class="bg-white dark:bg-gray-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-purple-100 dark:border-gray-800">
+    <h2 class="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+      Enter Enrollment Key
+    </h2>
 
+    <p id="enrollModuleName" class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      Enter the module key to join this course.
+    </p>
+
+    <input
+      id="moduleCodeInput"
+      type="text"
+      placeholder="Enter module code"
+      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 mb-4 text-gray-900 dark:text-white"
+    />
+
+    <div class="flex justify-end gap-3">
+      <button
+        type="button"
+        onclick="closeEnrollModal()"
+        class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onclick="submitEnrollment()"
+        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold"
+      >
+        Join Module
+      </button>
+    </div>
+
+    <p id="enrollError" class="text-sm text-red-500 mt-3 hidden"></p>
+  </div>
+</div>
+
+<script>
 const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
 let studentModules = [];
+let allModulesMode = false;
+let selectedModuleForEnroll = null;
+let currentVerifiedUser = null;
 
 function buildModuleImageUrl(value) {
   if (!value) return DEFAULT_MODULE_IMAGE;
@@ -195,46 +279,83 @@ function buildModuleImageUrl(value) {
   return `http://localhost:3000${value}`;
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatExamDate(dateValue) {
+  if (!dateValue) return "No date";
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return dateValue;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+
+function formatExamTime(timeValue) {
+  if (!timeValue) return "-";
+  const [h, m] = String(timeValue).split(":");
+  const hour = parseInt(h, 10);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${m} ${suffix}`;
+}
+
 function openStudentModule(moduleId) {
   if (!moduleId) return;
   sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
   window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
 }
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+function openEnrollModal(module) {
+  selectedModuleForEnroll = module;
+  document.getElementById("moduleCodeInput").value = "";
+  document.getElementById("enrollError").classList.add("hidden");
+  document.getElementById("enrollError").textContent = "";
+  document.getElementById("enrollModuleName").textContent =
+    `Enter the enrollment key to join ${module.module_name || "this module"}.`;
+  document.getElementById("enrollModal").classList.remove("hidden");
+  document.getElementById("enrollModal").classList.add("flex");
+}
+
+function closeEnrollModal() {
+  document.getElementById("enrollModal").classList.add("hidden");
+  document.getElementById("enrollModal").classList.remove("flex");
+}
+
+async function submitEnrollment() {
+  const moduleCode = document.getElementById("moduleCodeInput").value.trim();
+  const errorBox = document.getElementById("enrollError");
+
+  if (!moduleCode) {
+    errorBox.textContent = "Please enter the enrollment key.";
+    errorBox.classList.remove("hidden");
+    return;
   }
 
+  try {
+    const result = await API.modules.join(moduleCode);
 
-  function formatExamDate(dateValue) {
-    if (!dateValue) return "No date";
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) return dateValue;
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    if (!result.ok) {
+      errorBox.textContent = result.error || "Invalid enrollment key.";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+
+    closeEnrollModal();
+    await loadStudentModules(allModulesMode);
+  } catch (error) {
+    console.error("Module join failed:", error);
+    errorBox.textContent = "Failed to join module.";
+    errorBox.classList.remove("hidden");
   }
-
-  function formatExamTime(timeValue) {
-    if (!timeValue) return "-";
-    const [h, m] = String(timeValue).split(":");
-    const hour = parseInt(h, 10);
-    const suffix = hour >= 12 ? "PM" : "AM";
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${m} ${suffix}`;
-  }
-
-function openStudentModule(moduleId) {
-  if (!moduleId) return;
-  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
-  window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
 }
 
 function renderStudentModules(searchTerm = "") {
@@ -258,76 +379,114 @@ function renderStudentModules(searchTerm = "") {
     return;
   }
 
-  container.innerHTML = filtered.map(module => `
-    <div
-      class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
-      onclick="openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')"
-    >
-      <div class="relative h-44 overflow-hidden">
-        <img
-          src="${buildModuleImageUrl(module.module_image_url)}"
-          alt="${escapeHtml(module.module_name || "Module image")}"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
+  container.innerHTML = filtered.map(module => {
+    const isEnrolled = !!module.is_enrolled;
+    const actionLabel = isEnrolled ? "View" : "Enroll";
 
-        <div class="absolute top-4 left-4">
-          <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
-            ${escapeHtml(module.module_code || "MODULE")}
-          </span>
+    return `
+      <div class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all">
+        <div class="relative h-44 overflow-hidden">
+          <img
+            src="${buildModuleImageUrl(module.module_image_url)}"
+            alt="${escapeHtml(module.module_name || "Module image")}"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
+
+          <div class="absolute top-4 left-4">
+            <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
+              ${escapeHtml(module.module_code || "MODULE")}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
+            ${escapeHtml(module.module_name || "Untitled Module")}
+          </h3>
+
+          <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
+            ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
+          </p>
+
+          <div class="mt-5 flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider ${isEnrolled ? "text-primary" : "text-amber-600"}">
+              ${isEnrolled ? "Enrolled Module" : "Not Enrolled"}
+            </span>
+
+            <button
+              type="button"
+              class="px-4 py-2 rounded-xl ${isEnrolled ? "bg-primary text-white hover:bg-primary-dark" : "bg-white text-primary border border-purple-200 hover:bg-purple-50"} text-sm font-semibold transition-all"
+              onclick="${isEnrolled
+                ? `openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')`
+                : `openEnrollModalById('${String(module.module_id).replace(/'/g, "\\'")}')`
+              }"
+            >
+              ${actionLabel}
+            </button>
+          </div>
         </div>
       </div>
-
-      <div class="p-6">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
-          ${escapeHtml(module.module_name || "Untitled Module")}
-        </h3>
-
-        <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
-          ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
-        </p>
-
-        <div class="mt-5 flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-primary">
-            Open Module
-          </span>
-
-          <button
-            type="button"
-            onclick="event.stopPropagation(); openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')"
-            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
-          >
-            View
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
-async function loadStudentModules() {
-  const container = document.getElementById("studentModulesGrid");
+function openEnrollModalById(moduleId) {
+  const module = studentModules.find(m => String(m.module_id) === String(moduleId));
+  if (!module) return;
+  openEnrollModal(module);
+}
 
+async function loadStudentModules(showAll = false) {
+  const container = document.getElementById("studentModulesGrid");
   if (container) {
     container.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>`;
   }
 
   try {
-    const result = await API.modules.getAll();
+    const modulesResult = await API.modules.getAll();
 
-    if (!result.ok || !Array.isArray(result.modules)) {
+    if (!modulesResult.ok || !Array.isArray(modulesResult.modules)) {
       if (container) {
         container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
       }
       return;
     }
 
-    studentModules = result.modules.filter(module =>
+    const allModules = modulesResult.modules.filter(module =>
       module.is_active === true ||
       module.is_active === 1 ||
       module.is_active === "1"
     );
+
+    let enrolledIds = new Set();
+
+    if (currentVerifiedUser && currentVerifiedUser.id) {
+      const membershipChecks = await Promise.all(
+        allModules.map(async (module) => {
+          try {
+            const memberResult = await API.modules.getMembers(module.module_id);
+            const students = Array.isArray(memberResult.students) ? memberResult.students : [];
+            const isMember = students.some(student =>
+              String(student.student_id) === String(currentVerifiedUser.id)
+            );
+            return isMember ? String(module.module_id) : null;
+          } catch (error) {
+            return null;
+          }
+        })
+      );
+
+      enrolledIds = new Set(membershipChecks.filter(Boolean));
+    }
+
+    studentModules = allModules
+      .map(module => ({
+        ...module,
+        is_enrolled: enrolledIds.has(String(module.module_id))
+      }))
+      .filter(module => showAll ? true : module.is_enrolled);
 
     renderStudentModules(document.getElementById("studentModuleSearchInput")?.value || "");
   } catch (error) {
@@ -336,96 +495,6 @@ async function loadStudentModules() {
       container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
     }
   }
-}
-
-/* ===========================
-   RENDER MODULES
-=========================== */
-
-function renderStudentModules(searchTerm = "") {
-  const container = document.getElementById("studentModulesGrid");
-  if (!container) return;
-
-  const term = String(searchTerm || "").toLowerCase().trim();
-
-  const filtered = studentModules.filter(module => {
-    const code = String(module.module_code || "").toLowerCase();
-    const name = String(module.module_name || "").toLowerCase();
-    return code.includes(term) || name.includes(term);
-  });
-
-  if (!filtered.length) {
-    container.innerHTML = `
-      <div class="col-span-full bg-white dark:bg-card-dark rounded-3xl border border-purple-100 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
-        No modules found.
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = filtered.map(module => `
-    <div
-      class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
-      data-module-id="${escapeHtml(module.module_id)}"
-    >
-      <div class="relative h-44 overflow-hidden">
-        <img
-          src="${buildModuleImageUrl(module.module_image_url)}"
-          alt="${escapeHtml(module.module_name || "Module image")}"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
-
-        <div class="absolute top-4 left-4">
-          <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
-            ${escapeHtml(module.module_code || "MODULE")}
-          </span>
-        </div>
-      </div>
-
-      <div class="p-6">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
-          ${escapeHtml(module.module_name || "Untitled Module")}
-        </h3>
-
-        <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
-          ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
-        </p>
-
-        <div class="mt-5 flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-primary">
-            Open Module
-          </span>
-
-          <button
-            type="button"
-            class="open-module-btn px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
-            data-module-id="${escapeHtml(module.module_id)}"
-          >
-            View
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join("");
-
-  container.querySelectorAll("[data-module-id]").forEach(el => {
-    el.addEventListener("click", function (event) {
-      const moduleId = this.getAttribute("data-module-id");
-      if (!moduleId) return;
-      openStudentModule(moduleId);
-    });
-  });
-
-  container.querySelectorAll(".open-module-btn").forEach(btn => {
-    btn.addEventListener("click", function (event) {
-      event.stopPropagation();
-      const moduleId = this.getAttribute("data-module-id");
-      if (!moduleId) return;
-      openStudentModule(moduleId);
-    });
-  });
 }
 
 async function loadStudentUpcoming() {
@@ -469,68 +538,6 @@ async function loadStudentUpcoming() {
     `;
   }
 }
-/* ===========================
-   LOAD MODULES
-=========================== */
-
-async function loadStudentModules() {
-
-  const container =
-    document.getElementById(
-      "studentModulesGrid"
-    );
-
-  try {
-
-    const result =
-      await API.modules.getAll();
-
-    if (!result.ok) {
-
-      container.innerHTML =
-        `<div class="text-red-500">
-          Failed to load modules
-        </div>`;
-
-      return;
-
-    }
-
-    studentModules =
-      result.modules || [];
-
-    renderStudentModules();
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
-    container.innerHTML =
-      `<div class="text-red-500">
-        Failed to load modules
-      </div>`;
-
-  }
-
-}
-
-
-/* ===========================
-   OPEN MODULE
-=========================== */
-
-function openStudentModule(moduleId) {
-  if (!moduleId) return;
-  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
-  window.location.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
-}
-
-
-/* ===========================
-   INIT
-=========================== */
 
 document.addEventListener("DOMContentLoaded", async function () {
   if (typeof requireAuth !== "function") {
@@ -540,6 +547,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const user = await requireAuth("student");
   if (!user) return;
+  currentVerifiedUser = user;
 
   const fullName =
     user.fullName ||
@@ -550,6 +558,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const welcomeEl = document.getElementById("studentWelcomeText");
   const profileImageEl = document.getElementById("studentProfileImage");
   const searchInput = document.getElementById("studentModuleSearchInput");
+  const viewAllBtn = document.getElementById("viewAllCoursesBtn");
 
   if (nameEl) nameEl.textContent = fullName;
 
@@ -567,6 +576,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener("click", async function () {
+      allModulesMode = !allModulesMode;
+      this.textContent = allModulesMode ? "Show My Modules" : "View All Courses";
+      await loadStudentModules(allModulesMode);
+    });
+  }
+
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.onclick = function () {
@@ -574,10 +591,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     };
   }
 
-  await loadStudentModules();
+  await loadStudentModules(false);
   await loadStudentUpcoming();
 });
-
 </script>
 </body>
 </html>

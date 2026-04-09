@@ -596,8 +596,8 @@ const API = {
     body: JSON.stringify({ module_code: moduleCode })
   });
 
-  return await parseResponse(response);
-}
+
+  return await parseResponse(response);}
 },
 
 
