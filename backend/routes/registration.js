@@ -126,7 +126,7 @@ async function sendAccountCreatedEmail({
 }
 
 function isPrimaryAdmin(req) {
-  return req.user && req.user.role === "admin" && Number(req.user.id) === 1;
+  return req.user && req.user.role === "admin" && req.user.email === "reshmamohamed@icloud.com";
 }
 
 // -----------------------------

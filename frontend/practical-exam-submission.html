@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/student-shell.js"></script>
 
   <script>
     tailwind.config = {
@@ -43,71 +44,23 @@
   </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
-  <nav class="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-purple-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-    </div>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300" data-student-page="submission">
+  <div id="shell-header"></div>
 
-    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
-      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
-      <a class="hover:text-primary transition-colors" href="#">About</a>
-      <a class="hover:text-primary transition-colors" href="#">Contact</a>
-      <button id="logoutBtn" class="px-5 py-2 bg-primary text-white rounded-full font-semibold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-primary-dark transition-all">
-        Log Out
-      </button>
-    </div>
-  </nav>
+  <div class="flex min-h-screen">
+    <div id="shell-sidebar"></div>
 
-  <div class="flex min-h-screen pt-14">
-    <aside class="fixed top-14 left-0 bottom-0 w-72 bg-sidebar-light dark:bg-sidebar-dark p-6 hidden lg:block border-r border-purple-100 dark:border-gray-800 overflow-y-auto">
-      <div class="mb-8">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-primary mb-1">LMS</h2>
-        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">University of Peradeniya</p>
-      </div>
-
-      <nav class="space-y-2">
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="student-dashboard.html">
-          <span class="material-icons-round text-[20px]">dashboard</span>
-          <span class="font-medium">Dashboard</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl shadow-md" href="practical-exam-submission.html">
-          <span class="material-icons-round text-[20px]">assignment</span>
-          <span class="font-medium">Practical Examination Submission</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="lab-slot-booking.html">
-          <span class="material-icons-round text-[20px]">event_available</span>
-          <span class="font-medium">Lab Slot Timetable</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="study-materials.html">
-          <span class="material-icons-round text-[20px]">auto_stories</span>
-          <span class="font-medium">Study Materials</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="grades-feedback.html">
-          <span class="material-icons-round text-[20px]">insights</span>
-          <span class="font-medium">Grades & Feedback</span>
-        </a>
-      </nav>
-
-      <div class="mt-10 pt-6 border-t border-purple-200 dark:border-gray-700 flex items-center gap-3">
-        <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg" />
-        <div>
-          <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
-          <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
-        </div>
-      </div>
-    </aside>
-
-    <main class="flex-1 lg:ml-72 p-6 md:p-10">
+    <main class="flex-1 p-6 md:p-10">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
+          <!-- Back link -->
+          <a id="backToHubLink" href="submission-hub.html" class="inline-flex items-center gap-1 text-sm text-primary font-semibold mb-3 hover:underline">
+            <span class="material-icons-round text-[16px]">arrow_back</span>
+            Back to Submission Hub
+          </a>
           <h1 id="pageTitle" class="text-3xl font-bold text-gray-900 dark:text-white">Practical Examination Submission</h1>
           <p id="pageSubtitle" class="text-gray-500 dark:text-gray-400">
-            Upload up to 3 images and submit them for evaluation.
+            Upload up to 3 images and submit them for AI evaluation.
           </p>
         </div>
       </div>
@@ -293,38 +246,26 @@
     </main>
   </div>
 
-  <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col items-center">
-      <div class="flex flex-wrap justify-center gap-8 mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-        <a class="hover:text-primary transition-colors" href="#">Contact Us</a>
-        <a class="hover:text-primary transition-colors" href="#">For Students</a>
-        <a class="hover:text-primary transition-colors" href="#">For Lecturers</a>
-        <a class="hover:text-primary transition-colors" href="#">Lab Services</a>
-      </div>
-
-      <div class="flex gap-6 mb-8 text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">facebook</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">alternate_email</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">groups</i></a>
-      </div>
-
-      <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">© 2025 DentaNet LMS. All rights reserved. Professional Dental Education Platform.</p>
-    </div>
-  </footer>
-
-  <button class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center justify-center border border-purple-100 dark:border-gray-700 hover:scale-110 transition-transform" onclick="document.documentElement.classList.toggle('dark')">
-    <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
-  </button>
+  <div id="shell-footer"></div>
 
 <script>
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:3001';
 
-const urlParams = new URLSearchParams(window.location.search);
-const examId = urlParams.get('exam_id');
-const requestId = urlParams.get('request_id');
+const urlParams  = new URLSearchParams(window.location.search);
+const examId     = urlParams.get('exam_id');
+const requestId  = urlParams.get('request_id');
+const moduleId   = urlParams.get('module_id');   // module context
+
+// Build back-to-hub link
+(function buildBackLink() {
+  const backLink = document.getElementById('backToHubLink');
+  if (!backLink) return;
+  let href = 'submission-hub.html';
+  if (moduleId) href += '?module_id=' + encodeURIComponent(moduleId);
+  if (examId && moduleId) href += '&exam_id=' + encodeURIComponent(examId);
+  backLink.href = href;
+})();
 
 let submissionMode = null;
 
@@ -428,12 +369,12 @@ async function loadSubmissionPage() {
     if (submissionMode === "EXAM") {
 
       endpoint =
-        `${API_BASE}/submissions/exam/${examId}`;
+        `${API_BASE}/api/submissions/exam/${examId}`;
 
     } else {
 
       endpoint =
-        `${API_BASE}/submissions/practice/${requestId}`;
+        `${API_BASE}/api/submissions/practice/${requestId}`;
 
     }
 
@@ -646,7 +587,7 @@ async function submitCurrentItem(){
 
     const response=
       await fetch(
-        `${API_BASE}/submissions`,
+        `${API_BASE}/api/submissions`,
         {
           method:"POST",
           headers:{

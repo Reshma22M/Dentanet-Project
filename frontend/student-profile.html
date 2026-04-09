@@ -10,6 +10,7 @@
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/student-shell.js"></script>
 
   <script>
     tailwind.config = {
@@ -23,7 +24,9 @@
             "background-light": "#F5F3FF",
             "background-dark": "#0F172A",
             "card-light": "#FFFFFF",
-            "card-dark": "#1E293B"
+            "card-dark": "#1E293B",
+            "sidebar-light": "#EDE9FE",
+            "sidebar-dark": "#111827"
           },
           fontFamily: {
             sans: ["Inter", "sans-serif"]
@@ -34,8 +37,14 @@
   </script>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-white">
-  <div class="max-w-4xl mx-auto px-4 py-10">
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-white" data-student-page="profile">
+  <div id="shell-header"></div>
+
+  <div class="flex min-h-screen">
+    <div id="shell-sidebar"></div>
+
+    <main class="flex-1 p-6 md:p-10">
+  <div class="max-w-4xl mx-auto">
     <div class="bg-white dark:bg-card-dark rounded-3xl shadow-sm border border-purple-100 dark:border-slate-800 overflow-hidden">
 
       <div class="px-8 py-8 border-b border-purple-100 dark:border-slate-800 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
@@ -144,10 +153,14 @@
       </div>
     </div>
   </div>
+    </main>
+  </div>
+
+  <div id="shell-footer"></div>
 
   <script>
     const DEFAULT_PROFILE_IMAGE = "public/images/stu.jpg";
-    const FILE_BASE_URL = "http://localhost:3000";
+    const FILE_BASE_URL = "http://localhost:3001";
 
     function setStatus(message, type = "default") {
       const statusEl = document.getElementById("profileStatus");

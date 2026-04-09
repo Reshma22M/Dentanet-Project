@@ -97,141 +97,92 @@
 <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
 <div class="max-w-4xl mx-auto">
 <div class="mb-8">
+<a href="javascript:history.back()" class="inline-flex items-center gap-1.5 text-sm text-primary font-semibold mb-4 hover:underline">
+  <span class="material-icons-round text-[16px]">arrow_back</span> Back
+</a>
 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Schedule an Exam</h1>
-<p class="text-slate-500 dark:text-slate-400">Set up a new examination for your students and assign lab resources.</p>
+<p class="text-slate-500 dark:text-slate-400">Set up a new examination for your module students.</p>
 </div>
-<div class="mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+
+<div id="alertBox" class="hidden mb-6 px-4 py-3 rounded-xl text-sm font-medium border"></div>
+
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-8">
   <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white">Scheduled Exams</h2>
-    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-      Upcoming and active exams created under your modules.
-    </p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Exams created under this module.</p>
   </div>
-
-  <div id="scheduledExamsLoading" class="hidden px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-    Loading scheduled exams...
-  </div>
-
+  <div id="scheduledExamsLoading" class="hidden px-6 py-4 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
   <div id="scheduledExamsList" class="divide-y divide-slate-100 dark:divide-slate-700">
-    <div class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-      No scheduled exams yet.
-    </div>
+    <div class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">No scheduled exams yet.</div>
   </div>
 </div>
+
 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-<form id="examForm" class="p-6 md:p-8 space-y-8">
-<div class="grid grid-cols-1 gap-6">
-<div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-title">Exam Title</label>
-<input class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="exam-title" name="exam-title" placeholder="e.g., Cavity Preparation Test 2" type="text"/>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div>
-<div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="module">Module</label>
-<select class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="module" name="module">
-<option value="">Select Module</option>
-</select>
-</div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="batch">Select Batch</label>
-<select class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="batch" name="batch">
-<option value="">Choose Batch Year</option>
-<option value="2021">Batch 2021</option>
-<option value="2022">Batch 2022</option>
-<option value="2023">Batch 2023</option>
-<option value="2024">Batch 2024</option>
-</select>
-</div>
-<div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-date">Select Date</label>
-<div class="relative">
-<input class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="exam-date" name="exam-date" type="date"/>
-</div>
-</div>
-<div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="lab">Lab</label>
-<input class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="lab" name="lab" placeholder="e.g., Lab 01 - Clinical Simulation" type="text"/>
-</div>
-</div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-  <div>
-    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="max-attempts">Max Attempts</label>
-    <input
-      class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white"
-      id="max-attempts"
-      name="max-attempts"
-      type="number"
-      min="1"
-      value="1"
-      placeholder="Enter max attempts"
-    />
+  <div id="activeModuleHeader" class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 hidden">
+    <p class="text-xs font-bold text-primary uppercase tracking-wider mb-1">Creating Exam For Module</p>
+    <h2 id="activeModuleName" class="text-xl font-bold text-slate-900 dark:text-white">Loading...</h2>
   </div>
 
-  <div>
-    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="passing-grade">Passing Grade</label>
-    <input
-      class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white"
-      id="passing-grade"
-      name="passing-grade"
-      type="number"
-      min="0"
-      max="100"
-      step="0.01"
-      value="50"
-      placeholder="Enter passing grade"
-    />
-  </div>
+  <form id="examForm" class="p-6 md:p-8 space-y-6">
+    <!-- Exam Title -->
+    <div>
+      <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-title">Exam Title *</label>
+      <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="exam-title" placeholder="e.g., Cavity Preparation Test 2" type="text" required />
+    </div>
 
-  <div>
-    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-status">Status</label>
-    <select
-      class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white"
-      id="exam-status"
-      name="exam-status"
-    >
-      <option value="DRAFT">Draft</option>
-      <option value="SCHEDULED" selected>Scheduled</option>
-      <option value="OPEN">Open</option>
-      <option value="CLOSED">Closed</option>
-    </select>
-  </div>
-</div>
-<div class="p-6 bg-slate-50 dark:bg-slate-900/30 rounded-xl border border-slate-100 dark:border-slate-700/50">
-<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider flex items-center gap-2">
-<span class="material-icons-round text-primary text-base">schedule</span> Time Slot Selection</h3>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div>
-<label class="block text-xs font-semibold text-slate-500 mb-2 uppercase" for="start-time">Start Time</label>
-<input class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="start-time" name="start-time" type="time"/>
-</div>
-<div>
-<label class="block text-xs font-semibold text-slate-500 mb-2 uppercase" for="end-time">End Time</label>
-<input class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="end-time" name="end-time" type="time"/>
-</div>
-</div>
-</div>
-<div>
-<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="instructions">Exam Instructions</label>
-<textarea class="w-full px-4 py-3 rounded-xl border-slate-400 dark:border-slate-400 bg-slate-100 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="instructions" name="instructions" placeholder="Enter special instructions, materials required, or rules for students..." rows="4"></textarea>
-</div>
-</div>
-<div class="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-<button class="w-full sm:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/25 hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2" type="submit">
-<span class="material-icons-round text-lg">event_available</span>
-                                Schedule Exam
-                            </button>
-<button class="w-full sm:w-auto px-8 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all flex items-center justify-center gap-2" type="button">
-                                Cancel
-                            </button>
-</div>
-</form>
-</div>
-<div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50 flex gap-4">
-<span class="material-icons-round text-blue-500">info</span>
-<p class="text-sm text-blue-700 dark:text-blue-300">
-<strong>Note:</strong> Scheduling an exam will automatically block the selected lab slot in the Master Timetable and notify all students in the selected batch.
-                    </p>
+    <!-- Date & Time -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-date">Exam Date</label>
+        <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="exam-date" type="date" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="start-time">Start Time</label>
+        <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="start-time" type="time" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="end-time">End Time</label>
+        <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="end-time" type="time" />
+      </div>
+    </div>
+
+    <!-- Attempts, Grade, Status -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="max-attempts">Max Attempts</label>
+        <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="max-attempts" type="number" min="1" value="1" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="passing-grade">Passing Grade (%)</label>
+        <input class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="passing-grade" type="number" min="0" max="100" step="0.01" value="50" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="exam-status">Status</label>
+        <select class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="exam-status">
+          <option value="DRAFT">Draft</option>
+          <option value="SCHEDULED" selected>Scheduled</option>
+          <option value="OPEN">Open</option>
+          <option value="CLOSED">Closed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div>
+      <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" for="instructions">Exam Instructions</label>
+      <textarea class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="instructions" placeholder="Enter special instructions, materials required, or rules for students..." rows="4"></textarea>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+      <button id="submitBtn" class="w-full sm:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/25 hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2" type="submit">
+        <span class="material-icons-round text-lg">event_available</span>
+        Schedule Exam
+      </button>
+      <button onclick="document.getElementById('examForm').reset(); hideAlert();" class="w-full sm:w-auto px-8 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all" type="button">
+        Clear
+      </button>
+    </div>
+  </form>
 </div>
 </div>
 </main>
@@ -244,184 +195,173 @@
 </body>
 <script src="assets/js/api.js"></script>
 <script>
-  function showError(message) {
-    alert(message);
+  function showAlert(message, type) {
+    const box = document.getElementById("alertBox");
+    box.textContent = message;
+    box.classList.remove("hidden",
+      "bg-red-50","text-red-700","border-red-200",
+      "bg-green-50","text-green-700","border-green-200");
+    if (type === "success") {
+      box.classList.add("bg-green-50","text-green-700","border-green-200");
+    } else {
+      box.classList.add("bg-red-50","text-red-700","border-red-200");
+    }
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function hideAlert() {
+    const box = document.getElementById("alertBox");
+    if (box) box.classList.add("hidden");
   }
 
   async function loadModules() {
-    try {
-      const result = await API.modules.getAll();
-      const modules = Array.isArray(result) ? result : (result.modules || []);
+    const params = new URLSearchParams(window.location.search);
+    const moduleId = params.get("module_id") || sessionStorage.getItem("selectedLecturerModuleId");
 
-      const moduleSelect = document.getElementById("module");
-      moduleSelect.innerHTML = `<option value="">Select Module</option>`;
-
-      modules.forEach((module) => {
-        const option = document.createElement("option");
-        option.value = module.module_id;
-        option.textContent = `${module.module_code} - ${module.module_name}`;
-        moduleSelect.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Failed to load modules:", error);
-      showError("Failed to load modules");
+    if (moduleId) {
+      window.currentModuleId = moduleId;
+      try {
+        const result = await API.modules.getById(moduleId);
+        if (result.ok && result.module) {
+          const header = document.getElementById("activeModuleHeader");
+          const nameSpan = document.getElementById("activeModuleName");
+          nameSpan.textContent = result.module.module_code + " - " + result.module.module_name;
+          header.classList.remove("hidden");
+        } else {
+          showAlert("Could not load module info: " + (result.error || "Unknown error"), "error");
+        }
+      } catch (e) {
+        console.error("Failed to fetch module details", e);
+        showAlert("Network error loading module info.", "error");
+      }
+    } else {
+      showAlert("No module selected. Please open this page from a module.", "error");
     }
   }
 
   function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function formatExamDate(dateValue) {
-  if (!dateValue) return "No date";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return dateValue;
-  return date.toLocaleDateString();
-}
-
-function renderScheduledExams(exams) {
-  const list = document.getElementById("scheduledExamsList");
-
-  if (!Array.isArray(exams) || exams.length === 0) {
-    list.innerHTML = `
-      <div class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-        No scheduled exams yet.
-      </div>
-    `;
-    return;
+    return String(value || "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
-  list.innerHTML = exams.map((exam) => `
-    <div class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <p class="font-semibold text-slate-900 dark:text-white">
-          ${escapeHtml(exam.exam_name)}
-        </p>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          ${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "No module")}
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-        <div>
-          <p class="text-slate-400 uppercase text-[11px] font-bold">Date</p>
-          <p class="text-slate-700 dark:text-slate-200">${formatExamDate(exam.exam_date)}</p>
-        </div>
-        <div>
-          <p class="text-slate-400 uppercase text-[11px] font-bold">Time</p>
-          <p class="text-slate-700 dark:text-slate-200">
-            ${escapeHtml(exam.start_time || "-")} - ${escapeHtml(exam.end_time || "-")}
-          </p>
-        </div>
-        <div>
-          <p class="text-slate-400 uppercase text-[11px] font-bold">Attempts</p>
-          <p class="text-slate-700 dark:text-slate-200">${escapeHtml(exam.max_attempts)}</p>
-        </div>
-        <div>
-          <p class="text-slate-400 uppercase text-[11px] font-bold">Status</p>
-          <p class="font-semibold text-primary">${escapeHtml(exam.status || "DRAFT")}</p>
-        </div>
-      </div>
-    </div>
-  `).join("");
-}
-
-async function loadScheduledExams() {
-  const loading = document.getElementById("scheduledExamsLoading");
-  loading.classList.remove("hidden");
-
-  try {
-    const result = await API.exams.getAll();
-
-    loading.classList.add("hidden");
-
-    const exams = Array.isArray(result) ? result : (result.exams || []);
-
-    renderScheduledExams(exams);
-  } catch (error) {
-    loading.classList.add("hidden");
-    console.error("Failed to load scheduled exams:", error);
-    document.getElementById("scheduledExamsList").innerHTML = `
-      <div class="px-6 py-4 text-sm text-red-500">
-        Failed to load scheduled exams.
-      </div>
-    `;
+  function formatExamDate(dateValue) {
+    if (!dateValue) return "No date";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return dateValue;
+    return date.toLocaleDateString();
   }
-}
+
+  function renderScheduledExams(exams) {
+    const list = document.getElementById("scheduledExamsList");
+    if (!Array.isArray(exams) || exams.length === 0) {
+      list.innerHTML = `<div class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">No scheduled exams yet.</div>`;
+      return;
+    }
+    list.innerHTML = exams.map((exam) => `
+      <div class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(exam.exam_name)}</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(exam.module_code || "")} - ${escapeHtml(exam.module_name || "")}</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div>
+            <p class="text-slate-400 uppercase text-[11px] font-bold">Date</p>
+            <p class="text-slate-700 dark:text-slate-200">${formatExamDate(exam.exam_date)}</p>
+          </div>
+          <div>
+            <p class="text-slate-400 uppercase text-[11px] font-bold">Time</p>
+            <p class="text-slate-700 dark:text-slate-200">${escapeHtml(exam.start_time || "-")} - ${escapeHtml(exam.end_time || "-")}</p>
+          </div>
+          <div>
+            <p class="text-slate-400 uppercase text-[11px] font-bold">Attempts</p>
+            <p class="text-slate-700 dark:text-slate-200">${escapeHtml(String(exam.max_attempts))}</p>
+          </div>
+          <div>
+            <p class="text-slate-400 uppercase text-[11px] font-bold">Status</p>
+            <p class="font-semibold text-primary">${escapeHtml(exam.status || "DRAFT")}</p>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function loadScheduledExams() {
+    const loading = document.getElementById("scheduledExamsLoading");
+    loading.classList.remove("hidden");
+    try {
+      const result = await API.exams.getAll(window.currentModuleId);
+      loading.classList.add("hidden");
+      const exams = Array.isArray(result) ? result : (result.exams || []);
+      renderScheduledExams(exams);
+    } catch (error) {
+      loading.classList.add("hidden");
+      console.error("Failed to load scheduled exams:", error);
+      document.getElementById("scheduledExamsList").innerHTML =
+        `<div class="px-6 py-4 text-sm text-red-500">Failed to load scheduled exams.</div>`;
+    }
+  }
 
   async function handleExamSubmit(event) {
     event.preventDefault();
+    hideAlert();
 
     const examData = {
-    module_id: document.getElementById("module").value,
-    exam_name: document.getElementById("exam-title").value.trim(),
-    description: document.getElementById("instructions").value.trim(),
-    exam_date: document.getElementById("exam-date").value,
-    start_time: document.getElementById("start-time").value,
-    end_time: document.getElementById("end-time").value,
-    max_attempts: document.getElementById("max-attempts").value,
-    passing_grade: document.getElementById("passing-grade").value,
-    status: document.getElementById("exam-status").value
+      module_id: window.currentModuleId,
+      exam_name: document.getElementById("exam-title").value.trim(),
+      description: document.getElementById("instructions").value.trim(),
+      exam_date: document.getElementById("exam-date").value || null,
+      start_time: document.getElementById("start-time").value || null,
+      end_time: document.getElementById("end-time").value || null,
+      max_attempts: parseInt(document.getElementById("max-attempts").value) || 1,
+      passing_grade: document.getElementById("passing-grade").value || null,
+      status: document.getElementById("exam-status").value
     };
 
-    if (!examData.module_id || !examData.exam_name) {
-      showError("Module and exam title are required.");
+    if (!examData.module_id) {
+      showAlert("No module selected. Please go back and open this page from a module.", "error");
       return;
     }
-
+    if (!examData.exam_name) {
+      showAlert("Exam title is required.", "error");
+      return;
+    }
     if ((examData.start_time && !examData.end_time) || (!examData.start_time && examData.end_time)) {
-      showError("Please provide both start time and end time.");
+      showAlert("Please provide both start time and end time, or leave both empty.", "error");
       return;
     }
-    if (!examData.max_attempts || Number(examData.max_attempts) < 1) {
-  showError("Max attempts must be at least 1.");
-  return;
-    }
 
-    if (
-    examData.passing_grade !== "" &&
-    (Number(examData.passing_grade) < 0 || Number(examData.passing_grade) > 100)
-    ) {
-    showError("Passing grade must be between 0 and 100.");
-    return;
-    }
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Scheduling...";
 
     try {
       const result = await API.exams.create(examData);
-
       if (!result.ok) {
-        showError(result.error || "Failed to schedule exam");
-        return;
+        showAlert(result.error || "Failed to schedule exam.", "error");
+      } else {
+        showAlert("✓ Exam scheduled successfully!", "success");
+        document.getElementById("examForm").reset();
+        await loadScheduledExams();
       }
-
-      alert("Exam scheduled successfully");
-      document.getElementById("examForm").reset();
-      await loadScheduledExams();
-
     } catch (error) {
       console.error("Create exam error:", error);
-      showError("Failed to schedule exam");
+      showAlert("Network error. Please try again.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-icons-round text-lg">event_available</span> Schedule Exam';
     }
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
     if (typeof requireAuth !== "function") {
-      showError("api.js failed to load correctly.");
+      showAlert("api.js failed to load correctly.", "error");
       return;
     }
-
     const user = await requireAuth("lecturer");
     if (!user) return;
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      API.auth.logout();
-    });
-
+    document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());
     document.getElementById("examForm").addEventListener("submit", handleExamSubmit);
 
     await loadModules();

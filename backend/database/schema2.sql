@@ -1,10 +1,10 @@
 -- DentaNet LMS - Clean Final Schema
 -- Use this on a fresh database or after taking a backup.
 
-CREATE DATABASE IF NOT EXISTS dentanet_lms
+CREATE DATABASE IF NOT EXISTS dentanet_lms3
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
-USE dentanet_lms;
+USE dentanet_lms3;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -171,16 +171,28 @@ CREATE TABLE modules (
   module_code VARCHAR(30) NOT NULL UNIQUE,
   module_name VARCHAR(255) NOT NULL,
   description TEXT NULL,
-  created_by INT NOT NULL,
+  module_image_url VARCHAR(500) NULL,
+  created_by INT NULL,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_modules_created_by
-    FOREIGN KEY (created_by) REFERENCES lecturers(lecturer_id)
-    ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES admins(admin_id)
+    ON DELETE SET NULL,
 
   INDEX idx_modules_active (is_active)
+) ENGINE=InnoDB;
+
+CREATE TABLE module_lecturers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  module_id INT NOT NULL,
+  lecturer_id INT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_module_lecturer (module_id, lecturer_id),
+  CONSTRAINT fk_ml_module FOREIGN KEY (module_id) REFERENCES modules(module_id) ON DELETE CASCADE,
+  CONSTRAINT fk_ml_lecturer FOREIGN KEY (lecturer_id) REFERENCES lecturers(lecturer_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE exams (
@@ -362,10 +374,10 @@ CREATE TABLE api_evaluations (
   api_status ENUM('SUCCESS','FAILED') NOT NULL DEFAULT 'SUCCESS',
   api_score DECIMAL(5,2) NULL,
   confidence DECIMAL(5,2) NULL,
-  smooth_outline_status ENUM('acceptable','non-acceptable') NULL,
-  flat_floor_status ENUM('acceptable','non-acceptable') NULL,
-  depth_status ENUM('acceptable','non-acceptable') NULL,
-  undercut_status ENUM('acceptable','non-acceptable') NULL,
+  smooth_outline_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  flat_floor_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  depth_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  undercut_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
   raw_response_json JSON NULL,
   evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -538,7 +550,7 @@ INSERT INTO departments (department_name) VALUES
 
 INSERT INTO admins (email, password_hash, first_name, last_name, must_change_password, is_active)
 VALUES
-('admin@dentanet.lk', '$2b$10$REPLACE_WITH_REAL_HASH', 'System', 'Admin', TRUE, TRUE);
+('reshmamohammed@icloud.com', '$2b$10$REPLACE_WITH_REAL_HASH', 'Reshma', 'Muhammed', TRUE, TRUE);
 
 INSERT INTO lecturers (email, password_hash, first_name, last_name, staff_id, department_id, must_change_password, is_active)
 SELECT 'lecturer1@dentanet.lk', '$2b$10$REPLACE_WITH_REAL_HASH', 'Nimal', 'Perera', 'LEC/001', d.department_id, TRUE, TRUE
@@ -724,10 +736,10 @@ CREATE TABLE api_evaluations (
   api_score DECIMAL(5,2) NULL,
   confidence DECIMAL(5,2) NULL,
 
-  smooth_outline_status ENUM('acceptable','non-acceptable') NULL,
-  flat_floor_status ENUM('acceptable','non-acceptable') NULL,
-  depth_status ENUM('acceptable','non-acceptable') NULL,
-  undercut_status ENUM('acceptable','non-acceptable') NULL,
+  smooth_outline_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  flat_floor_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  depth_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
+  undercut_status ENUM('Ideal','Acceptable','Needs Improvement','Unacceptable') NULL,
 
   evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -810,24 +822,11 @@ CREATE TABLE retake_requests (
     ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
-USE dentanet_lms;
+USE dentanet_lms3;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ------------------------------------------------------------
--- 1) Change modules.created_by to admin
--- ------------------------------------------------------------
 
--- Drop old foreign key first
-ALTER TABLE modules
-DROP FOREIGN KEY fk_modules_created_by;
-
--- Re-add it pointing to admins
-ALTER TABLE modules
-ADD CONSTRAINT fk_modules_created_by
-  FOREIGN KEY (created_by) REFERENCES admins(admin_id)
-  ON DELETE CASCADE;
--- ------------------------------------------------------------
 -- 3) Add student study materials table
 -- ------------------------------------------------------------
 CREATE TABLE student_study_materials (
@@ -933,3 +932,4 @@ DROP COLUMN module_student_id;
 
 ALTER TABLE module_lecturers
 DROP COLUMN module_lecturer_id;
+

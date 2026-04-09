@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -254,7 +254,7 @@ body {
         <a class="hover:text-blue-400 transition-colors" href="#">For Lecturers</a>
         <a class="hover:text-blue-400 transition-colors" href="#">Lab Services</a>
     </div>
-    <p class="text-center text-xs opacity-60">© 2026 DentaNet LMS Admin Portal. All rights reserved.</p>
+    <p class="text-center text-xs opacity-60">Â© 2026 DentaNet LMS Admin Portal. All rights reserved.</p>
 </div>
 </footer>
 
@@ -493,7 +493,7 @@ function updateAdminCreationHint() {
     const adminBtn = document.getElementById("openCreateAdminModal");
     const admins = allUsers.filter(u => u.account_type === "admin");
     const totalAdmins = admins.length;
-    const isPrimaryAdmin = currentAdmin && Number(currentAdmin.id) === 1;
+    const isPrimaryAdmin = currentAdmin && currentAdmin.email === 'reshmamohamed@icloud.com';
 
     if (!isPrimaryAdmin) {
         if (section) {
@@ -520,8 +520,8 @@ function updateAdminCreationHint() {
 }
 
 function renderUsers(users) {
-    const activeUsers = users.filter(isUserActive);
-    const inactiveUsers = allUsers.filter(isUserInactive);
+    const activeUsers = users.filter(u => { if (isUserActive(u)) return true; if (u.account_type === 'student' && !isUserActive(u)) { const t1 = new Date(u.created_at).getTime(); const t2 = new Date(u.updated_at).getTime(); if (t2 <= t1 + 2000) return true; } return false; });
+    const inactiveUsers = allUsers.filter(u => { if (isUserActive(u)) return false; if (u.account_type === 'student' && !isUserActive(u)) { const t1 = new Date(u.created_at).getTime(); const t2 = new Date(u.updated_at).getTime(); if (t2 <= t1 + 2000) return false; } return true; });
 
     renderActiveUsersTable(activeUsers);
     renderPastUsersTable(inactiveUsers);
@@ -554,18 +554,14 @@ function renderActiveUsersTable(users) {
             ? `${escapeHtml(user.identifier || "-")}${batch ? `<span class="text-xs text-slate-400 block mt-1">Batch ${escapeHtml(batch)}</span>` : ""}`
             : escapeHtml(user.identifier || "-");
 
-        const statusBadge = `
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-               Active
-            </span>
-            `;
+        const statusBadge = isUserActive(user) ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>` : `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending Approval</span>`;
 
         const isAdminRow = user.account_type === "admin";
-        const isPrimaryAdminLoggedIn = currentAdmin && Number(currentAdmin.id) === 1;
+        const isPrimaryAdminLoggedIn = currentAdmin && currentAdmin.email === 'reshmamohamed@icloud.com';
         const canManageThisAdminRow = !isAdminRow || isPrimaryAdminLoggedIn;
 
         const disableDeactivate =
-            (isAdminRow && Number(user.id) === 1) ||
+            (isAdminRow && user.email === 'reshmamohamed@icloud.com') ||
             !canManageThisAdminRow;
 
         const actionButtons = canManageThisAdminRow

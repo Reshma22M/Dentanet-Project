@@ -1,12 +1,12 @@
 -- Insert Test Accounts into new auth tables
-USE dentanet_lms;
+USE dentanet_lms3;
 
 -- ADMIN
 INSERT INTO admins (email, password_hash, first_name, last_name, must_change_password, is_active, created_at)
 VALUES (
-  'admin@dentanet.lk',
+  'reshmamohamed@icloud.com',
   '$2b$10$KvKem9j4pstwvBLHy0ZgGuvFtrSeYUZVdKdVVKxqX2ZEDQ8ys7FGO',
-  'System', 'Administrator', TRUE, TRUE, NOW()
+  'Reshma', 'Mohamed', TRUE, TRUE, NOW()
 )
 ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash);
 

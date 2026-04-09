@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -348,7 +348,7 @@ tailwind.config = {
         </main>
 
         <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-            Â© 2026 DentaNet Admin Hub.
+            © 2026 DentaNet Admin Hub.
         </footer>
     </div>
 </div>
@@ -441,7 +441,7 @@ async function initializeDashboard() {
 
     const profileImage =
         admin.profile_image_url
-        ? `http://localhost:3000${admin.profile_image_url}?t=${Date.now()}`
+        ? `http://localhost:3001${admin.profile_image_url}?t=${Date.now()}`
         : "public/images/admin.jpg";
 
     const adminName = document.getElementById("adminName");
@@ -529,14 +529,14 @@ function renderPlannerTasks() {
     latestPendingBookings.slice(0, 2).forEach(b => {
         items.push({
             title: "Review pending lab request",
-            text: `${b.booking_date || "-"} â€¢ ${b.start_time || "-"} - ${b.end_time || "-"}`
+            text: `${b.booking_date || "-"} • ${b.start_time || "-"} - ${b.end_time || "-"}`
         });
     });
 
     latestModules.slice(0, 2).forEach(m => {
         items.push({
             title: "Review new module",
-            text: `${m.module_code || "-"} â€¢ ${m.module_name || "Module"}`
+            text: `${m.module_code || "-"} • ${m.module_name || "Module"}`
         });
     });
 
@@ -634,7 +634,7 @@ async function loadBookings() {
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/40">
                 <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(b.slot_type || "Booking Request")}</p>
                 <p class="text-slate-500 dark:text-slate-400 mt-1">
-                    ${escapeHtml(b.booking_date || "-")} â€¢ ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
+                    ${escapeHtml(b.booking_date || "-")} • ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
                 </p>
             </div>
         `).join("");
@@ -677,7 +677,7 @@ async function loadModules() {
 
         container.innerHTML = modules.map(module => {
             const imageUrl = module.module_image_url
-                ? (module.module_image_url.startsWith("http") ? module.module_image_url : `http://localhost:3000${module.module_image_url}`)
+                ? (module.module_image_url.startsWith("http") ? module.module_image_url : `http://localhost:3001${module.module_image_url}`)
                 : DEFAULT_MODULE_IMAGE;
 
             const activeClass = normalizeBool(module.is_active) ? "badge badge-active" : "badge badge-inactive";
@@ -849,7 +849,7 @@ function setupModulePreviewBindings() {
 
             const value = this.value.trim();
             preview.src = value
-                ? (value.startsWith("http") ? value : `http://localhost:3000${value}`)
+                ? (value.startsWith("http") ? value : `http://localhost:3001${value}`)
                 : DEFAULT_MODULE_IMAGE;
         });
     }
@@ -874,7 +874,7 @@ function setupModulePreviewBindings() {
                     const preview = document.getElementById("moduleImagePreview");
 
                     if (imageInputEl) imageInputEl.value = result.file_url;
-                    if (preview) preview.src = `http://localhost:3000${result.file_url}`;
+                    if (preview) preview.src = `http://localhost:3001${result.file_url}`;
                     if (uploadStatus) uploadStatus.textContent = "Uploaded";
                 } else {
                     if (uploadStatus) uploadStatus.textContent = "Upload failed";

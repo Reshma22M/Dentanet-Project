@@ -531,7 +531,8 @@ router.get("/", authenticateToken, async (req, res) => {
         must_change_password,
         is_active,
         profile_image_url,
-        created_at
+        created_at,
+        updated_at
       FROM (
         SELECT
           a.admin_id AS id,
@@ -545,7 +546,8 @@ router.get("/", authenticateToken, async (req, res) => {
           a.must_change_password,
           a.is_active,
           a.profile_image_url,
-          a.created_at
+          a.created_at,
+          a.updated_at
         FROM admins a
 
         UNION ALL
@@ -562,7 +564,8 @@ router.get("/", authenticateToken, async (req, res) => {
           FALSE AS must_change_password,
           s.is_active,
           s.profile_image_url,
-          s.created_at
+          s.created_at,
+          s.updated_at
         FROM students s
         LEFT JOIN departments d ON s.department_id = d.department_id
 
@@ -580,7 +583,8 @@ router.get("/", authenticateToken, async (req, res) => {
           l.must_change_password,
           l.is_active,
           l.profile_image_url,
-          l.created_at
+          l.created_at,
+          l.updated_at
         FROM lecturers l
         LEFT JOIN departments d ON l.department_id = d.department_id
       ) t

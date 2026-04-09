@@ -4,28 +4,30 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>DentaNet - Lab Slot Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <script src="assets/js/api.js"></script>
+<script src="assets/js/student-shell.js"></script>
 <script>
 tailwind.config = {
   darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: "#1d72d2",
-        "background-light": "#f3f4f9",
-        "background-dark": "#0f172a",
+        primary: "#6366f1",
+        "primary-light": "#8B5CF6",
+        "primary-dark": "#4C1D95",
+        "background-light": "#F5F3FF",
+        "background-dark": "#0F172A",
+        "card-light": "#FFFFFF",
+        "card-dark": "#1E293B",
+        "sidebar-light": "#EDE9FE",
+        "sidebar-dark": "#111827",
       },
-      fontFamily: {
-        display: ["Inter", "sans-serif"],
-        body: ["Inter", "sans-serif"],
-      },
-      borderRadius: {
-        DEFAULT: "0.5rem",
-        xl: "1rem",
-      },
+      fontFamily: { display: ["Inter", "sans-serif"] },
+      borderRadius: { DEFAULT: "0.75rem" },
     },
   },
 };
@@ -35,61 +37,11 @@ body { font-family: 'Inter', sans-serif; }
 </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col">
-<header class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-  <div class="max-w-screen-2xl mx-auto px-6 h-16 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-    </div>
-    <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
-      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Dashboard</a>
-      <a class="hover:text-primary transition-colors" href="practical-exam-submission.html">Submissions</a>
-      <a class="hover:text-primary transition-colors text-primary font-bold" href="lab-slot-booking.html">Lab Booking</a>
-      <a class="hover:text-primary transition-colors" href="study-materials.html">Study Materials</a>
-      <a class="hover:text-primary transition-colors" href="grades-feedback.html">Grades</a>
-      <button id="logoutBtn" class="bg-white dark:bg-slate-800 px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200">Log Out</button>
-    </nav>
-  </div>
-</header>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300" data-student-page="labslot">
+<div id="shell-header"></div>
 
-<div class="flex flex-row flex-1 min-h-0">
-  <aside class="w-72 hidden lg:flex flex-col bg-indigo-500 dark:bg-indigo-950 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200 dark:shadow-none min-h-[600px] my-8 ml-6">
-    <div class="mb-10">
-      <p class="text-xs uppercase tracking-widest text-indigo-100 opacity-80 font-bold">LMS</p>
-      <p class="text-sm font-medium">University of Peradeniya</p>
-    </div>
-
-    <nav class="space-y-2 flex-grow">
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="student-dashboard.html">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span>Dashboard</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="practical-exam-submission.html">
-        <span class="material-symbols-outlined">upload_file</span>
-        <span>Practical Exam Submission</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary shadow-lg font-semibold" href="lab-slot-booking.html">
-        <span class="material-symbols-outlined">event_seat</span>
-        <span>Lab Slot Booking</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="study-materials.html">
-        <span class="material-symbols-outlined">menu_book</span>
-        <span>Study Materials</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="grades-feedback.html">
-        <span class="material-symbols-outlined">grade</span>
-        <span>Grades & Feedback</span>
-      </a>
-    </nav>
-
-    <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
-      <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
-      <div>
-        <p class="text-xs text-indigo-100">Welcome back,</p>
-        <p id="studentName" class="text-sm font-bold">Student</p>
-      </div>
-    </div>
-  </aside>
+<div class="flex min-h-screen">
+  <div id="shell-sidebar"></div>
 
   <main class="flex-1 overflow-y-auto p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
@@ -207,16 +159,7 @@ body { font-family: 'Inter', sans-serif; }
   </main>
 </div>
 
-<footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-8 px-6 mt-auto">
-  <div class="max-w-7xl mx-auto text-center">
-    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">© 2026 University of Peradeniya - Faculty of Dental Sciences</p>
-    <p class="text-xs text-slate-400">DentaNet Learning Management System. All rights reserved.</p>
-  </div>
-</footer>
-
-<button class="fixed bottom-4 right-4 bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
-  <span class="material-symbols-outlined dark:text-white">dark_mode</span>
-</button>
+<div id="shell-footer"></div>
 
 <script>
 let SELECTED_EXAM_ID = null;
@@ -644,7 +587,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const profileImageEl = document.getElementById("studentProfileImage");
   if (profileImageEl && student.profile_image_url) {
-    profileImageEl.src = `http://localhost:3000${student.profile_image_url}?t=${Date.now()}`;
+    profileImageEl.src = `http://localhost:3001${student.profile_image_url}?t=${Date.now()}`;
   }
 
   const logoutBtn = document.getElementById("logoutBtn");

@@ -349,13 +349,13 @@
     function buildModuleImageUrl(value) {
       if (!value) return DEFAULT_MODULE_IMAGE;
       if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-      return `http://localhost:3000${value}`;
+      return `http://localhost:3001${value}`;
     }
 
     function buildFileUrl(fileUrl) {
       if (!fileUrl) return "#";
       if (String(fileUrl).startsWith("http://") || String(fileUrl).startsWith("https://")) return fileUrl;
-      return `http://localhost:3000${fileUrl}`;
+      return `http://localhost:3001${fileUrl}`;
     }
 
     function getModuleIdFromQuery() {
@@ -746,7 +746,7 @@
 
       const profileImage = document.getElementById("topProfileImage");
       if (profileImage && user.profile_image_url) {
-        profileImage.src = `http://localhost:3000${user.profile_image_url}?t=${Date.now()}`;
+        profileImage.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
       }
 
       const logoutBtn = document.getElementById("logoutBtn");

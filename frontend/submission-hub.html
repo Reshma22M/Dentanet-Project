@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>DentaNet Submission Hub</title>
+  <title>DentaNet | Submission Hub</title>
+  <meta name="description" content="Submit your practical and examination work for the selected module on DentaNet LMS."/>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/student-shell.js"></script>
 
   <script>
     tailwind.config = {
@@ -26,12 +28,8 @@
             "sidebar-light": "#EDE9FE",
             "sidebar-dark": "#111827",
           },
-          fontFamily: {
-            display: ["Inter", "sans-serif"],
-          },
-          borderRadius: {
-            DEFAULT: "0.75rem",
-          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.75rem" },
         },
       },
     };
@@ -40,455 +38,500 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+    .tab-active {
+      background: linear-gradient(135deg, #6366f1 0%, #8B5CF6 100%);
+      color: white;
+      box-shadow: 0 6px 18px rgba(99,102,241,0.30);
+    }
+    .tab-inactive {
+      background: white;
+      color: #475569;
+      border: 1.5px solid #e2e8f0;
+    }
+    .dark .tab-inactive {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      padding: 3px 10px;
+    }
+    .status-approved  { background:#dcfce7; color:#166534; }
+    .status-completed { background:#dbeafe; color:#1e40af; }
+    .status-pending   { background:#fef9c3; color:#854d0e; }
+    .status-denied    { background:#fee2e2; color:#991b1b; }
+    .status-cancelled { background:#f3f4f6; color:#6b7280; }
+
+    .result-pass { background:#dcfce7; color:#166534; }
+    .result-fail { background:#fee2e2; color:#991b1b; }
+
+    .card-hover {
+      transition: box-shadow .2s, transform .2s;
+    }
+    .card-hover:hover {
+      box-shadow: 0 10px 40px rgba(99,102,241,.12);
+      transform: translateY(-2px);
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg,#6366f1 0%,#8B5CF6 100%);
+      box-shadow: 0 6px 20px rgba(99,102,241,.35);
+      transition: opacity .2s, box-shadow .2s, transform .15s;
+    }
+    .submit-btn:hover { opacity:.92; transform:translateY(-1px); }
+    .submit-btn:disabled { opacity:.6; transform:none; cursor:not-allowed; }
+
+    .skeleton {
+      animation: pulse 1.4s ease-in-out infinite;
+      background: linear-gradient(90deg,#ede9fe 25%,#e0e7ff 50%,#ede9fe 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 12px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    .module-badge {
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      color: white;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      padding: 3px 12px;
+    }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    .fade-in { animation: fadeIn .35s ease both; }
   </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
-  <nav class="sticky top-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-purple-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-    </div>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300" data-student-page="submission">
 
-    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
-      <a class="hover:text-primary transition-colors" href="student-dashboard.html">Home</a>
-      <a class="hover:text-primary transition-colors" href="#">About</a>
-      <a class="hover:text-primary transition-colors" href="#">Contact</a>
-      <button id="logoutBtn" class="px-5 py-2 bg-primary text-white rounded-full font-semibold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-primary-dark transition-all">
-        Log Out
-      </button>
-    </div>
-  </nav>
+  <div id="shell-header"></div>
 
   <div class="flex min-h-screen">
-    <aside class="w-72 bg-sidebar-light dark:bg-sidebar-dark p-6 hidden lg:block border-r border-purple-100 dark:border-gray-800">
-      <div class="mb-8">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-primary mb-1">LMS</h2>
-        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">University of Peradeniya</p>
-      </div>
+    <div id="shell-sidebar"></div>
 
-      <nav class="space-y-2">
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="student-dashboard.html">
-          <span class="material-icons-round text-[20px]">dashboard</span>
-          <span class="font-medium">Dashboard</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl shadow-md" href="submission-hub.html">
-          <span class="material-icons-round text-[20px]">assignment</span>
-          <span class="font-medium">Submission</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="lab-slot-booking.html">
-          <span class="material-icons-round text-[20px]">event_available</span>
-          <span class="font-medium">Lab Slot Timetable</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="study-materials.html">
-          <span class="material-icons-round text-[20px]">auto_stories</span>
-          <span class="font-medium">Study Materials</span>
-        </a>
-
-        <a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="grades-feedback.html">
-          <span class="material-icons-round text-[20px]">insights</span>
-          <span class="font-medium">Grades & Feedback</span>
-        </a>
-      </nav>
-    </aside>
-
+    <!-- MAIN -->
     <main class="flex-1 p-6 md:p-10">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+
+      <!-- Header block -->
+      <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Submission Hub</h1>
-          <p class="text-gray-500 dark:text-gray-400">View your practice sessions and examinations, then open the relevant submission page.</p>
+          <!-- Back to module link -->
+          <a id="backToModuleLink" href="student-module-details.html" class="inline-flex items-center gap-1 text-sm text-primary font-semibold mb-3 hover:underline">
+            <span class="material-icons-round text-[16px]">arrow_back</span>
+            Back to Module
+          </a>
+
+          <div class="flex items-center gap-3 flex-wrap mb-1">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Submission Hub</h1>
+            <span id="moduleBadge" class="module-badge hidden">Loading…</span>
+          </div>
+          <p id="moduleSubtitle" class="text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
+            Submit your practice and examination work for this module.
+          </p>
         </div>
 
-        <a href="student-profile.html" class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3 hover:opacity-90 transition">
-          <img id="studentProfileImage" alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover" src="public/images/stu.jpg"/>
-          <div>
-            <p id="studentProfileName" class="text-sm font-bold text-gray-900 dark:text-white">Student Name</p>
-            <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>
+        <!-- Stats row -->
+        <div class="flex gap-4 flex-wrap shrink-0">
+          <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
+            <p class="text-2xl font-extrabold text-primary" id="statPractice">—</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Practice</p>
           </div>
-        </a>
+          <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
+            <p class="text-2xl font-extrabold text-primary" id="statExam">—</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Exams</p>
+          </div>
+          <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
+            <p class="text-2xl font-extrabold text-green-500" id="statSubmitted">—</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Submitted</p>
+          </div>
+        </div>
       </div>
 
+      <!-- Alert box -->
       <div id="alertBox" class="hidden mb-6 rounded-2xl px-4 py-3 text-sm font-medium"></div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Practice Sessions</h3>
-            <span id="practiceCount" class="text-primary text-sm font-semibold">0 Sessions</span>
-          </div>
-
-          <div id="practiceSessionsContainer" class="space-y-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">Loading practice sessions...</div>
-          </div>
-        </section>
-
-        <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Practical Examinations</h3>
-            <span id="examCount" class="text-primary text-sm font-semibold">0 Examinations</span>
-          </div>
-
-          <div id="examSessionsContainer" class="space-y-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">Loading examinations...</div>
-          </div>
-        </section>
+      <!-- Tabs -->
+      <div class="bg-white dark:bg-card-dark rounded-2xl px-4 py-3 shadow-sm border border-purple-50 dark:border-gray-800 mb-8 flex flex-wrap gap-3">
+        <button id="tabPractice" class="tab-button tab-active px-5 py-2.5 rounded-xl text-sm font-semibold" type="button" data-panel="practicePanel">
+          <span class="material-icons-round text-[16px] align-middle mr-1">science</span>
+          Practice Sessions
+        </button>
+        <button id="tabExam" class="tab-button tab-inactive px-5 py-2.5 rounded-xl text-sm font-semibold" type="button" data-panel="examPanel">
+          <span class="material-icons-round text-[16px] align-middle mr-1">fact_check</span>
+          Practical Examinations
+        </button>
       </div>
+
+      <!-- Practice Panel -->
+      <section id="practicePanel" class="tab-panel fade-in">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Practice Sessions</h2>
+          <span id="practiceCountBadge" class="text-xs text-primary font-bold"></span>
+        </div>
+        <div id="practiceContainer" class="space-y-4">
+          <!-- Skeleton -->
+          <div class="skeleton h-24 w-full opacity-50"></div>
+          <div class="skeleton h-24 w-full opacity-40"></div>
+        </div>
+      </section>
+
+      <!-- Exam Panel -->
+      <section id="examPanel" class="tab-panel hidden fade-in">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Practical Examinations</h2>
+          <span id="examCountBadge" class="text-xs text-primary font-bold"></span>
+        </div>
+        <div id="examContainer" class="space-y-4">
+          <!-- Skeleton -->
+          <div class="skeleton h-24 w-full opacity-50"></div>
+          <div class="skeleton h-24 w-full opacity-40"></div>
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col items-center">
-      <div class="flex flex-wrap justify-center gap-8 mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-        <a class="hover:text-primary transition-colors" href="#">Contact Us</a>
-        <a class="hover:text-primary transition-colors" href="#">For Students</a>
-        <a class="hover:text-primary transition-colors" href="#">For Lecturers</a>
-        <a class="hover:text-primary transition-colors" href="#">Lab Services</a>
-      </div>
-
-      <div class="flex gap-6 mb-8 text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">facebook</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">alternate_email</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">groups</i></a>
-      </div>
-
-      <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">© 2025 DentaNet LMS. All rights reserved. Professional Dental Education Platform.</p>
-    </div>
-  </footer>
-
-  <button class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center justify-center border border-purple-100 dark:border-gray-700 hover:scale-110 transition-transform" onclick="document.documentElement.classList.toggle('dark')">
-    <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
-  </button>
+  <div id="shell-footer"></div>
 
 <script>
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:3001';
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+// ── URL params ──────────────────────────────────────────
+const urlParams   = new URLSearchParams(window.location.search);
+const moduleId    = urlParams.get('module_id');
+const focusExamId = urlParams.get('exam_id');   // highlight a specific exam if coming from module details
+
+// ── Helpers ─────────────────────────────────────────────
+function esc(v) {
+  return String(v ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function showAlert(message, type = "error") {
-  const alertBox = document.getElementById("alertBox");
-
-  alertBox.classList.remove("hidden");
-
-  if (type === "success") {
-    alertBox.className =
-      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200";
-  } else {
-    alertBox.className =
-      "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
-  }
-
-  alertBox.textContent = message;
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
 }
 
-function formatDate(dateValue) {
-  if (!dateValue) return "-";
+function fmtTime(t) {
+  if (!t) return '—';
+  const [h, m] = String(t).split(':');
+  const hr = parseInt(h, 10);
+  return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+}
 
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return "-";
+function statusPill(status) {
+  const map = {
+    APPROVED:'status-approved',
+    COMPLETED:'status-completed',
+    PENDING:'status-pending',
+    DENIED:'status-denied',
+    CANCELLED:'status-cancelled'
+  };
+  const cls = map[status] || 'status-pending';
+  return `<span class="status-pill ${cls}">${esc(status)}</span>`;
+}
 
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
+function resultPill(passFail) {
+  if (!passFail) return '<span class="status-pill status-pending">Pending</span>';
+  const cls = passFail === 'PASS' ? 'result-pass' : 'result-fail';
+  return `<span class="status-pill ${cls}">${esc(passFail)}</span>`;
+}
+
+function showAlert(msg, type = 'error') {
+  const box = document.getElementById('alertBox');
+  box.classList.remove('hidden');
+  box.className = type === 'success'
+    ? 'mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200'
+    : 'mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200';
+  box.textContent = msg;
+}
+
+// ── Tab switching ────────────────────────────────────────
+function setupTabs() {
+  const buttons = document.querySelectorAll('.tab-button');
+  const panels  = document.querySelectorAll('.tab-panel');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-panel');
+
+      buttons.forEach(b => {
+        b.classList.remove('tab-active');
+        b.classList.add('tab-inactive');
+      });
+      panels.forEach(p => p.classList.add('hidden'));
+
+      btn.classList.remove('tab-inactive');
+      btn.classList.add('tab-active');
+
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('fade-in');
+      }
+    });
   });
 }
 
-function formatTime(timeValue) {
-  if (!timeValue) return "-";
-
-  const [h, m] = String(timeValue).split(":");
-  const hour = parseInt(h, 10);
-
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const formattedHour = hour % 12 || 12;
-
-  return `${formattedHour}:${m} ${suffix}`;
-}
-
-/* ===========================
-   PRACTICE RENDER
-=========================== */
-
-function renderPracticeSessions(practiceSessions) {
-
-  const container =
-    document.getElementById("practiceSessionsContainer");
-
-  const countBox =
-    document.getElementById("practiceCount");
-
-  countBox.textContent =
-    `${practiceSessions.length} Session`;
-
-  if (!practiceSessions.length) {
-    container.innerHTML =
-      `<div class="text-sm text-gray-500">
-        No practice sessions found.
-      </div>`;
-    return;
-  }
-
-  container.innerHTML =
-    practiceSessions.map(session => {
-
-      const isAllowed =
-        session.slot_status === "APPROVED" ||
-        session.slot_status === "COMPLETED";
-
-      return `
-
-<div class="p-5 rounded-2xl bg-gray-50 border">
-
-<div class="flex flex-col md:flex-row md:justify-between gap-4">
-
-<div>
-
-<h4 class="font-bold text-gray-900">
-
-${escapeHtml(session.purpose || "Practice Session")}
-
-</h4>
-
-<p class="text-xs text-primary font-semibold mt-2">
-
-${formatDate(session.booking_date)}
-
-•
-
-${formatTime(session.start_time)}
--
-${formatTime(session.end_time)}
-
-</p>
-
-<p class="text-xs text-gray-500 mt-1">
-
-Status:
-
-<span class="text-primary font-semibold">
-
-${escapeHtml(session.slot_status)}
-
-</span>
-
-</p>
-
-</div>
-
-<div>
-
-${
-isAllowed
-? `<a
-href="practical-exam-submission.html?request_id=${session.request_id}"
-class="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold"
->
-Open Submission
-</a>`
-: `<span class="text-xs text-gray-400 font-semibold">
-Submission Locked
-</span>`
-}
-
-</div>
-
-</div>
-</div>
-
-`;
-    }).join("");
-}
-
-/* ===========================
-   EXAM RENDER
-=========================== */
-
-function renderExamSessions(examSessions) {
-
-  const container =
-    document.getElementById("examSessionsContainer");
-
-  const countBox =
-    document.getElementById("examCount");
-
-  countBox.textContent =
-    `${examSessions.length} Examination`;
-
-  if (!examSessions.length) {
-
-    container.innerHTML =
-      `<div class="text-sm text-gray-500">
-        No examinations found.
-      </div>`;
-
-    return;
-  }
-
-  container.innerHTML =
-    examSessions.map(exam => {
-
-      const isAllowed =
-        exam.slot_status === "APPROVED" ||
-        exam.slot_status === "COMPLETED";
-
-      return `
-
-<div class="p-5 rounded-2xl bg-gray-50 border">
-
-<div class="flex flex-col md:flex-row md:justify-between gap-4">
-
-<div>
-
-<h4 class="font-bold text-gray-900">
-
-${escapeHtml(exam.exam_name)}
-
-</h4>
-
-<p class="text-sm text-gray-500 mt-1">
-
-${escapeHtml(exam.description || "")}
-
-</p>
-
-<p class="text-xs text-primary font-semibold mt-2">
-
-${formatDate(exam.slot_date)}
-
-•
-
-${formatTime(exam.exam_start_time)}
--
-${formatTime(exam.exam_end_time)}
-
-</p>
-
-<p class="text-xs text-gray-500 mt-1">
-
-Status:
-
-<span class="text-primary font-semibold">
-
-${escapeHtml(exam.slot_status)}
-
-</span>
-
-</p>
-
-</div>
-
-<div>
-
-${
-isAllowed
-? `<a
-href="practical-exam-submission.html?exam_id=${exam.exam_id}"
-class="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold"
->
-Open Submission
-</a>`
-: `<span class="text-xs text-gray-400 font-semibold">
-Submission Locked
-</span>`
-}
-
-</div>
-
-</div>
-</div>
-
-`;
-    }).join("");
-}
-
-/* ===========================
-   LOAD DATA
-=========================== */
-
-async function loadSubmissionHub() {
-
-  try {
-
-    const token =
-      localStorage.getItem("token");
-
-    if (!token) {
-      showAlert("User not logged in");
-      return;
-    }
-
-    const response =
-      await fetch(
-        `${API_BASE}/submissions/student/dashboard-data`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+// ── Submission card builders ─────────────────────────────
+
+function buildPracticeCard(session) {
+  const allowed = ['APPROVED','COMPLETED'].includes(session.slot_status);
+  const hasSubmission = !!session.submission_id;
+
+  // Submission link – carry module_id through
+  const subLink = `practical-exam-submission.html?request_id=${session.request_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
+
+  const aiScore = session.api_score != null
+    ? `<span class="ml-2 text-xs font-bold text-primary">AI Score: ${session.api_score}</span>`
+    : '';
+
+  return `
+  <article class="card-hover bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2 mb-1">
+        <span class="material-icons-round text-primary text-[20px]">science</span>
+        <h3 class="font-bold text-gray-900 dark:text-white text-base truncate">
+          ${esc(session.purpose || 'Practice Session')}
+        </h3>
+        ${statusPill(session.slot_status)}
+      </div>
+
+      <p class="text-xs text-primary font-semibold mt-1">
+        ${fmtDate(session.booking_date)} &nbsp;•&nbsp; ${fmtTime(session.start_time)} – ${fmtTime(session.end_time)}
+      </p>
+
+      <div class="flex flex-wrap items-center gap-3 mt-2">
+        ${hasSubmission
+          ? `<span class="text-xs text-gray-500 dark:text-gray-400">
+               Attempt <strong>${esc(session.attempt_number)}</strong> submitted on ${fmtDate(session.submitted_at)}
+             </span>
+             ${resultPill(session.pass_fail)}
+             ${aiScore}`
+          : `<span class="text-xs text-gray-400 italic">No submission yet</span>`
         }
-      );
+      </div>
+    </div>
 
-    const data = await response.json();
+    <div class="shrink-0 flex flex-col gap-2 items-end">
+      ${allowed
+        ? `<a href="${subLink}"
+             class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
+             <span class="material-icons-round text-[18px]">upload_file</span>
+             ${hasSubmission ? 'Resubmit' : 'Submit Now'}
+           </a>`
+        : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
+             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>Locked
+           </span>`
+      }
+    </div>
+  </article>
+  `;
+}
 
-    if (!response.ok) {
-      throw new Error(data.error);
-    }
+function buildExamCard(exam) {
+  const allowed = ['APPROVED','COMPLETED'].includes(exam.slot_status);
+  const hasSubmission = !!exam.submission_id;
+  const isHighlighted = focusExamId && String(exam.exam_id) === String(focusExamId);
 
-    renderPracticeSessions(
-      data.practiceSessions || []
-    );
+  // Submission link – carry module_id through
+  const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
 
-    renderExamSessions(
-      data.examSessions || []
-    );
+  const gradeinfo = exam.published_grade != null
+    ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${exam.published_grade}%</span>`
+    : '';
 
-  } catch (error) {
+  return `
+  <article class="card-hover bg-white dark:bg-card-dark rounded-2xl border ${isHighlighted ? 'border-primary border-2' : 'border-purple-50 dark:border-gray-800'} p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}">
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2 mb-1">
+        <span class="material-icons-round text-primary text-[20px]">fact_check</span>
+        <h3 class="font-bold text-gray-900 dark:text-white text-base truncate">
+          ${esc(exam.exam_name || 'Practical Exam')}
+        </h3>
+        ${statusPill(exam.slot_status)}
+        ${isHighlighted ? '<span class="status-pill status-approved">Selected</span>' : ''}
+      </div>
 
-    console.error(error);
+      ${exam.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1 line-clamp-1">${esc(exam.description)}</p>` : ''}
 
-    showAlert(
-      error.message ||
-      "Failed to load submission data"
-    );
+      <p class="text-xs text-primary font-semibold">
+        ${fmtDate(exam.slot_date)} &nbsp;•&nbsp; ${fmtTime(exam.exam_start_time)} – ${fmtTime(exam.exam_end_time)}
+      </p>
+
+      <div class="flex flex-wrap items-center gap-3 mt-2">
+        ${hasSubmission
+          ? `<span class="text-xs text-gray-500 dark:text-gray-400">
+               Attempt <strong>${esc(exam.attempt_number)}</strong> submitted on ${fmtDate(exam.submitted_at)}
+             </span>
+             ${resultPill(exam.pass_fail)}
+             ${gradeinfo}`
+          : `<span class="text-xs text-gray-400 italic">No submission yet</span>`
+        }
+      </div>
+    </div>
+
+    <div class="shrink-0 flex flex-col gap-2 items-end">
+      ${allowed
+        ? `<a href="${subLink}"
+             class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
+             <span class="material-icons-round text-[18px]">upload_file</span>
+             ${hasSubmission ? 'Resubmit' : 'Submit Now'}
+           </a>`
+        : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
+             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>
+             ${exam.slot_status === 'PENDING' ? 'Awaiting Approval' : 'Locked'}
+           </span>`
+      }
+    </div>
+  </article>
+  `;
+}
+
+function emptyState(icon, message) {
+  return `
+  <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 p-10 flex flex-col items-center text-center shadow-sm">
+    <span class="material-icons-round text-primary/30 text-5xl mb-4">${icon}</span>
+    <p class="text-gray-400 dark:text-gray-500 text-sm font-medium">${message}</p>
+  </div>`;
+}
+
+// ── Render functions ─────────────────────────────────────
+
+function renderPractice(sessions) {
+  const container = document.getElementById('practiceContainer');
+  const badge     = document.getElementById('practiceCountBadge');
+  badge.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`;
+
+  if (!sessions.length) {
+    container.innerHTML = emptyState('science', 'No practice sessions found for this module.');
+    return;
+  }
+  container.innerHTML = sessions.map(buildPracticeCard).join('');
+  document.getElementById('statPractice').textContent = sessions.length;
+}
+
+function renderExams(exams) {
+  const container = document.getElementById('examContainer');
+  const badge     = document.getElementById('examCountBadge');
+  badge.textContent = `${exams.length} exam${exams.length !== 1 ? 's' : ''}`;
+
+  if (!exams.length) {
+    container.innerHTML = emptyState('fact_check', 'No examination slots booked for this module.');
+    return;
+  }
+  container.innerHTML = exams.map(buildExamCard).join('');
+  document.getElementById('statExam').textContent = exams.length;
+
+  // If a specific exam was requested, switch to exam tab automatically
+  if (focusExamId) {
+    document.getElementById('tabExam').click();
   }
 }
 
-/* ===========================
-   INIT
-=========================== */
+// ── Load data ─────────────────────────────────────────────
 
-document.addEventListener(
-"DOMContentLoaded",
-async function () {
+async function load() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) { showAlert('Not logged in'); return; }
 
-  if (typeof requireAuth !== "function") {
-    alert("api.js failed to load");
+    let endpoint;
+    if (moduleId) {
+      endpoint = `${API_BASE}/api/submissions/student/module/${encodeURIComponent(moduleId)}`;
+    } else {
+      // Fallback – generic hub (all modules)
+      endpoint = `${API_BASE}/api/submissions/student/dashboard-data`;
+    }
+
+    const res  = await fetch(endpoint, { headers:{ Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load');
+
+    // Module badge & subtitle
+    if (data.module) {
+      const badge = document.getElementById('moduleBadge');
+      badge.textContent = `${data.module.module_code} – ${data.module.module_name}`;
+      badge.classList.remove('hidden');
+      document.getElementById('moduleSubtitle').textContent =
+        data.module.description || 'Submit your practical and examination work for this module.';
+
+      // Update sidebar links to keep module context
+      if (moduleId) {
+        document.getElementById('sidebarBookingLink').href =
+          `lab-slot-booking.html?module_id=${encodeURIComponent(moduleId)}`;
+        document.getElementById('sidebarMaterialsLink').href =
+          `study-materials.html?module_id=${encodeURIComponent(moduleId)}`;
+        document.getElementById('backToModuleLink').href =
+          `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+      }
+    }
+
+    const practices = Array.isArray(data.practiceSessions) ? data.practiceSessions : [];
+    const exams     = Array.isArray(data.examSessions)     ? data.examSessions     : [];
+
+    renderPractice(practices);
+    renderExams(exams);
+
+    // Submitted count
+    const submitted = [
+      ...practices.filter(p => p.submission_id),
+      ...exams.filter(e => e.submission_id)
+    ].length;
+    document.getElementById('statSubmitted').textContent = submitted;
+
+  } catch (err) {
+    console.error(err);
+    showAlert(err.message || 'Failed to load submission data');
+    document.getElementById('practiceContainer').innerHTML =
+      emptyState('error_outline', 'Could not load practice sessions.');
+    document.getElementById('examContainer').innerHTML =
+      emptyState('error_outline', 'Could not load examination sessions.');
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async function () {
+  if (typeof requireAuth !== 'function') {
+    alert('api.js failed to load');
     return;
   }
 
-  const user =
-    await requireAuth("student");
-
+  const user = await requireAuth('student');
   if (!user) return;
 
-  const logoutBtn =
-    document.getElementById("logoutBtn");
-
-  if (logoutBtn) {
-    logoutBtn.onclick =
-      () => API.auth.logout();
+  // Profile
+  const fullName = user.fullName ||
+    `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+  const nameEl = document.getElementById('studentProfileName');
+  if (nameEl) nameEl.textContent = fullName;
+  if (user.profile_image_url) {
+    const img = document.getElementById('studentProfileImage');
+    if (img) img.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
   }
 
-  loadSubmissionHub();
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.onclick = () => API.auth.logout();
 
+  setupTabs();
+  await load();
 });
 </script>
 </body>

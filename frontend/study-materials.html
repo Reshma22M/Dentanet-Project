@@ -1,20 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Study Materials - DentaNet LMS</title>
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet"
-  />
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/student-shell.js"></script>
 
   <script>
     tailwind.config = {
@@ -23,104 +19,38 @@
         extend: {
           colors: {
             primary: "#6366f1",
-            "background-light": "#f8fafc",
-            "background-dark": "#0f172a",
-            "sidebar-light": "#818cf8",
-            "sidebar-dark": "#1e1b4b",
+            "primary-light": "#8B5CF6",
+            "primary-dark": "#4C1D95",
+            "background-light": "#F5F3FF",
+            "background-dark": "#0F172A",
+            "card-light": "#FFFFFF",
+            "card-dark": "#1E293B",
+            "sidebar-light": "#EDE9FE",
+            "sidebar-dark": "#111827",
           },
-          fontFamily: {
-            display: ["Inter", "sans-serif"],
-          },
-          borderRadius: {
-            DEFAULT: "0.75rem",
-          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.75rem" },
         },
       },
     };
   </script>
 
-  <style type="text/tailwindcss">
+  <style>
     body { font-family: 'Inter', sans-serif; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
   </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
-  <!-- HEADER -->
-  <header class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-    <div class="max-w-screen-2xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <img src="purple-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-      </div>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300" data-student-page="materials">
+  <div id="shell-header"></div>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
-        <a class="hover:text-primary transition-colors" href="student-dashboard.html">Dashboard</a>
-        <a class="hover:text-primary transition-colors" href="practical-exam-submission.html">Submissions</a>
-        <a class="hover:text-primary transition-colors" href="lab-slot-booking.html">Lab Booking</a>
-        <a class="hover:text-primary transition-colors text-primary font-bold" href="study-materials.html">Study Materials</a>
-        <a class="hover:text-primary transition-colors" href="grades-feedback.html">Grades</a>
-        <button
-          id="logoutBtn"
-          class="bg-white dark:bg-slate-800 px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200"
-        >
-          Log Out
-        </button>
-      </nav>
-    </div>
-  </header>
+  <div class="flex min-h-screen">
+    <div id="shell-sidebar"></div>
 
-  <div class="flex-grow flex max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-8 gap-8">
-    <!-- SIDEBAR -->
-    <aside class="w-72 hidden lg:block shrink-0">
-      <div class="bg-indigo-500 dark:bg-indigo-950 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200 dark:shadow-none min-h-[600px] flex flex-col">
-        <div class="mb-10">
-          <p class="text-xs uppercase tracking-widest text-indigo-100 opacity-80 font-bold">LMS</p>
-          <p class="text-sm font-medium">University of Peradeniya</p>
-        </div>
-
-        <nav class="space-y-2 flex-grow">
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="student-dashboard.html">
-            <span class="material-symbols-outlined">dashboard</span>
-            <span>Dashboard</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="practical-exam-submission.html">
-            <span class="material-symbols-outlined">upload_file</span>
-            <span>Practical Exam Submission</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="lab-slot-booking.html">
-            <span class="material-symbols-outlined">event_seat</span>
-            <span>Lab Slot Timetable</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary shadow-lg font-semibold" href="study-materials.html">
-            <span class="material-symbols-outlined">menu_book</span>
-            <span>Study Materials</span>
-          </a>
-
-          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors" href="grades-feedback.html">
-            <span class="material-symbols-outlined">grade</span>
-            <span>Grades &amp; Feedback</span>
-          </a>
-        </nav>
-
-        <div class="mt-auto pt-6 border-t border-indigo-400/30 flex items-center gap-3">
-          <img alt="Student Profile" class="w-10 h-10 rounded-full border-2 border-white/50" src="public/images/stu.jpg" />
-          <div>
-            <p class="text-xs text-indigo-100">Welcome back,</p>
-            <p class="text-sm font-bold">Student</p>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="flex-grow">
+    <main class="flex-1 p-6 md:p-10">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Study Materials</h1>
@@ -164,6 +94,14 @@
         >
           Refresh
         </button>
+
+        <button
+          id="shareMaterialBtn"
+          class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-green-600 text-white shadow-sm hover:bg-green-700 transition-all flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>
+          Share Material
+        </button>
       </div>
 
       <div id="pageStatus" class="hidden mb-6 rounded-xl px-4 py-3 text-sm font-medium"></div>
@@ -176,37 +114,61 @@
     </main>
   </div>
 
-  <!-- FOOTER -->
-  <footer class="bg-indigo-50 dark:bg-slate-900 border-t border-indigo-100 dark:border-slate-800 py-12 mt-12">
-    <div class="max-w-screen-2xl mx-auto px-6">
-      <div class="flex flex-wrap justify-center gap-8 md:gap-16 mb-8 text-sm font-medium text-slate-500 dark:text-slate-400">
-        <a class="hover:text-primary" href="#">Privacy Policy</a>
-        <a class="hover:text-primary" href="#">Terms of Service</a>
-        <a class="hover:text-primary" href="#">Contact Us</a>
-        <a class="hover:text-primary" href="#">For Students</a>
-        <a class="hover:text-primary" href="#">For Lecturers</a>
-        <a class="hover:text-primary" href="#">Lab Services</a>
+  <!-- SHARE MATERIAL MODAL -->
+  <div id="shareModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Share a Study Material</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Upload a file or share a link with your classmates.</p>
+
+      <div id="shareAlertBox" class="hidden mb-4 rounded-xl px-4 py-2.5 text-sm font-medium"></div>
+
+      <!-- Title -->
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Title *</label>
+      <input id="shareTitle" type="text" placeholder="e.g. Cavity Prep Notes"
+        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm mb-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" />
+
+      <!-- Description -->
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+      <textarea id="shareDescription" rows="2" placeholder="Optional description"
+        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm mb-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none resize-none"></textarea>
+
+      <!-- Module -->
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Module *</label>
+      <select id="shareModule"
+        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm mb-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+        <option value="">Select a module</option>
+      </select>
+
+      <!-- Type -->
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Material Type *</label>
+      <select id="shareType"
+        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm mb-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+        <option value="">Select a type</option>
+      </select>
+
+      <!-- File upload (shown for file-based types) -->
+      <div id="shareFileGroup" class="mb-4">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Upload File</label>
+        <input id="shareFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.mp4,.webm"
+          class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white file:font-semibold file:cursor-pointer" />
       </div>
 
-      <div class="flex justify-center gap-6 mb-8">
-        <a class="text-slate-400 hover:text-primary transition-colors" href="#">
-          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
-          </svg>
-        </a>
-
-        <a class="text-slate-400 hover:text-primary transition-colors" href="#">
-          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path>
-          </svg>
-        </a>
+      <!-- External URL (shown for link-based types) -->
+      <div id="shareLinkGroup" class="mb-4 hidden">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">External URL</label>
+        <input id="shareUrl" type="url" placeholder="https://youtube.com/watch?v=..."
+          class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" />
       </div>
 
-      <p class="text-center text-slate-400 text-xs font-medium">© 2025 DentaNet. All rights reserved.</p>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="shareCancelBtn" type="button" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">Cancel</button>
+        <button id="shareSubmitBtn" type="button" class="px-6 py-2.5 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-all shadow-md">Upload</button>
+      </div>
     </div>
-  </footer>
+  </div>
 
-  <script src="assets/js/api.js"></script>
+  <div id="shell-footer"></div>
+
   <script>
     let allMaterials = [];
     let allModules = [];
@@ -216,7 +178,7 @@
     function initBackendBaseUrl() {
       backendBaseUrl = typeof API_BASE_URL === "string"
         ? API_BASE_URL.replace(/\/api\/?$/, "")
-        : "http://localhost:3000";
+        : "http://localhost:3001";
     }
 
     function showPageStatus(message, type = "error") {
@@ -394,16 +356,24 @@
       loading.classList.remove("hidden");
 
       try {
-        const result = await API.materials.getAll();
+        // Load both lecturer and student materials
+        const [lecturerResult, studentResult] = await Promise.all([
+          API.materials.getAll(),
+          API.studyMaterials.getAll()
+        ]);
 
-        if (!result.ok) {
-          loading.classList.add("hidden");
-          showPageStatus(result.error || "Failed to load materials");
-          renderMaterials([]);
-          return;
-        }
+        const lecturerMats = (lecturerResult.ok && Array.isArray(lecturerResult.materials))
+          ? lecturerResult.materials.map(m => ({ ...m, _source: 'lecturer' }))
+          : [];
 
-        allMaterials = Array.isArray(result.materials) ? result.materials : [];
+        const studentMats = (studentResult.ok && Array.isArray(studentResult.materials))
+          ? studentResult.materials.map(m => ({ ...m, _source: 'student' }))
+          : [];
+
+        allMaterials = [...lecturerMats, ...studentMats].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+
         loading.classList.add("hidden");
         renderMaterials(allMaterials);
       } catch (error) {
@@ -411,6 +381,127 @@
         loading.classList.add("hidden");
         showPageStatus("Failed to load materials");
         renderMaterials([]);
+      }
+    }
+
+    // ── Share modal logic ──────────────────────────────
+    const LINK_TYPES = ["youtube", "external link"];
+
+    function openShareModal() {
+      const modal = document.getElementById("shareModal");
+      document.getElementById("shareAlertBox").classList.add("hidden");
+      document.getElementById("shareTitle").value = "";
+      document.getElementById("shareDescription").value = "";
+      document.getElementById("shareFile").value = "";
+      document.getElementById("shareUrl").value = "";
+
+      // Populate module dropdown
+      const modSelect = document.getElementById("shareModule");
+      modSelect.innerHTML = '<option value="">Select a module</option>';
+      allModules.forEach(m => {
+        modSelect.innerHTML += '<option value="' + m.module_id + '">' + escapeHtml(m.module_code + ' - ' + m.module_name) + '</option>';
+      });
+
+      // Populate type dropdown
+      const typeSelect = document.getElementById("shareType");
+      typeSelect.innerHTML = '<option value="">Select a type</option>';
+      allTypes.forEach(t => {
+        typeSelect.innerHTML += '<option value="' + t.material_type_id + '" data-name="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + '</option>';
+      });
+
+      updateShareFieldVisibility();
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeShareModal() {
+      const modal = document.getElementById("shareModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function updateShareFieldVisibility() {
+      const typeSelect = document.getElementById("shareType");
+      const selected = typeSelect.options[typeSelect.selectedIndex];
+      const typeName = (selected && selected.getAttribute("data-name") || "").toLowerCase().trim();
+
+      const fileGroup = document.getElementById("shareFileGroup");
+      const linkGroup = document.getElementById("shareLinkGroup");
+
+      if (LINK_TYPES.includes(typeName)) {
+        fileGroup.classList.add("hidden");
+        linkGroup.classList.remove("hidden");
+      } else {
+        fileGroup.classList.remove("hidden");
+        linkGroup.classList.add("hidden");
+      }
+    }
+
+    function showShareAlert(msg, type) {
+      const box = document.getElementById("shareAlertBox");
+      box.classList.remove("hidden");
+      box.className = type === "success"
+        ? "mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-green-100 text-green-700 border border-green-200"
+        : "mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
+      box.textContent = msg;
+    }
+
+    async function submitShare() {
+      const title = document.getElementById("shareTitle").value.trim();
+      const description = document.getElementById("shareDescription").value.trim();
+      const moduleId = document.getElementById("shareModule").value;
+      const typeSelect = document.getElementById("shareType");
+      const materialTypeId = typeSelect.value;
+      const selected = typeSelect.options[typeSelect.selectedIndex];
+      const typeName = (selected && selected.getAttribute("data-name") || "").toLowerCase().trim();
+      const fileInput = document.getElementById("shareFile");
+      const urlInput = document.getElementById("shareUrl");
+      const btn = document.getElementById("shareSubmitBtn");
+
+      if (!title || !moduleId || !materialTypeId) {
+        showShareAlert("Title, module and type are required.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Uploading...";
+
+      try {
+        const formData = new FormData();
+        formData.append("module_id", moduleId);
+        formData.append("material_type_id", materialTypeId);
+        formData.append("title", title);
+        if (description) formData.append("description", description);
+
+        if (LINK_TYPES.includes(typeName)) {
+          const url = urlInput.value.trim();
+          if (!url) { showShareAlert("Please enter a URL.", "error"); btn.disabled = false; btn.textContent = "Upload"; return; }
+          formData.append("external_url", url);
+        } else {
+          if (!fileInput.files.length) { showShareAlert("Please select a file.", "error"); btn.disabled = false; btn.textContent = "Upload"; return; }
+          formData.append("file", fileInput.files[0]);
+        }
+
+        const token = localStorage.getItem("token");
+        const res = await fetch(backendBaseUrl + "/api/study-materials", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
+
+        showShareAlert("Material shared successfully!", "success");
+        setTimeout(async () => {
+          closeShareModal();
+          await loadMaterials();
+          applyFilters();
+        }, 800);
+      } catch (err) {
+        showShareAlert(err.message || "Failed to share material", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Upload";
       }
     }
 
@@ -432,6 +523,15 @@
         await loadMaterialTypes();
         await loadMaterials();
         applyFilters();
+      });
+
+      // Share modal events
+      document.getElementById("shareMaterialBtn").addEventListener("click", openShareModal);
+      document.getElementById("shareCancelBtn").addEventListener("click", closeShareModal);
+      document.getElementById("shareSubmitBtn").addEventListener("click", submitShare);
+      document.getElementById("shareType").addEventListener("change", updateShareFieldVisibility);
+      document.getElementById("shareModal").addEventListener("click", function(e) {
+        if (e.target === e.currentTarget) closeShareModal();
       });
 
       await loadModules();

@@ -356,7 +356,7 @@ async function initializePage() {
 
     const profileImage =
         admin.profile_image_url
-        ? `http://localhost:3000${admin.profile_image_url}?t=${Date.now()}`
+        ? `http://localhost:3001${admin.profile_image_url}?t=${Date.now()}`
         : "public/images/admin.jpg";
 
     setText("adminName", fullName);
@@ -680,7 +680,7 @@ function setupModulePreviewBindings() {
                     const preview = document.getElementById("moduleImagePreview");
 
                     if (imageInputEl) imageInputEl.value = result.file_url;
-                    if (preview) preview.src = `http://localhost:3000${result.file_url}`;
+                    if (preview) preview.src = `http://localhost:3001${result.file_url}`;
                     if (uploadStatus) uploadStatus.textContent = "Uploaded";
                 } else {
                     if (uploadStatus) uploadStatus.textContent = "Upload failed";
@@ -812,7 +812,7 @@ function showFormMessage(message, type = "success") {
 function buildModuleImageUrl(value) {
     if (!value) return DEFAULT_MODULE_IMAGE;
     if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-    return `http://localhost:3000${value}`;
+    return `http://localhost:3001${value}`;
 }
 
 function setText(id, value) {

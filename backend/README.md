@@ -30,11 +30,11 @@ mysql.server start
 mysql -u root -p
 
 # Run the schema file
-source C:/Users/USER/Downloads/DentaNet-new/backend/database/schema.sql
+source C:/Users/USER/Downloads/DentaNet-new/backend/database/schema2.sql
 
 # Or create manually:
-CREATE DATABASE dentanet_lms;
-USE dentanet_lms;
+CREATE DATABASE dentanet_lms3;
+USE dentanet_lms3;
 ```
 
 ## 🚀 Step 2: Backend Setup (Node.js + Express)
@@ -176,10 +176,10 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ```bash
 # Backup
-mysqldump -u root -p dentanet_lms > backup.sql
+mysqldump -u root -p dentanet_lms3 > backup.sql
 
 # Restore
-mysql -u root -p dentanet_lms < backup.sql
+mysql -u root -p dentanet_lms3 < backup.sql
 ```
 
 ## 🔒 Security Best Practices
@@ -195,7 +195,7 @@ mysql -u root -p dentanet_lms < backup.sql
 
 ## 📱 Next Steps
 
-1. Run `schema.sql` to create database
+1. Run `schema2.sql` to create database
 2. Configure `.env` with your credentials
 3. Install npm packages
 4. Start backend server

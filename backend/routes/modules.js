@@ -76,8 +76,43 @@ router.get("/", authenticateToken, async (req, res) => {
     console.error("Get modules error:", error);
     return res.status(500).json({
       ok: false,
-      error: "Failed to fetch modules"
+      error: "Failed to fetch modules: " + (error ? error.message : "Unknown error")
     });
+  }
+});
+
+// ======================================================
+// GET STUDENT'S ENROLLED MODULES
+// ======================================================
+router.get("/my", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "student") {
+      return res.status(403).json({ ok: false, error: "Only students can access this endpoint" });
+    }
+
+    const [rows] = await promisePool.query(`
+      SELECT
+        m.module_id,
+        m.module_name,
+        m.module_code,
+        m.description,
+        m.module_image_url,
+        m.is_active,
+        m.created_at,
+        m.updated_at,
+        ms.enrolled_at
+      FROM module_students ms
+      JOIN modules m ON ms.module_id = m.module_id
+      WHERE ms.student_id = ?
+        AND ms.is_active = TRUE
+        AND m.is_active = TRUE
+      ORDER BY ms.enrolled_at DESC
+    `, [req.user.id]);
+
+    return res.json({ ok: true, modules: rows });
+  } catch (error) {
+    console.error("Get my modules error:", error);
+    return res.status(500).json({ ok: false, error: "Failed to fetch enrolled modules" });
   }
 });
 
