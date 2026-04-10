@@ -211,10 +211,16 @@
       return `${formattedHour}:${m} ${suffix}`;
     }
 
-    function getModuleIdFromQuery() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("module_id") || sessionStorage.getItem("selectedStudentModuleId") || "";
-    }
+      function getModuleIdFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return (
+          params.get("module_id") ||
+          sessionStorage.getItem("selectedStudentModuleId") ||
+          sessionStorage.getItem("selectedModuleId") ||
+          ""
+        );
+      }
+
 
     function getMaterialUrl(material) {
       if (material.external_url) return material.external_url;
@@ -477,6 +483,9 @@
 
     async function loadStudentModuleDetails() {
       currentModuleId = getModuleIdFromQuery();
+      sessionStorage.setItem("selectedStudentModuleId", currentModuleId);
+      sessionStorage.setItem("selectedModuleId", currentModuleId);
+
 
       if (!currentModuleId) {
         showStatus("No module id was provided.");

@@ -358,10 +358,16 @@
       return `http://localhost:3001${fileUrl}`;
     }
 
-    function getModuleIdFromQuery() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("module_id") || sessionStorage.getItem("selectedLecturerModuleId") || "";
-    }
+function getModuleIdFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get("module_id") ||
+    sessionStorage.getItem("selectedLecturerModuleId") ||
+    sessionStorage.getItem("selectedModuleId") ||
+    ""
+  );
+}
+
 
     function formatDate(dateStr) {
       if (!dateStr) return "-";
@@ -673,6 +679,9 @@
 
     async function loadModuleData() {
       currentModuleId = getModuleIdFromQuery();
+      sessionStorage.setItem("selectedLecturerModuleId", currentModuleId);
+      sessionStorage.setItem("selectedModuleId", currentModuleId);
+
 
       if (!currentModuleId) {
         document.getElementById("moduleName").textContent = "Module not found";
@@ -707,8 +716,7 @@
         }
 
         currentModule = moduleResult.module;
-        moduleMembers = Array.isArray(membersResult.members) ? membersResult.members : [];
-        moduleStudents = moduleMembers.filter(member => String(member.role || "").toLowerCase() === "student");
+        moduleStudents = Array.isArray(membersResult.students) ? membersResult.students : [];
         moduleExams = Array.isArray(examsResult.exams) ? examsResult.exams : [];
         allBookings = Array.isArray(bookingsResult.bookings) ? bookingsResult.bookings : [];
         moduleMaterials = Array.isArray(materialsResult.materials) ? materialsResult.materials : [];

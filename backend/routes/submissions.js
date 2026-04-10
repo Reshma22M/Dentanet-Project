@@ -43,6 +43,29 @@ function normalizeError(error, fallback) {
     return fallback;
 }
 
+async function canLecturerAccessSubmission(submissionId, lecturerId) {
+    const [rows] = await promisePool.query(`
+        SELECT s.submission_id
+        FROM submissions s
+        JOIN slot_requests sr
+          ON s.request_id = sr.request_id
+        JOIN exam_slot_requests esr
+          ON esr.request_id = sr.request_id
+        JOIN exams e
+          ON esr.exam_id = e.exam_id
+        JOIN module_lecturers ml
+          ON ml.module_id = e.module_id
+         AND ml.lecturer_id = ?
+         AND ml.is_active = TRUE
+        WHERE s.submission_id = ?
+          AND s.submission_type = 'EXAM'
+        LIMIT 1
+    `, [lecturerId, submissionId]);
+
+    return rows.length > 0;
+}
+
+
 // =======================================================
 // COMMON STUDENT SUBMISSION HUB DATA
 // =======================================================
@@ -747,7 +770,7 @@ router.post("/:submission_id/review", authenticateToken, async (req, res) => {
         const lecturerId = req.user.id;
         const role = req.user.role;
 
-        if (!["lecturer", "admin"].includes(role)) {
+        if (role !== "lecturer") {
             return res.status(403).json({
                 ok: false,
                 error: "Only lecturers can review submissions"
@@ -761,6 +784,15 @@ router.post("/:submission_id/review", authenticateToken, async (req, res) => {
             return res.status(400).json({
                 ok: false,
                 error: "Final grade and decision are required"
+            });
+        }
+
+        const allowed = await canLecturerAccessSubmission(submissionId, lecturerId);
+
+        if (!allowed) {
+            return res.status(403).json({
+                ok: false,
+                error: "You can only review submissions for your assigned module"
             });
         }
 
@@ -811,7 +843,7 @@ router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
         const lecturerId = req.user.id;
         const role = req.user.role;
 
-        if (!["lecturer", "admin"].includes(role)) {
+        if (role !== "lecturer") {
             return res.status(403).json({
                 ok: false,
                 error: "Only lecturers can publish results"
@@ -819,6 +851,15 @@ router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
         }
 
         const submissionId = req.params.submission_id;
+
+        const allowed = await canLecturerAccessSubmission(submissionId, lecturerId);
+
+        if (!allowed) {
+            return res.status(403).json({
+                ok: false,
+                error: "You can only publish submissions for your assigned module"
+            });
+        }
 
         const [reviewRows] = await promisePool.query(`
             SELECT

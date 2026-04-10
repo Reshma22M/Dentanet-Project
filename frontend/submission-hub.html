@@ -212,7 +212,12 @@ const API_BASE = 'http://localhost:3001';
 
 // ── URL params ──────────────────────────────────────────
 const urlParams   = new URLSearchParams(window.location.search);
-const moduleId    = urlParams.get('module_id');
+const moduleId =
+  urlParams.get('module_id') ||
+  sessionStorage.getItem('selectedStudentModuleId') ||
+  sessionStorage.getItem('selectedModuleId') ||
+  '';
+
 const focusExamId = urlParams.get('exam_id');   // highlight a specific exam if coming from module details
 
 // ── Helpers ─────────────────────────────────────────────

@@ -101,249 +101,65 @@ var API_BASE = 'http://localhost:3001';
 var DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
 var allModules = [];
 var enrolledModuleIds = new Set();
+var currentVerifiedUser = null;
 
 function escapeHtml(v) {
-  return String(v || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  return String(v || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
+
 function formatExamDate(d) {
   if (!d) return "No date";
   var dt = new Date(d);
   if (isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  return dt.toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
 }
+
 function formatExamTime(t) {
   if (!t) return "-";
   var parts = String(t).split(":");
-  var hr = parseInt(parts[0],10);
-  return (hr%12||12)+":"+parts[1]+" "+(hr>=12?"PM":"AM");
+  var hr = parseInt(parts[0], 10);
+  return (hr % 12 || 12) + ":" + parts[1] + " " + (hr >= 12 ? "PM" : "AM");
 }
+
 function buildModuleImageUrl(v) {
   if (!v) return DEFAULT_MODULE_IMAGE;
   if (String(v).startsWith("http")) return v;
   return API_BASE + v;
 }
-=======
-  <section class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-      <div>
-        <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">My Modules</h2>
-        <p class="text-gray-500 dark:text-gray-400">
-          Only your enrolled modules are shown here.
-        </p>
-      </div>
 
-      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-        <button
-          id="viewAllCoursesBtn"
-          type="button"
-          class="px-5 py-3 rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700 transition-all"
-        >
-          View All Courses
-        </button>
-
-        <label class="relative block w-full lg:w-[320px]">
-          <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
-            search
-          </span>
-          <input
-            id="studentModuleSearchInput"
-            type="text"
-            placeholder="Search modules..."
-            class="w-full bg-gray-50 dark:bg-gray-800 border border-purple-100 dark:border-gray-700 rounded-2xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
-          />
-        </label>
-      </div>
-    </div>
-  </section>
-
-  <div id="studentModulesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-    <div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>
-  </div>
-
-  <section class="mt-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming</h3>
-      <span class="material-icons-round text-primary/40">event</span>
-    </div>
-
-    <div id="studentUpcomingPanel" class="space-y-4">
-      <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">
-        Loading updates...
-      </div>
-    </div>
-  </section>
-</main>
-
-<div id="enrollModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 px-4">
-  <div class="bg-white dark:bg-gray-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-purple-100 dark:border-gray-800">
-    <h2 class="text-xl font-bold mb-3 text-gray-900 dark:text-white">
-      Enter Enrollment Key
-    </h2>
-
-    <p id="enrollModuleName" class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-      Enter the module key to join this course.
-    </p>
-
-    <input
-      id="moduleCodeInput"
-      type="text"
-      placeholder="Enter module code"
-      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 mb-4 text-gray-900 dark:text-white"
-    />
-
-    <div class="flex justify-end gap-3">
-      <button
-        type="button"
-        onclick="closeEnrollModal()"
-        class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        onclick="submitEnrollment()"
-        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold"
-      >
-        Join Module
-      </button>
-    </div>
-
-    <p id="enrollError" class="text-sm text-red-500 mt-3 hidden"></p>
-  </div>
-</div>
-  </div>
-
-  <footer class="bg-sidebar-light dark:bg-sidebar-dark border-t border-purple-100 dark:border-gray-800 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col items-center">
-      <div class="flex flex-wrap justify-center gap-8 mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-        <a class="hover:text-primary transition-colors" href="#">Contact Us</a>
-        <a class="hover:text-primary transition-colors" href="#">For Students</a>
-        <a class="hover:text-primary transition-colors" href="#">For Lecturers</a>
-        <a class="hover:text-primary transition-colors" href="#">Lab Services</a>
-      </div>
-
-      <div class="flex gap-6 mb-8 text-gray-400">
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">facebook</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">alternate_email</i></a>
-        <a class="hover:text-primary transition-colors" href="#"><i class="material-icons-round">groups</i></a>
-      </div>
-
-      <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">© 2025 DentaNet LMS. All rights reserved. Professional Dental Education Platform.</p>
-    </div>
-  </footer>
-
-  <button class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center justify-center border border-purple-100 dark:border-gray-700 hover:scale-110 transition-transform" onclick="document.documentElement.classList.toggle('dark')">
-    <span class="material-icons-round text-primary dark:text-yellow-400">dark_mode</span>
-  </button>
-
-<div id="enrollModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 px-4">
-  <div class="bg-white dark:bg-gray-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-purple-100 dark:border-gray-800">
-    <h2 class="text-xl font-bold mb-3 text-gray-900 dark:text-white">
-      Enter Enrollment Key
-    </h2>
-
-    <p id="enrollModuleName" class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-      Enter the module key to join this course.
-    </p>
-
-    <input
-      id="moduleCodeInput"
-      type="text"
-      placeholder="Enter module code"
-      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 mb-4 text-gray-900 dark:text-white"
-    />
-
-    <div class="flex justify-end gap-3">
-      <button
-        type="button"
-        onclick="closeEnrollModal()"
-        class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        onclick="submitEnrollment()"
-        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold"
-      >
-        Join Module
-      </button>
-    </div>
-
-    <p id="enrollError" class="text-sm text-red-500 mt-3 hidden"></p>
-  </div>
-</div>
-
-<script>
-const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
-let studentModules = [];
-let allModulesMode = false;
-let selectedModuleForEnroll = null;
-let currentVerifiedUser = null;
-
-function buildModuleImageUrl(value) {
-  if (!value) return DEFAULT_MODULE_IMAGE;
-  if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-  return `http://localhost:3000${value}`;
-}
-
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function formatExamDate(dateValue) {
-  if (!dateValue) return "No date";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return dateValue;
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
-}
-
-function formatExamTime(timeValue) {
-  if (!timeValue) return "-";
-  const [h, m] = String(timeValue).split(":");
-  const hour = parseInt(h, 10);
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${m} ${suffix}`;
-}
-
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
 function openStudentModule(moduleId) {
   if (!moduleId) return;
   sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  sessionStorage.setItem("selectedModuleId", String(moduleId));
   window.location.href = "student-module-details.html?module_id=" + encodeURIComponent(moduleId);
 }
 
-<<<<<<< HEAD
 function buildModuleCard(module) {
   var isEnrolled = enrolledModuleIds.has(Number(module.module_id));
 
   var actionBtn;
   if (isEnrolled) {
-    actionBtn = '<button type="button" onclick="event.stopPropagation(); openStudentModule(\'' + module.module_id + '\')" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all">View</button>';
+    actionBtn =
+      '<button type="button" onclick="event.stopPropagation(); openStudentModule(\'' + module.module_id + '\')" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all">View</button>';
   } else {
-    actionBtn = '<button type="button" onclick="event.stopPropagation(); openEnrollModal(\'' + escapeHtml(module.module_code) + '\')" class="px-4 py-2 rounded-xl border-2 border-primary text-primary text-sm font-semibold hover:bg-primary hover:text-white transition-all">Enroll</button>';
+    actionBtn =
+      '<button type="button" onclick="event.stopPropagation(); openEnrollModal(\'' + escapeHtml(module.module_code) + '\')" class="px-4 py-2 rounded-xl border-2 border-primary text-primary text-sm font-semibold hover:bg-primary hover:text-white transition-all">Enroll</button>';
   }
 
-  var enrolledBadge = isEnrolled ? '<div class="absolute top-4 right-4"><span class="enrolled-badge"><span class="material-icons-round text-[12px]">check_circle</span> Enrolled</span></div>' : '';
+  var enrolledBadge = isEnrolled
+    ? '<div class="absolute top-4 right-4"><span class="enrolled-badge"><span class="material-icons-round text-[12px]">check_circle</span> Enrolled</span></div>'
+    : '';
+
   var labelText = isEnrolled ? 'Open Module' : 'Enroll to join';
 
   return '<div class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer" onclick="' + (isEnrolled ? "openStudentModule('" + module.module_id + "')" : "openEnrollModal('" + escapeHtml(module.module_code) + "')") + '">'
     + '<div class="relative h-44 overflow-hidden">'
-    + '<img src="' + buildModuleImageUrl(module.module_image_url) + '" alt="'+escapeHtml(module.module_name || 'Module')+'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src=\'' + DEFAULT_MODULE_IMAGE + '\'" />'
+    + '<img src="' + buildModuleImageUrl(module.module_image_url) + '" alt="' + escapeHtml(module.module_name || 'Module') + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src=\'' + DEFAULT_MODULE_IMAGE + '\'" />'
     + '<div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>'
     + '<div class="absolute top-4 left-4"><span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">' + escapeHtml(module.module_code || 'MODULE') + '</span></div>'
     + enrolledBadge
@@ -355,250 +171,126 @@ function buildModuleCard(module) {
     + '<span class="text-xs font-semibold uppercase tracking-wider text-primary">' + labelText + '</span>'
     + actionBtn
     + '</div></div></div>';
-=======
-function openEnrollModal(module) {
-  selectedModuleForEnroll = module;
-  document.getElementById("moduleCodeInput").value = "";
-  document.getElementById("enrollError").classList.add("hidden");
-  document.getElementById("enrollError").textContent = "";
-  document.getElementById("enrollModuleName").textContent =
-    `Enter the enrollment key to join ${module.module_name || "this module"}.`;
-  document.getElementById("enrollModal").classList.remove("hidden");
-  document.getElementById("enrollModal").classList.add("flex");
-}
-
-function closeEnrollModal() {
-  document.getElementById("enrollModal").classList.add("hidden");
-  document.getElementById("enrollModal").classList.remove("flex");
-}
-
-async function submitEnrollment() {
-  const moduleCode = document.getElementById("moduleCodeInput").value.trim();
-  const errorBox = document.getElementById("enrollError");
-
-  if (!moduleCode) {
-    errorBox.textContent = "Please enter the enrollment key.";
-    errorBox.classList.remove("hidden");
-    return;
-  }
-
-  try {
-    const result = await API.modules.join(moduleCode);
-
-    if (!result.ok) {
-      errorBox.textContent = result.error || "Invalid enrollment key.";
-      errorBox.classList.remove("hidden");
-      return;
-    }
-
-    closeEnrollModal();
-    await loadStudentModules(allModulesMode);
-  } catch (error) {
-    console.error("Module join failed:", error);
-    errorBox.textContent = "Failed to join module.";
-    errorBox.classList.remove("hidden");
-  }
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
 }
 
 function renderModules(searchTerm) {
   var container = document.getElementById('modulesGrid');
   if (!container) return;
+
   var term = String(searchTerm || '').toLowerCase().trim();
+
   var filtered = allModules.filter(function(m) {
-    return String(m.module_code||'').toLowerCase().includes(term) || String(m.module_name||'').toLowerCase().includes(term);
+    return String(m.module_code || '').toLowerCase().includes(term) ||
+           String(m.module_name || '').toLowerCase().includes(term);
   });
+
   if (!filtered.length) {
-    container.innerHTML = '<div class="col-span-full bg-white dark:bg-card-dark rounded-3xl border border-purple-100 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">No modules found.</div>';
+    container.innerHTML =
+      '<div class="col-span-full bg-white dark:bg-card-dark rounded-3xl border border-purple-100 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">No modules found.</div>';
     return;
   }
-<<<<<<< HEAD
-  container.innerHTML = filtered.map(function(m){ return buildModuleCard(m); }).join('');
+
+  container.innerHTML = filtered.map(function(m) {
+    return buildModuleCard(m);
+  }).join('');
 }
 
 function openEnrollModal(moduleCode) {
   var modal = document.getElementById('enrollModal');
   var input = document.getElementById('enrollCodeInput');
-  document.getElementById('enrollAlertBox').classList.add('hidden');
-  input.value = moduleCode || '';
+  var alertBox = document.getElementById('enrollAlertBox');
+
+  if (alertBox) alertBox.classList.add('hidden');
+  if (input) input.value = moduleCode || '';
+
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  input.focus();
+
+  if (input) input.focus();
 }
+
 function closeEnrollModal() {
   var modal = document.getElementById('enrollModal');
+  if (!modal) return;
   modal.classList.add('hidden');
   modal.classList.remove('flex');
 }
-async function submitEnrollment() {
-  var input = document.getElementById('enrollCodeInput');
-  var btn = document.getElementById('enrollSubmitBtn');
-  var code = input.value.trim().toUpperCase();
-  if (!code) { showEnrollAlert('Please enter a module code.','error'); return; }
-  btn.disabled = true; btn.textContent = 'Enrolling...';
-  try {
-    var token = localStorage.getItem('token');
-    var res = await fetch(API_BASE + '/api/modules/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ module_code: code })
-    });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Enrollment failed');
-    showEnrollAlert('Successfully enrolled! Redirecting...', 'success');
-    setTimeout(async function() {
-      closeEnrollModal();
-      await loadAllData();
-    }, 1000);
-  } catch(err) {
-    showEnrollAlert(err.message || 'Failed to enroll', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Enroll';
-  }
-}
+
 function showEnrollAlert(msg, type) {
   var box = document.getElementById('enrollAlertBox');
+  if (!box) return;
+
   box.classList.remove('hidden');
   box.className = type === 'success'
     ? 'mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-green-100 text-green-700 border border-green-200'
     : 'mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-red-100 text-red-700 border border-red-200';
+
   box.textContent = msg;
+}
+
+async function submitEnrollment() {
+  var input = document.getElementById('enrollCodeInput');
+  var btn = document.getElementById('enrollSubmitBtn');
+  var code = (input && input.value ? input.value : '').trim().toUpperCase();
+
+  if (!code) {
+    showEnrollAlert('Please enter a module code.', 'error');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Enrolling...';
+  }
+
+  try {
+    var token = localStorage.getItem('token');
+    var res = await fetch(API_BASE + '/api/modules/join', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token
+      },
+      body: JSON.stringify({ module_code: code })
+    });
+
+    var data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Enrollment failed');
+    }
+
+    showEnrollAlert('Successfully enrolled! Redirecting...', 'success');
+
+    setTimeout(async function() {
+      closeEnrollModal();
+      await loadAllData();
+    }, 1000);
+
+  } catch (err) {
+    showEnrollAlert(err.message || 'Failed to enroll', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Enroll';
+    }
+  }
 }
 
 async function loadUpcoming() {
   var panel = document.getElementById('studentUpcomingPanel');
-=======
-
-  container.innerHTML = filtered.map(module => {
-    const isEnrolled = !!module.is_enrolled;
-    const actionLabel = isEnrolled ? "View" : "Enroll";
-
-    return `
-      <div class="group bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-purple-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all">
-        <div class="relative h-44 overflow-hidden">
-          <img
-            src="${buildModuleImageUrl(module.module_image_url)}"
-            alt="${escapeHtml(module.module_name || "Module image")}"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onerror="this.src='${DEFAULT_MODULE_IMAGE}'"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
-
-          <div class="absolute top-4 left-4">
-            <span class="px-3 py-1 rounded-full bg-white/90 text-primary text-xs font-bold shadow-sm">
-              ${escapeHtml(module.module_code || "MODULE")}
-            </span>
-          </div>
-        </div>
-
-        <div class="p-6">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-2">
-            ${escapeHtml(module.module_name || "Untitled Module")}
-          </h3>
-
-          <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[48px]">
-            ${escapeHtml(module.description || "Open this module to access exams, materials, bookings, and submissions.")}
-          </p>
-
-          <div class="mt-5 flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider ${isEnrolled ? "text-primary" : "text-amber-600"}">
-              ${isEnrolled ? "Enrolled Module" : "Not Enrolled"}
-            </span>
-
-            <button
-              type="button"
-              class="px-4 py-2 rounded-xl ${isEnrolled ? "bg-primary text-white hover:bg-primary-dark" : "bg-white text-primary border border-purple-200 hover:bg-purple-50"} text-sm font-semibold transition-all"
-              onclick="${isEnrolled
-                ? `openStudentModule('${String(module.module_id).replace(/'/g, "\\'")}')`
-                : `openEnrollModalById('${String(module.module_id).replace(/'/g, "\\'")}')`
-              }"
-            >
-              ${actionLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-function openEnrollModalById(moduleId) {
-  const module = studentModules.find(m => String(m.module_id) === String(moduleId));
-  if (!module) return;
-  openEnrollModal(module);
-}
-
-async function loadStudentModules(showAll = false) {
-  const container = document.getElementById("studentModulesGrid");
-  if (container) {
-    container.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Loading modules...</div>`;
-  }
-
-  try {
-    const modulesResult = await API.modules.getAll();
-
-    if (!modulesResult.ok || !Array.isArray(modulesResult.modules)) {
-      if (container) {
-        container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
-      }
-      return;
-    }
-
-    const allModules = modulesResult.modules.filter(module =>
-      module.is_active === true ||
-      module.is_active === 1 ||
-      module.is_active === "1"
-    );
-
-    let enrolledIds = new Set();
-
-    if (currentVerifiedUser && currentVerifiedUser.id) {
-      const membershipChecks = await Promise.all(
-        allModules.map(async (module) => {
-          try {
-            const memberResult = await API.modules.getMembers(module.module_id);
-            const students = Array.isArray(memberResult.students) ? memberResult.students : [];
-            const isMember = students.some(student =>
-              String(student.student_id) === String(currentVerifiedUser.id)
-            );
-            return isMember ? String(module.module_id) : null;
-          } catch (error) {
-            return null;
-          }
-        })
-      );
-
-      enrolledIds = new Set(membershipChecks.filter(Boolean));
-    }
-
-    studentModules = allModules
-      .map(module => ({
-        ...module,
-        is_enrolled: enrolledIds.has(String(module.module_id))
-      }))
-      .filter(module => showAll ? true : module.is_enrolled);
-
-    renderStudentModules(document.getElementById("studentModuleSearchInput")?.value || "");
-  } catch (error) {
-    console.error("Failed to load student modules:", error);
-    if (container) {
-      container.innerHTML = `<div class="text-sm text-red-500">Failed to load modules.</div>`;
-    }
-  }
-}
-
-async function loadStudentUpcoming() {
-  const panel = document.getElementById("studentUpcomingPanel");
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
   if (!panel) return;
+
   try {
     var result = await API.exams.getAll(null, "SCHEDULED");
-    var exams = Array.isArray(result.exams) ? result.exams.slice(0,5) : [];
+    var exams = Array.isArray(result.exams) ? result.exams.slice(0, 5) : [];
+
     if (!exams.length) {
-      panel.innerHTML = '<div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">No upcoming scheduled exams right now.</div>';
+      panel.innerHTML =
+        '<div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">No upcoming scheduled exams right now.</div>';
       return;
     }
+
     panel.innerHTML = exams.map(function(exam) {
       return '<div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-purple-50 dark:hover:bg-gray-800 transition-all"><div>'
         + '<p class="font-semibold text-gray-900 dark:text-white">' + escapeHtml(exam.exam_name || 'Scheduled Exam') + '</p>'
@@ -606,126 +298,122 @@ async function loadStudentUpcoming() {
         + '<p class="text-xs text-primary font-semibold mt-1">' + formatExamDate(exam.exam_date) + ' - ' + formatExamTime(exam.start_time) + ' to ' + formatExamTime(exam.end_time) + '</p>'
         + '</div></div>';
     }).join('');
-  } catch(e) {
+
+  } catch (e) {
     console.error(e);
-    panel.innerHTML = '<div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-red-500">Failed to load updates.</div>';
+    panel.innerHTML =
+      '<div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-red-500">Failed to load updates.</div>';
   }
 }
 
-<<<<<<< HEAD
 async function loadAllData() {
   try {
     var token = localStorage.getItem('token');
 
-    // Get enrolled modules first
-    var myRes = await fetch(API_BASE + '/api/modules/my', { headers: { Authorization: 'Bearer ' + token } });
+    var myRes = await fetch(API_BASE + '/api/modules/my', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
     var myData = await myRes.json();
     var myModules = (myData.ok && Array.isArray(myData.modules)) ? myData.modules : [];
-    enrolledModuleIds = new Set(myModules.map(function(m) { return Number(m.module_id); }));
 
-    // Get all modules
+    enrolledModuleIds = new Set(
+      myModules.map(function(m) { return Number(m.module_id); })
+    );
+
     var allResult = await API.modules.getAll();
-    allModules = Array.isArray(allResult.modules) ? allResult.modules.filter(function(m) {
-      return m.is_active === true || m.is_active === 1 || m.is_active === '1';
-    }) : [];
+    allModules = Array.isArray(allResult.modules)
+      ? allResult.modules.filter(function(m) {
+          return m.is_active === true || m.is_active === 1 || m.is_active === '1';
+        })
+      : [];
 
-    var term = document.getElementById('moduleSearchInput') ? document.getElementById('moduleSearchInput').value : '';
+    var searchInput = document.getElementById('moduleSearchInput');
+    var term = searchInput ? searchInput.value : '';
     renderModules(term);
-  } catch(e) {
+
+  } catch (e) {
     console.error('Failed to load modules:', e);
-    document.getElementById('modulesGrid').innerHTML = '<div class="col-span-full text-sm text-red-500">Failed to load modules.</div>';
+    var grid = document.getElementById('modulesGrid');
+    if (grid) {
+      grid.innerHTML =
+        '<div class="col-span-full text-sm text-red-500">Failed to load modules.</div>';
+    }
   }
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-  if (typeof requireAuth !== 'function') { alert('api.js failed to load'); return; }
-  var user = await requireAuth('student');
-=======
-document.addEventListener("DOMContentLoaded", async function () {
-  if (typeof requireAuth !== "function") {
-    alert("api.js failed to load correctly.");
+  if (typeof requireAuth !== 'function') {
+    alert('api.js failed to load');
     return;
   }
 
-  const user = await requireAuth("student");
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
+  var user = await requireAuth('student');
   if (!user) return;
+
   currentVerifiedUser = user;
 
-<<<<<<< HEAD
-  var fullName = user.fullName || ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || 'Student';
-  ['studentProfileName','sidebarProfileName'].forEach(function(id) {
+  var fullName =
+    user.fullName ||
+    ((user.firstName || '') + ' ' + (user.lastName || '')).trim() ||
+    'Student';
+
+  ['studentProfileName', 'sidebarProfileName'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.textContent = fullName;
   });
+
   if (user.profile_image_url) {
     var url = API_BASE + user.profile_image_url + '?t=' + Date.now();
-    ['studentProfileImage','sidebarProfileImage'].forEach(function(id) {
+    ['studentProfileImage', 'sidebarProfileImage'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.src = url;
-=======
-  const fullName =
-    user.fullName ||
-    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-    "Student";
-
-  const nameEl = document.getElementById("studentProfileName");
-  const welcomeEl = document.getElementById("studentWelcomeText");
-  const profileImageEl = document.getElementById("studentProfileImage");
-  const searchInput = document.getElementById("studentModuleSearchInput");
-  const viewAllBtn = document.getElementById("viewAllCoursesBtn");
-
-  if (nameEl) nameEl.textContent = fullName;
-
-  if (welcomeEl) {
-    welcomeEl.textContent = `Welcome back, ${user.firstName || fullName}! Select a module to continue.`;
-  }
-
-  if (profileImageEl && user.profile_image_url) {
-    profileImageEl.src = `http://localhost:3000${user.profile_image_url}?t=${Date.now()}`;
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      renderStudentModules(this.value);
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
     });
   }
+
   var welcomeEl = document.getElementById('studentWelcomeText');
-  if (welcomeEl) welcomeEl.textContent = 'Welcome back, ' + fullName + '! Select a module to continue.';
-
-<<<<<<< HEAD
-  var logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.onclick = function() { API.auth.logout(); };
-
-  var searchInput = document.getElementById('moduleSearchInput');
-  searchInput.addEventListener('input', function() { renderModules(searchInput.value); });
-
-  document.getElementById('enrollCancelBtn').onclick = closeEnrollModal;
-  document.getElementById('enrollSubmitBtn').onclick = submitEnrollment;
-  document.getElementById('enrollCodeInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') submitEnrollment(); });
-  document.getElementById('enrollModal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeEnrollModal(); });
-
-  await Promise.all([loadAllData(), loadUpcoming()]);
-=======
-  if (viewAllBtn) {
-    viewAllBtn.addEventListener("click", async function () {
-      allModulesMode = !allModulesMode;
-      this.textContent = allModulesMode ? "Show My Modules" : "View All Courses";
-      await loadStudentModules(allModulesMode);
-    });
+  if (welcomeEl) {
+    welcomeEl.textContent = 'Welcome back, ' + fullName + '! Select a module to continue.';
   }
 
-  const logoutBtn = document.getElementById("logoutBtn");
+  var logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.onclick = function () {
+    logoutBtn.onclick = function() {
       API.auth.logout();
     };
   }
 
-  await loadStudentModules(false);
-  await loadStudentUpcoming();
->>>>>>> 15f218138e0f289ec5ee82cc0cb8ce76fafe4e33
+  var searchInput = document.getElementById('moduleSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      renderModules(searchInput.value);
+    });
+  }
+
+  var enrollCancelBtn = document.getElementById('enrollCancelBtn');
+  if (enrollCancelBtn) {
+    enrollCancelBtn.onclick = closeEnrollModal;
+  }
+
+  var enrollSubmitBtn = document.getElementById('enrollSubmitBtn');
+  if (enrollSubmitBtn) {
+    enrollSubmitBtn.onclick = submitEnrollment;
+  }
+
+  var enrollCodeInput = document.getElementById('enrollCodeInput');
+  if (enrollCodeInput) {
+    enrollCodeInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitEnrollment();
+    });
+  }
+
+  var enrollModal = document.getElementById('enrollModal');
+  if (enrollModal) {
+    enrollModal.addEventListener('click', function(e) {
+      if (e.target === e.currentTarget) closeEnrollModal();
+    });
+  }
+
+  await Promise.all([loadAllData(), loadUpcoming()]);
 });
 </script>
 </body>

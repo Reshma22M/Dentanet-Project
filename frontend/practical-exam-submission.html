@@ -255,7 +255,11 @@ const API_BASE = 'http://localhost:3001';
 const urlParams  = new URLSearchParams(window.location.search);
 const examId     = urlParams.get('exam_id');
 const requestId  = urlParams.get('request_id');
-const moduleId   = urlParams.get('module_id');   // module context
+const moduleId =
+  urlParams.get('module_id') ||
+  sessionStorage.getItem('selectedStudentModuleId') ||
+  sessionStorage.getItem('selectedModuleId') ||
+  '';
 
 // Build back-to-hub link
 (function buildBackLink() {

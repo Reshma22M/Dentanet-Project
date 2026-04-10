@@ -174,6 +174,18 @@
     let allModules = [];
     let allTypes = [];
     let backendBaseUrl = "";
+    let currentModuleId = "";
+
+function getModuleIdFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get("module_id") ||
+    sessionStorage.getItem("selectedStudentModuleId") ||
+    sessionStorage.getItem("selectedModuleId") ||
+    ""
+  );
+}
+
 
     function initBackendBaseUrl() {
       backendBaseUrl = typeof API_BASE_URL === "string"
@@ -311,67 +323,97 @@
 
     async function loadModules() {
       const select = document.getElementById("moduleFilter");
+      const shareSelect = document.getElementById("shareModule");
 
       try {
         const result = await API.modules.getAll();
-        const modules = Array.isArray(result) ? result : (result.modules || []);
+        const modules = Array.isArray(result?.modules) ? result.modules : [];
 
         allModules = modules;
+
         select.innerHTML = `<option value="">All Modules</option>`;
 
         modules.forEach(module => {
           const option = document.createElement("option");
           option.value = module.module_id;
           option.textContent = `${module.module_code} - ${module.module_name}`;
+          if (currentModuleId && String(module.module_id) === String(currentModuleId)) {
+            option.selected = true;
+          }
           select.appendChild(option);
         });
+
+        if (shareSelect) {
+          shareSelect.innerHTML = `<option value="">Select a module</option>`;
+          modules.forEach(module => {
+            const option = document.createElement("option");
+            option.value = module.module_id;
+            option.textContent = `${module.module_code} - ${module.module_name}`;
+            if (currentModuleId && String(module.module_id) === String(currentModuleId)) {
+              option.selected = true;
+            }
+            shareSelect.appendChild(option);
+          });
+        }
       } catch (error) {
         console.error("Failed to load modules:", error);
       }
     }
 
+
     async function loadMaterialTypes() {
       const select = document.getElementById("typeFilter");
+      const shareTypeSelect = document.getElementById("shareType");
 
       try {
         const result = await API.materialTypes.getAll();
-        const types = Array.isArray(result) ? result : (result.materialTypes || []);
+        const types = Array.isArray(result?.materialTypes) ? result.materialTypes : [];
 
         allTypes = types;
+
         select.innerHTML = `<option value="">All Types</option>`;
+        if (shareTypeSelect) {
+          shareTypeSelect.innerHTML = `<option value="">Select a type</option>`;
+        }
 
         types.forEach(type => {
           const option = document.createElement("option");
           option.value = type.material_type_id;
           option.textContent = type.name;
           select.appendChild(option);
+
+          if (shareTypeSelect) {
+            const shareOption = document.createElement("option");
+            shareOption.value = type.material_type_id;
+            shareOption.textContent = type.name;
+            shareOption.setAttribute("data-name", type.name);
+            shareTypeSelect.appendChild(shareOption);
+          }
         });
       } catch (error) {
         console.error("Failed to load material types:", error);
       }
     }
-
+    
     async function loadMaterials() {
       const loading = document.getElementById("materialsLoading");
       loading.classList.remove("hidden");
 
       try {
-        // Load both lecturer and student materials
-        const [lecturerResult, studentResult] = await Promise.all([
-          API.materials.getAll(),
-          API.studyMaterials.getAll()
-        ]);
+        const selectedModuleId = document.getElementById("moduleFilter").value || currentModuleId || "";
+        const selectedTypeId = document.getElementById("typeFilter").value || "";
 
-        const lecturerMats = (lecturerResult.ok && Array.isArray(lecturerResult.materials))
-          ? lecturerResult.materials.map(m => ({ ...m, _source: 'lecturer' }))
-          : [];
+        const studentResult = await API.studyMaterials.getAll(
+          selectedModuleId || null,
+          selectedTypeId || null
+        );
 
         const studentMats = (studentResult.ok && Array.isArray(studentResult.materials))
-          ? studentResult.materials.map(m => ({ ...m, _source: 'student' }))
+          ? studentResult.materials.map(m => ({ ...m, _source: "student" }))
           : [];
 
-        allMaterials = [...lecturerMats, ...studentMats].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        allMaterials = studentMats.sort(
+          (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
         );
 
         loading.classList.add("hidden");
@@ -383,36 +425,43 @@
         renderMaterials([]);
       }
     }
-
     // ── Share modal logic ──────────────────────────────
     const LINK_TYPES = ["youtube", "external link"];
 
     function openShareModal() {
       const modal = document.getElementById("shareModal");
-      document.getElementById("shareAlertBox").classList.add("hidden");
+      const alertBox = document.getElementById("shareAlertBox");
+
+      if (alertBox) alertBox.classList.add("hidden");
+
       document.getElementById("shareTitle").value = "";
       document.getElementById("shareDescription").value = "";
       document.getElementById("shareFile").value = "";
       document.getElementById("shareUrl").value = "";
 
-      // Populate module dropdown
       const modSelect = document.getElementById("shareModule");
-      modSelect.innerHTML = '<option value="">Select a module</option>';
-      allModules.forEach(m => {
-        modSelect.innerHTML += '<option value="' + m.module_id + '">' + escapeHtml(m.module_code + ' - ' + m.module_name) + '</option>';
-      });
-
-      // Populate type dropdown
       const typeSelect = document.getElementById("shareType");
-      typeSelect.innerHTML = '<option value="">Select a type</option>';
-      allTypes.forEach(t => {
-        typeSelect.innerHTML += '<option value="' + t.material_type_id + '" data-name="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + '</option>';
-      });
+
+      if (currentModuleId) {
+        modSelect.value = String(currentModuleId);
+      }
+
+      if (typeSelect.options.length <= 1) {
+        typeSelect.innerHTML = `<option value="">Select a type</option>`;
+        allTypes.forEach(t => {
+          const option = document.createElement("option");
+          option.value = t.material_type_id;
+          option.textContent = t.name;
+          option.setAttribute("data-name", t.name);
+          typeSelect.appendChild(option);
+        });
+      }
 
       updateShareFieldVisibility();
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
+
 
     function closeShareModal() {
       const modal = document.getElementById("shareModal");
@@ -508,16 +557,34 @@
     document.addEventListener("DOMContentLoaded", async () => {
       initBackendBaseUrl();
 
+    currentModuleId = getModuleIdFromQuery();
+if (currentModuleId) {
+  sessionStorage.setItem("selectedStudentModuleId", currentModuleId);
+  sessionStorage.setItem("selectedModuleId", currentModuleId);
+}
+
+
       const user = await requireAuth("student");
       if (!user) return;
 
-      document.getElementById("logoutBtn").addEventListener("click", () => {
-        API.auth.logout();
-      });
+      const logoutBtn = document.getElementById("shellLogoutBtn") || document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+          API.auth.logout();
+        });
+      }
 
       document.getElementById("searchInput").addEventListener("input", applyFilters);
-      document.getElementById("moduleFilter").addEventListener("change", applyFilters);
-      document.getElementById("typeFilter").addEventListener("change", applyFilters);
+      document.getElementById("moduleFilter").addEventListener("change", async () => {
+        await loadMaterials();
+        applyFilters();
+      });
+
+      document.getElementById("typeFilter").addEventListener("change", async () => {
+        await loadMaterials();
+        applyFilters();
+      });
+
       document.getElementById("refreshBtn").addEventListener("click", async () => {
         await loadModules();
         await loadMaterialTypes();
