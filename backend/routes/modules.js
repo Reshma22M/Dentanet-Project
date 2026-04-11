@@ -44,29 +44,114 @@ const upload = multer({
   }
 });
 
+async function assignLecturerToModule(moduleId, lecturerId, adminId) {
+  await promisePool.query(`
+    UPDATE module_lecturers
+    SET is_active = FALSE
+    WHERE module_id = ?
+  `, [moduleId]);
+
+  if (!lecturerId) {
+    return;
+  }
+
+  const [lecturerRows] = await promisePool.query(`
+    SELECT lecturer_id
+    FROM lecturers
+    WHERE lecturer_id = ?
+    LIMIT 1
+  `, [lecturerId]);
+
+  if (lecturerRows.length === 0) {
+    throw new Error("Selected lecturer not found");
+  }
+
+  await promisePool.query(`
+    INSERT INTO module_lecturers
+    (
+      module_id,
+      lecturer_id,
+      enrolled_by_admin_id,
+      enrolled_at,
+      is_active
+    )
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP, TRUE)
+    ON DUPLICATE KEY UPDATE
+      enrolled_by_admin_id = VALUES(enrolled_by_admin_id),
+      enrolled_at = CURRENT_TIMESTAMP,
+      is_active = TRUE
+  `, [moduleId, lecturerId, adminId]);
+}
+
 // ======================================================
 // GET ALL MODULES
 // ======================================================
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const [rows] = await promisePool.query(`
-      SELECT
-        m.module_id,
-        m.module_name,
-        m.module_code,
-        m.description,
-        m.module_image_url,
-        m.is_active,
-        m.created_at,
-        m.updated_at,
-        a.first_name AS admin_first_name,
-        a.last_name AS admin_last_name
-      FROM modules m
-      LEFT JOIN admins a
-        ON m.created_by = a.admin_id
-      WHERE m.is_active = TRUE
-      ORDER BY m.created_at DESC
-    `);
+    let rows = [];
+
+    if (req.user.role === "lecturer") {
+      const [lecturerRows] = await promisePool.query(`
+        SELECT
+          m.module_id,
+          m.module_name,
+          m.module_code,
+          m.description,
+          m.module_image_url,
+          m.is_active,
+          m.created_at,
+          m.updated_at,
+          a.first_name AS admin_first_name,
+          a.last_name AS admin_last_name,
+          l.lecturer_id AS assigned_lecturer_id,
+          l.first_name AS assigned_lecturer_first_name,
+          l.last_name AS assigned_lecturer_last_name,
+          l.staff_id AS assigned_lecturer_staff_id
+        FROM module_lecturers ml
+        JOIN modules m
+          ON ml.module_id = m.module_id
+        LEFT JOIN admins a
+          ON m.created_by = a.admin_id
+        LEFT JOIN lecturers l
+          ON ml.lecturer_id = l.lecturer_id
+        WHERE ml.lecturer_id = ?
+          AND ml.is_active = TRUE
+          AND m.is_active = TRUE
+        ORDER BY ml.enrolled_at DESC
+      `, [req.user.id]);
+
+      rows = lecturerRows;
+    } else {
+      const [defaultRows] = await promisePool.query(`
+        SELECT
+          m.module_id,
+          m.module_name,
+          m.module_code,
+          m.description,
+          m.module_image_url,
+          m.is_active,
+          m.created_at,
+          m.updated_at,
+          a.first_name AS admin_first_name,
+          a.last_name AS admin_last_name,
+          l.lecturer_id AS assigned_lecturer_id,
+          l.first_name AS assigned_lecturer_first_name,
+          l.last_name AS assigned_lecturer_last_name,
+          l.staff_id AS assigned_lecturer_staff_id
+        FROM modules m
+        LEFT JOIN admins a
+          ON m.created_by = a.admin_id
+        LEFT JOIN module_lecturers ml
+          ON ml.module_id = m.module_id
+         AND ml.is_active = TRUE
+        LEFT JOIN lecturers l
+          ON ml.lecturer_id = l.lecturer_id
+        WHERE m.is_active = TRUE
+        ORDER BY m.created_at DESC
+      `);
+
+      rows = defaultRows;
+    }
 
     return res.json({
       ok: true,
@@ -141,10 +226,19 @@ router.get("/:id", authenticateToken, async (req, res) => {
         m.created_at,
         m.updated_at,
         a.first_name AS admin_first_name,
-        a.last_name AS admin_last_name
+        a.last_name AS admin_last_name,
+        l.lecturer_id AS assigned_lecturer_id,
+        l.first_name AS assigned_lecturer_first_name,
+        l.last_name AS assigned_lecturer_last_name,
+        l.staff_id AS assigned_lecturer_staff_id
       FROM modules m
       LEFT JOIN admins a
         ON m.created_by = a.admin_id
+      LEFT JOIN module_lecturers ml
+        ON ml.module_id = m.module_id
+       AND ml.is_active = TRUE
+      LEFT JOIN lecturers l
+        ON ml.lecturer_id = l.lecturer_id
       WHERE m.module_id = ?
       LIMIT 1
     `, [moduleId]);
@@ -172,67 +266,71 @@ router.get("/:id", authenticateToken, async (req, res) => {
 // ======================================================
 // GET MODULE MEMBERS
 // ======================================================
-router.get("/", authenticateToken, async (req, res) => {
+router.get("/:id/members", authenticateToken, async (req, res) => {
   try {
-    let rows = [];
+    const moduleId = Number(req.params.id);
 
-    if (req.user.role === "lecturer") {
-      const [lecturerRows] = await promisePool.query(`
-        SELECT
-          m.module_id,
-          m.module_name,
-          m.module_code,
-          m.description,
-          m.module_image_url,
-          m.is_active,
-          m.created_at,
-          m.updated_at,
-          a.first_name AS admin_first_name,
-          a.last_name AS admin_last_name
-        FROM module_lecturers ml
-        JOIN modules m
-          ON ml.module_id = m.module_id
-        LEFT JOIN admins a
-          ON m.created_by = a.admin_id
-        WHERE ml.lecturer_id = ?
-          AND ml.is_active = TRUE
-          AND m.is_active = TRUE
-        ORDER BY ml.enrolled_at DESC
-      `, [req.user.id]);
-
-      rows = lecturerRows;
-    } else {
-      const [defaultRows] = await promisePool.query(`
-        SELECT
-          m.module_id,
-          m.module_name,
-          m.module_code,
-          m.description,
-          m.module_image_url,
-          m.is_active,
-          m.created_at,
-          m.updated_at,
-          a.first_name AS admin_first_name,
-          a.last_name AS admin_last_name
-        FROM modules m
-        LEFT JOIN admins a
-          ON m.created_by = a.admin_id
-        WHERE m.is_active = TRUE
-        ORDER BY m.created_at DESC
-      `);
-
-      rows = defaultRows;
+    if (!moduleId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id"
+      });
     }
+
+    const [moduleExists] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE LIMIT 1`,
+      [moduleId]
+    );
+
+    if (moduleExists.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "Module not found"
+      });
+    }
+
+    const [students] = await promisePool.query(`
+      SELECT
+        s.student_id,
+        s.first_name,
+        s.last_name,
+        s.email,
+        s.registration_number,
+        ms.enrolled_at
+      FROM module_students ms
+      JOIN students s
+        ON ms.student_id = s.student_id
+      WHERE ms.module_id = ?
+        AND ms.is_active = TRUE
+      ORDER BY ms.enrolled_at DESC
+    `, [moduleId]);
+
+    const [lecturers] = await promisePool.query(`
+      SELECT
+        l.lecturer_id,
+        l.first_name,
+        l.last_name,
+        l.email,
+        l.staff_id,
+        ml.enrolled_at
+      FROM module_lecturers ml
+      JOIN lecturers l
+        ON ml.lecturer_id = l.lecturer_id
+      WHERE ml.module_id = ?
+        AND ml.is_active = TRUE
+      ORDER BY ml.enrolled_at DESC
+    `, [moduleId]);
 
     return res.json({
       ok: true,
-      modules: rows
+      students,
+      lecturers
     });
   } catch (error) {
-    console.error("Get modules error:", error);
+    console.error("Get module members error:", error);
     return res.status(500).json({
       ok: false,
-      error: "Failed to fetch modules: " + (error ? error.message : "Unknown error")
+      error: "Failed to fetch module members"
     });
   }
 });
@@ -240,81 +338,82 @@ router.get("/", authenticateToken, async (req, res) => {
 // ======================================================
 // CREATE MODULE (ADMIN ONLY)
 // ======================================================
-router.post("/lecturer/join", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== "lecturer") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         ok: false,
-        error: "Only lecturers can enroll into modules"
+        error: "Only admins can create modules"
       });
     }
 
-    const { module_id } = req.body;
+    const {
+      module_name,
+      module_code,
+      description,
+      module_image_url,
+      assigned_lecturer_id
+    } = req.body;
 
-    if (!module_id) {
+    if (!module_name || !module_code) {
       return res.status(400).json({
         ok: false,
-        error: "module_id is required"
+        error: "Module name and code are required"
       });
     }
 
-    const numericModuleId = Number(module_id);
-    const lecturerId = Number(req.user.id);
+    const normalizedCode = String(module_code).trim().toUpperCase();
+    const normalizedName = String(module_name).trim();
+    const normalizedDescription = description ? String(description).trim() : null;
+    const normalizedImageUrl = module_image_url ? String(module_image_url).trim() : null;
 
-    const [moduleRows] = await promisePool.query(
-      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE LIMIT 1`,
-      [numericModuleId]
+    const [duplicateRows] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_code = ? LIMIT 1`,
+      [normalizedCode]
     );
 
-    if (moduleRows.length === 0) {
-      return res.status(404).json({
-        ok: false,
-        error: "Module not found"
-      });
-    }
-
-    const [activeLecturerRows] = await promisePool.query(`
-      SELECT lecturer_id
-      FROM module_lecturers
-      WHERE module_id = ?
-        AND is_active = TRUE
-      LIMIT 1
-    `, [numericModuleId]);
-
-    if (
-      activeLecturerRows.length > 0 &&
-      Number(activeLecturerRows[0].lecturer_id) !== lecturerId
-    ) {
+    if (duplicateRows.length > 0) {
       return res.status(409).json({
         ok: false,
-        error: "This module is already assigned to another lecturer"
+        error: "Module code already exists"
       });
     }
 
-    await promisePool.query(`
-      INSERT INTO module_lecturers
+    const [result] = await promisePool.query(`
+      INSERT INTO modules
       (
-        module_id,
-        lecturer_id,
-        enrolled_by_admin_id,
-        enrolled_at,
+        module_code,
+        module_name,
+        description,
+        module_image_url,
+        created_by,
         is_active
       )
-      VALUES (?, ?, NULL, CURRENT_TIMESTAMP, TRUE)
-      ON DUPLICATE KEY UPDATE
-        is_active = TRUE,
-        enrolled_at = CURRENT_TIMESTAMP
-    `, [numericModuleId, lecturerId]);
+      VALUES (?, ?, ?, ?, ?, TRUE)
+    `, [
+      normalizedCode,
+      normalizedName,
+      normalizedDescription,
+      normalizedImageUrl,
+      req.user.id
+    ]);
 
-    return res.json({
+    await assignLecturerToModule(
+      result.insertId,
+      assigned_lecturer_id ? Number(assigned_lecturer_id) : null,
+      req.user.id
+    );
+
+    return res.status(201).json({
       ok: true,
-      message: "Lecturer enrolled into module successfully"
+      message: "Module created successfully",
+      module_id: result.insertId
     });
   } catch (error) {
-    console.error("Lecturer join module error:", error);
+    console.error("Create module error:", error);
     return res.status(500).json({
       ok: false,
-      error: "Failed to enroll lecturer into module"
+      error: error.message || "Failed to create module"
     });
   }
 });
@@ -353,6 +452,11 @@ router.put("/:id", authenticateToken, async (req, res) => {
     }
 
     const existingModule = existingRows[0];
+
+    const nextAssignedLecturerId =
+      req.body.assigned_lecturer_id !== undefined && req.body.assigned_lecturer_id !== ""
+        ? Number(req.body.assigned_lecturer_id)
+        : null;
 
     const nextModuleName =
       req.body.module_name !== undefined
@@ -410,6 +514,12 @@ router.put("/:id", authenticateToken, async (req, res) => {
       moduleId
     ]);
 
+    await assignLecturerToModule(
+      moduleId,
+      nextAssignedLecturerId,
+      req.user.id
+    );
+
     return res.json({
       ok: true,
       message: "Module updated successfully"
@@ -418,7 +528,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     console.error("Update module error:", error);
     return res.status(500).json({
       ok: false,
-      error: "Failed to update module"
+      error: error.message || "Failed to update module"
     });
   }
 });
@@ -574,63 +684,13 @@ router.post("/join", authenticateToken, async (req, res) => {
 
 // ======================================================
 // LECTURER SELF-ENROLL INTO MODULE
+// Kept disabled because lecturer assignment is admin-controlled
 // ======================================================
 router.post("/lecturer/join", authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== "lecturer") {
-      return res.status(403).json({
-        ok: false,
-        error: "Only lecturers can enroll into modules"
-      });
-    }
-
-    const { module_id } = req.body;
-
-    if (!module_id) {
-      return res.status(400).json({
-        ok: false,
-        error: "module_id is required"
-      });
-    }
-
-    const [moduleRows] = await promisePool.query(
-      `SELECT module_id FROM modules WHERE module_id = ? AND is_active = TRUE LIMIT 1`,
-      [module_id]
-    );
-
-    if (moduleRows.length === 0) {
-      return res.status(404).json({
-        ok: false,
-        error: "Module not found"
-      });
-    }
-
-    await promisePool.query(`
-      INSERT INTO module_lecturers
-      (
-        module_id,
-        lecturer_id,
-        enrolled_by_admin_id,
-        enrolled_at,
-        is_active
-      )
-      VALUES (?, ?, NULL, CURRENT_TIMESTAMP, TRUE)
-      ON DUPLICATE KEY UPDATE
-        is_active = TRUE,
-        enrolled_at = CURRENT_TIMESTAMP
-    `, [module_id, req.user.id]);
-
-    return res.json({
-      ok: true,
-      message: "Lecturer enrolled into module successfully"
-    });
-  } catch (error) {
-    console.error("Lecturer join module error:", error);
-    return res.status(500).json({
-      ok: false,
-      error: "Failed to enroll lecturer into module"
-    });
-  }
+  return res.status(403).json({
+    ok: false,
+    error: "Lecturer enrollment is managed by admin assignment only"
+  });
 });
 
 module.exports = router;

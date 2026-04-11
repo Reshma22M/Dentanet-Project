@@ -224,7 +224,7 @@
           <div class="col-span-full empty-box">
             <span class="material-symbols-outlined text-4xl text-slate-400">menu_book</span>
             <p class="mt-3 font-semibold text-slate-900 dark:text-white">No modules found</p>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Try a different search or refresh the page.</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">No modules are currently assigned to you.</p>
           </div>
         `;
         return;
@@ -290,6 +290,8 @@
     async function loadLecturerModules() {
       const container = document.getElementById("lecturerModulesGrid");
       const countBox = document.getElementById("lecturerModuleCount");
+      const hasModules = lecturerModules.length > 0;
+
 
       if (container) {
         container.innerHTML = `<div class="col-span-full text-sm text-slate-500 dark:text-slate-400">Loading modules...</div>`;
@@ -310,6 +312,16 @@
         if (countBox) {
           countBox.textContent = lecturerModules.length;
         }
+
+        const scheduleLinks = document.querySelectorAll('a[href="lecturer-schedule-exam.html"], a[href^="lecturer-schedule-exam.html?"]');
+       
+        scheduleLinks.forEach(link => {
+          if (!hasModules) {
+            link.classList.add("pointer-events-none", "opacity-50");
+          } else {
+            link.classList.remove("pointer-events-none", "opacity-50");
+          }
+        });
 
         renderLecturerModules(document.getElementById("moduleSearchInput")?.value || "");
       } catch (error) {

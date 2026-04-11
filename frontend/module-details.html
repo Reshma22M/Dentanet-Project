@@ -237,11 +237,7 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm">
-                  <div class="list-card p-3">
-                    <p class="text-xs uppercase tracking-wider text-slate-400 font-bold">Code</p>
-                    <p id="summaryModuleCode" class="font-semibold text-slate-900 dark:text-white">-</p>
-                  </div>
+                <div class="grid grid-cols-1 gap-3 mt-3 text-sm">
                   <div class="list-card p-3">
                     <p class="text-xs uppercase tracking-wider text-slate-400 font-bold">Created By</p>
                     <p id="summaryCreatedBy" class="font-semibold text-slate-900 dark:text-white">-</p>
@@ -254,18 +250,41 @@
           </div>
         </section>
 
-        <section id="tab-lecturers" class="tab-panel hidden">
-          <div class="page-card p-6">
-            <h2 class="section-title">Lecturers</h2>
-            <p class="muted mt-2">Academic staff enrolled into this module.</p>
+<section id="tab-lecturers" class="tab-panel hidden">
+  <div class="page-card p-6">
+    <h2 class="section-title">Lecturers</h2>
+    <p class="muted mt-2">Assign and manage the lecturer responsible for this module.</p>
 
-            <div id="lecturersListContainer" class="mt-6">
-              <div class="empty-box">
-                <p class="muted">Loading lecturers...</p>
-              </div>
-            </div>
-          </div>
-        </section>
+    <div class="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/30">
+      <div class="flex flex-col md:flex-row md:items-end gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Assigned Lecturer
+          </label>
+          <select id="assignedLecturerSelect" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm">
+            <option value="">Select lecturer</option>
+          </select>
+          <p id="assignedLecturerText" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            No lecturer assigned yet.
+          </p>
+        </div>
+
+        <div>
+          <button id="saveLecturerAssignmentBtn" type="button" class="px-5 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-accent transition-all">
+            Save Lecturer Assignment
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="lecturersListContainer" class="mt-6">
+      <div class="empty-box">
+        <p class="muted">Loading lecturers...</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 
         <section id="tab-students" class="tab-panel hidden">
           <div class="page-card p-6">
@@ -375,6 +394,7 @@
     const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
     const FILE_BASE_URL = "http://localhost:3001";
     let currentModuleId = null;
+    let allLecturers = [];
 
 function getModuleIdFromQuery() {
   const params = new URLSearchParams(window.location.search);
@@ -398,6 +418,49 @@ function getModuleIdFromQuery() {
       if (path.startsWith("/")) return `${FILE_BASE_URL}${path}`;
       return path;
     }
+
+      async function loadLecturers() {
+    try {
+      const result = await API.users.getAll();
+
+      if (!result.ok || !Array.isArray(result.users)) {
+        allLecturers = [];
+        populateAssignedLecturerSelect();
+        return;
+      }
+
+      allLecturers = result.users.filter(user =>
+        String(user.role || "").toLowerCase() === "lecturer"
+      );
+
+      populateAssignedLecturerSelect();
+    } catch (error) {
+      console.error("Load lecturers error:", error);
+      allLecturers = [];
+      populateAssignedLecturerSelect();
+    }
+  }
+
+  function populateAssignedLecturerSelect(selectedLecturerId = "") {
+    const select = document.getElementById("assignedLecturerSelect");
+    if (!select) return;
+
+    select.innerHTML = `<option value="">Select lecturer</option>`;
+
+    allLecturers.forEach(lecturer => {
+      const option = document.createElement("option");
+      option.value = lecturer.id || lecturer.lecturer_id;
+      option.textContent =
+        `${lecturer.firstName || lecturer.first_name || ""} ${lecturer.lastName || lecturer.last_name || ""}`.trim() +
+        ` (${lecturer.staffId || lecturer.staff_id || "No Staff ID"})`;
+
+      if (String(option.value) === String(selectedLecturerId || "")) {
+        option.selected = true;
+      }
+
+      select.appendChild(option);
+    });
+  }
 
     function setActiveMainTab(tabName) {
       document.querySelectorAll("[data-tab]").forEach(btn => {
@@ -466,11 +529,19 @@ async function loadModule() {
     const fullAdminName = `${module.admin_first_name || ""} ${module.admin_last_name || ""}`.trim() || "-";
     const isActive = module.is_active === true || module.is_active === 1 || module.is_active === "1";
 
+    populateAssignedLecturerSelect(module.assigned_lecturer_id || "");
+
+    const assignedLecturerText = document.getElementById("assignedLecturerText");
+    if (assignedLecturerText) {
+      assignedLecturerText.textContent = module.assigned_lecturer_id
+        ? `Currently assigned: ${(module.assigned_lecturer_first_name || "")} ${(module.assigned_lecturer_last_name || "")}`.trim() +
+          ` (${module.assigned_lecturer_staff_id || "No Staff ID"})`
+        : "No lecturer assigned yet.";
+    }
     document.getElementById("moduleTitle").textContent = module.module_name || "Module";
     document.getElementById("moduleCodeLine").textContent = module.module_code || "-";
     document.getElementById("moduleCodeLineTop").textContent = module.module_code || "-";
     document.getElementById("moduleHeroName").textContent = module.module_name || "Module";
-    document.getElementById("summaryModuleCode").textContent = module.module_code || "-";
     document.getElementById("summaryCreatedBy").textContent = fullAdminName;
     document.getElementById("summaryCreatedAt").textContent = formatDate(module.created_at);
     document.getElementById("moduleDescription").textContent = module.description || "No description available.";
@@ -482,6 +553,56 @@ async function loadModule() {
   } catch (error) {
     console.error("Load module error:", error);
     showModuleNotFound("Something went wrong while loading the module.");
+  }
+}
+
+async function saveLecturerAssignment() {
+  if (!currentModuleId) return;
+
+  const button = document.getElementById("saveLecturerAssignmentBtn");
+  const select = document.getElementById("assignedLecturerSelect");
+
+  try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Saving...";
+    }
+
+    const moduleResult = await API.modules.getById(currentModuleId);
+    if (!moduleResult.ok || !moduleResult.module) {
+      alert(moduleResult.error || "Failed to load module before saving.");
+      return;
+    }
+
+    const module = moduleResult.module;
+
+    const payload = {
+      module_name: module.module_name,
+      module_code: module.module_code,
+      description: module.description,
+      module_image_url: module.module_image_url,
+      is_active: module.is_active,
+      assigned_lecturer_id: select.value || null
+    };
+
+    const result = await API.modules.update(currentModuleId, payload);
+
+    if (!result.ok) {
+      alert(result.error || "Failed to save lecturer assignment");
+      return;
+    }
+
+    await loadModule();
+    await loadMembers();
+    alert("Lecturer assignment updated successfully.");
+  } catch (error) {
+    console.error("Save lecturer assignment error:", error);
+    alert("Failed to save lecturer assignment.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Save Lecturer Assignment";
+    }
   }
 }
 
@@ -789,6 +910,11 @@ async function loadModule() {
       setActiveMainTab("overview");
       setActiveMaterialTab("lecturer-materials");
 
+      await loadLecturers();
+      const saveLecturerAssignmentBtn = document.getElementById("saveLecturerAssignmentBtn");
+      if (saveLecturerAssignmentBtn) {
+        saveLecturerAssignmentBtn.addEventListener("click", saveLecturerAssignment);
+      }
       await loadModule();
       await loadMembers();
       await loadModuleExams();

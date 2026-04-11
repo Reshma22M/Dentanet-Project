@@ -221,7 +221,7 @@ tailwind.config = {
                     <div>
                         <h2 class="text-xl font-bold text-slate-900 dark:text-white">All Modules</h2>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Admin can create, update, and remove modules here. Modules remain the main LMS container. :contentReference[oaicite:0]{index=0}
+                        create, update, and remove modules here.
                         </p>
                     </div>
 
@@ -287,8 +287,18 @@ tailwind.config = {
             </div>
 
             <div>
-                <label class="field-label">Description</label>
-                <textarea id="moduleDescriptionInput" name="description" rows="4" class="input-field" placeholder="Short description about the module"></textarea>
+                <label class="field-label">Module Description</label>
+                <textarea id="moduleDescriptionInput" name="description" rows="4" class="input-field" placeholder="Short description of the module (optional)"></textarea>
+            </div>
+
+            <div>
+                <label class="field-label">Assigned Lecturer</label>
+                <select id="assignedLecturerInput" class="input-field">
+                    <option value="">Select lecturer</option>
+                </select>
+                <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Only the assigned lecturer will be able to manage this module, create exams, and view submissions.
+                </p>
             </div>
 
             <div>
@@ -335,6 +345,7 @@ tailwind.config = {
 <script>
 const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
 let allModules = [];
+let allLecturers = [];
 let currentMode = "create";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -364,6 +375,7 @@ async function initializePage() {
     const adminProfileImage = document.getElementById("adminProfileImage");
     if (adminProfileImage) adminProfileImage.src = profileImage;
 
+    await loadLecturers();
     await loadModules();
 }
 
@@ -413,6 +425,50 @@ async function loadModules() {
         container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
     }
 }
+
+async function loadLecturers() {
+    try {
+        const result = await API.users.getAll();
+
+        if (!result.ok || !Array.isArray(result.users)) {
+            allLecturers = [];
+            populateLecturerSelect();
+            return;
+        }
+
+        allLecturers = result.users.filter(user =>
+            String(user.account_type || user.role || "").toLowerCase() === "lecturer"
+        );
+
+        populateLecturerSelect();
+    } catch (error) {
+        console.error("Failed to load lecturers:", error);
+        allLecturers = [];
+        populateLecturerSelect();
+    }
+}
+
+function populateLecturerSelect(selectedLecturerId = "") {
+    const select = document.getElementById("assignedLecturerInput");
+    if (!select) return;
+
+    select.innerHTML = `<option value="">Select lecturer</option>`;
+
+    allLecturers.forEach(lecturer => {
+        const option = document.createElement("option");
+        option.value = lecturer.id || lecturer.lecturer_id;
+        option.textContent =
+            `${lecturer.firstName || lecturer.first_name || ""} ${lecturer.lastName || lecturer.last_name || ""}`.trim() +
+            ` (${lecturer.staffId || lecturer.staff_id || "No Staff ID"})`;
+
+        if (String(option.value) === String(selectedLecturerId)) {
+            option.selected = true;
+        }
+
+        select.appendChild(option);
+    });
+}
+
 
 function renderModules(searchTerm = "") {
     const container = document.getElementById("modulesGrid");
@@ -467,9 +523,21 @@ function renderModules(searchTerm = "") {
                         ${escapeHtml(module.description || "No description provided yet.")}
                     </p>
 
-                    <div class="mt-4 text-xs text-slate-400">
-                        Created ${formatDate(module.created_at)}
+                    <div class="mt-4 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                        <p>Created ${formatDate(module.created_at)}</p>
+                        <p>
+                            Assigned Lecturer:
+                            <span class="font-semibold text-slate-700 dark:text-slate-200">
+                                ${module.assigned_lecturer_id
+                                    ? escapeHtml(
+                                        `${module.assigned_lecturer_first_name || ""} ${module.assigned_lecturer_last_name || ""}`.trim() +
+                                        ` (${module.assigned_lecturer_staff_id || "No Staff ID"})`
+                                    )
+                                    : "Not assigned"}
+                            </span>
+                        </p>
                     </div>
+
 
                     <div class="mt-5 flex items-center justify-between gap-3 flex-wrap">
                         <a
@@ -555,12 +623,14 @@ function openEditModule(moduleId) {
     resetModuleForm();
 
     setText("drawerTitle", "Edit Module");
-    document.getElementById("editingModuleId").value = module.module_id;
+    const editingIdEl = document.getElementById("editingModuleId");
+    if (editingIdEl) editingIdEl.value = module.module_id || "";
     document.getElementById("moduleCodeInput").value = module.module_code || "";
     document.getElementById("moduleNameInput").value = module.module_name || "";
     document.getElementById("moduleDescriptionInput").value = module.description || "";
     document.getElementById("moduleImageInput").value = module.module_image_url || "";
     document.getElementById("moduleIsActiveInput").checked = normalizeBool(module.is_active);
+    populateLecturerSelect(module.assigned_lecturer_id || "");
 
     setText("previewModuleCode", (module.module_code || "MODULE101").toUpperCase());
     setText("previewModuleName", module.module_name || "Module Name Preview");
@@ -619,6 +689,8 @@ function resetModuleForm() {
 
     const activeInput = document.getElementById("moduleIsActiveInput");
     if (activeInput) activeInput.checked = true;
+    populateLecturerSelect("");
+
 
     if (uploadStatus) uploadStatus.textContent = "";
     if (messageBox) {
@@ -703,6 +775,7 @@ async function handleModuleSubmit(event) {
     const name = document.getElementById("moduleNameInput")?.value?.trim();
     const description = document.getElementById("moduleDescriptionInput")?.value?.trim();
     const imageUrl = document.getElementById("moduleImageInput")?.value?.trim();
+    const assignedLecturerId = document.getElementById("assignedLecturerInput")?.value?.trim();
     const isActive = document.getElementById("moduleIsActiveInput")?.checked;
     const submitBtn = document.getElementById("submitModuleBtn");
 
@@ -718,13 +791,14 @@ async function handleModuleSubmit(event) {
             Saving...
         `;
 
-        const payload = {
-            module_code: code.toUpperCase(),
-            module_name: name,
-            description: description || null,
-            module_image_url: imageUrl || null,
-            is_active: !!isActive
-        };
+    const payload = {
+        module_code: code.toUpperCase(),
+        module_name: name,
+        description: description || null,
+        module_image_url: imageUrl || null,
+        assigned_lecturer_id: assignedLecturerId || null,
+        is_active: !!isActive
+    };
 
         let result;
 
@@ -855,6 +929,8 @@ function escapeJsString(value) {
         .replace(/'/g, "\\'")
         .replace(/"/g, '\\"');
 }
+window.openEditModule = openEditModule;
+window.deleteModule = deleteModule;
 </script>
 </body>
 </html>
