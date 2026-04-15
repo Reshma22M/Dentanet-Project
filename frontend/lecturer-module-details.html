@@ -246,6 +246,11 @@
                 <span class="material-symbols-outlined text-[18px]">calendar_view_week</span>
                 Lab Slots
               </a>
+
+              <a id="submissionsBtn" href="lecturer-eva-submissions1.html" class="btn-secondary">
+                <span class="material-symbols-outlined text-[18px]">assignment</span>
+                Submissions
+              </a>
             </div>
           </div>
 
@@ -253,6 +258,7 @@
             <button class="tab-btn tab-btn-active" data-tab="studentsTab">Students</button>
             <button class="tab-btn tab-btn-inactive" data-tab="examsTab">Exams</button>
             <button class="tab-btn tab-btn-inactive" data-tab="bookingsTab">Bookings</button>
+            <button class="tab-btn tab-btn-inactive" data-tab="submissionsTab">Submissions</button>
             <button class="tab-btn tab-btn-inactive" data-tab="materialsTab">Lecturer Materials</button>
             <button class="tab-btn tab-btn-inactive" data-tab="studyMaterialsTab">Student Study Materials</button>
           </div>
@@ -294,6 +300,22 @@
           </div>
         </section>
 
+        <section id="submissionsTab" class="tab-panel hidden card overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white">Exam Submissions</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Latest submissions for this module only.</p>
+            </div>
+            <a id="submissionsActionBtn" href="lecturer-eva-submissions1.html" class="btn-primary">
+              <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+              Open Full Queue
+            </a>
+          </div>
+          <div id="submissionsContent" class="p-6">
+            <div class="text-sm text-slate-500 dark:text-slate-400">Loading submissions...</div>
+          </div>
+        </section>
+
         <section id="materialsTab" class="tab-panel hidden card overflow-hidden">
           <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -326,6 +348,9 @@
 
   <script>
     const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+    const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+      ? API_BASE_URL.replace(/\/api$/, "")
+      : window.location.origin;
 
     let currentModuleId = null;
     let currentModule = null;
@@ -333,6 +358,7 @@
     let moduleStudents = [];
     let moduleExams = [];
     let moduleBookings = [];
+    let moduleExamSubmissions = [];
     let moduleMaterials = [];
     let moduleStudyMaterials = [];
     let allBookings = [];
@@ -349,13 +375,15 @@
     function buildModuleImageUrl(value) {
       if (!value) return DEFAULT_MODULE_IMAGE;
       if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-      return `http://localhost:3001${value}`;
+      const normalized = String(value).startsWith("/") ? String(value) : `/${String(value)}`;
+      return `${API_ORIGIN}${normalized}`;
     }
 
     function buildFileUrl(fileUrl) {
       if (!fileUrl) return "#";
       if (String(fileUrl).startsWith("http://") || String(fileUrl).startsWith("https://")) return fileUrl;
-      return `http://localhost:3001${fileUrl}`;
+      const normalized = String(fileUrl).startsWith("/") ? String(fileUrl) : `/${String(fileUrl)}`;
+      return `${API_ORIGIN}${normalized}`;
     }
 
 function getModuleIdFromQuery() {
@@ -407,12 +435,15 @@ function getModuleIdFromQuery() {
       const scheduleHref = `lecturer-schedule-exam.html?module_id=${encodeURIComponent(currentModuleId)}`;
       const materialsHref = `lecturer-upload-materials.html?module_id=${encodeURIComponent(currentModuleId)}`;
       const labSlotsHref = `lecturer-labslot-timetable.html?module_id=${encodeURIComponent(currentModuleId)}`;
+      const submissionsHref = `lecturer-eva-submissions1.html?module_id=${encodeURIComponent(currentModuleId)}`;
 
       document.getElementById("scheduleExamBtn").href = scheduleHref;
       document.getElementById("uploadMaterialBtn").href = materialsHref;
       document.getElementById("labSlotsBtn").href = labSlotsHref;
+      document.getElementById("submissionsBtn").href = submissionsHref;
       document.getElementById("examsActionBtn").href = scheduleHref;
       document.getElementById("materialsActionBtn").href = materialsHref;
+      document.getElementById("submissionsActionBtn").href = submissionsHref;
 
       document.getElementById("scheduleExamSidebarLink").href = scheduleHref;
       document.getElementById("uploadMaterialsSidebarLink").href = materialsHref;
@@ -509,6 +540,10 @@ function getModuleIdFromQuery() {
                   <a href="lecturer-schedule-exam.html?module_id=${encodeURIComponent(currentModuleId)}" class="btn-secondary">
                     <span class="material-symbols-outlined text-[18px]">edit</span>
                     Manage
+                  </a>
+                  <a href="lecturer-eva-submissions1.html?module_id=${encodeURIComponent(currentModuleId)}" class="btn-secondary">
+                    <span class="material-symbols-outlined text-[18px]">assignment</span>
+                    Submissions
                   </a>
                 </div>
               </div>
@@ -623,6 +658,67 @@ function getModuleIdFromQuery() {
       `;
     }
 
+    function getSubmissionStatusMeta(item) {
+      if (item.published_grade !== null && item.published_grade !== undefined) {
+        return { label: "Published", classes: "badge-active" };
+      }
+      if (item.lecturer_grade !== null && item.lecturer_grade !== undefined) {
+        return { label: "Reviewed", classes: "badge-open" };
+      }
+      if (String(item.api_status || "").toUpperCase() === "FAILED") {
+        return { label: "AI Failed", classes: "badge-closed" };
+      }
+      if (String(item.api_status || "").toUpperCase() === "SUCCESS") {
+        return { label: "Ready", classes: "badge-open" };
+      }
+      return { label: "Pending", classes: "badge-draft" };
+    }
+
+    function renderSubmissions() {
+      const container = document.getElementById("submissionsContent");
+      if (!container) return;
+
+      if (!moduleExamSubmissions.length) {
+        container.innerHTML = renderEmptyState("No submission records found for this module yet.", "assignment");
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          ${moduleExamSubmissions.slice(0, 10).map(item => {
+            const statusMeta = getSubmissionStatusMeta(item);
+            const studentName = `${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() || "Student";
+            const score = item.api_score !== null && item.api_score !== undefined ? Number(item.api_score).toFixed(2) : "N/A";
+            const target = `lecturer-evaluate-submission.html?submission_id=${encodeURIComponent(item.submission_id)}&module_id=${encodeURIComponent(currentModuleId)}`;
+            return `
+              <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div class="space-y-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(studentName)}</h4>
+                      <span class="badge ${statusMeta.classes}">${escapeHtml(statusMeta.label)}</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                      ${escapeHtml(item.exam_name || "Exam")} • Attempt ${escapeHtml(item.attempt_number || 1)}
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                      Submitted: ${formatDate(item.submitted_at)} • AI Score: ${escapeHtml(score)}
+                    </p>
+                  </div>
+                  <div class="flex gap-2">
+                    <a href="${target}" class="btn-primary">
+                      <span class="material-symbols-outlined text-[18px]">rate_review</span>
+                      Evaluate
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
     function renderStudyMaterials() {
       const container = document.getElementById("studyMaterialsContent");
 
@@ -726,6 +822,15 @@ function getModuleIdFromQuery() {
             ? studyMaterialsResult.materials
             : [];
 
+        const submissionResponse = await fetch(`${API_BASE_URL}/submissions/lecturer/exams`, {
+          headers: getAuthHeaders()
+        });
+        const submissionResult = await parseResponse(submissionResponse);
+        const allSubmissions = submissionResult.ok && Array.isArray(submissionResult.submissions)
+          ? submissionResult.submissions
+          : [];
+        moduleExamSubmissions = allSubmissions.filter(item => String(item.module_id) === String(currentModuleId));
+
         const examIds = new Set(moduleExams.map(exam => String(exam.exam_id)));
         moduleBookings = allBookings.filter(booking => examIds.has(String(booking.exam_id)));
 
@@ -733,6 +838,7 @@ function getModuleIdFromQuery() {
         renderStudents();
         renderExams();
         renderBookings();
+        renderSubmissions();
         renderMaterials();
         renderStudyMaterials();
         updateStats();
@@ -754,7 +860,7 @@ function getModuleIdFromQuery() {
 
       const profileImage = document.getElementById("topProfileImage");
       if (profileImage && user.profile_image_url) {
-        profileImage.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
+        profileImage.src = `${API_ORIGIN}${user.profile_image_url}?t=${Date.now()}`;
       }
 
       const logoutBtn = document.getElementById("logoutBtn");

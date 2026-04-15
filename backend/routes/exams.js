@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { promisePool } = require("../config/database");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
+const { notifyAdmins } = require("../services/notifications");
 
 // --------------------------------------------------
 // Helpers
@@ -77,6 +78,31 @@ function isValidStatus(status) {
   return ["DRAFT", "SCHEDULED", "OPEN", "CLOSED"].includes(status);
 }
 
+function buildExamDateTime(examDate, endTime, startTime) {
+  if (!examDate) return null;
+
+  const timeValue = endTime || startTime || "23:59:59";
+  const parsed = new Date(`${examDate}T${String(timeValue).slice(0, 8)}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function mapExamVisibility(exam) {
+  const examEndDate = buildExamDateTime(exam.exam_date, exam.end_time, exam.start_time);
+  const now = new Date();
+  const retentionCutoff = examEndDate ? new Date(examEndDate) : null;
+
+  if (retentionCutoff) {
+    retentionCutoff.setMonth(retentionCutoff.getMonth() + 3);
+  }
+
+  return {
+    ...exam,
+    exam_has_passed: !!examEndDate && now > examEndDate,
+    retention_expires_at: retentionCutoff ? retentionCutoff.toISOString() : null,
+    retention_expired: !!retentionCutoff && now > retentionCutoff
+  };
+}
+
 // --------------------------------------------------
 // GET all exams
 // Optional query params:
@@ -132,10 +158,13 @@ router.get("/", authenticateToken, async (req, res) => {
     `;
 
     const [rows] = await promisePool.query(query, params);
+    const exams = rows
+      .map(mapExamVisibility)
+      .filter(exam => !exam.retention_expired);
 
     return res.json({
       ok: true,
-      exams: rows,
+      exams,
     });
   } catch (error) {
     console.error("Get exams error:", error);
@@ -151,12 +180,20 @@ router.get("/", authenticateToken, async (req, res) => {
 // --------------------------------------------------
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
-    const exam = await getExamById(Number(req.params.id));
+    const examRecord = await getExamById(Number(req.params.id));
+    const exam = examRecord ? mapExamVisibility(examRecord) : null;
 
     if (!exam || exam.is_active === 0 || exam.is_active === false) {
       return res.status(404).json({
         ok: false,
         error: "Exam not found",
+      });
+    }
+
+    if (exam.retention_expired) {
+      return res.status(404).json({
+        ok: false,
+        error: "Exam is no longer available",
       });
     }
 
@@ -292,6 +329,14 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
     );
 
     const exam = await getExamById(result.insertId);
+
+    await notifyAdmins({
+      title: "New exam scheduled",
+      message: `${req.user.first_name || "A lecturer"} scheduled "${finalExamName}" and it may need admin slot allocation.`,
+      notificationType: "exam",
+      relatedEntityType: "exam",
+      relatedEntityId: result.insertId
+    });
 
     return res.status(201).json({
       ok: true,

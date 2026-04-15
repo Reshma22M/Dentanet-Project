@@ -51,25 +51,26 @@
   </style>
 </head>
 
-<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 min-h-screen flex flex-col">
-  <nav class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto">
-      <div class="flex justify-between h-16 items-center">
+<body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 min-h-screen">
+  <nav class="fixed top-0 left-0 right-0 h-16 bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 z-50">
+    <div class="h-full px-4 lg:px-8">
+      <div class="flex justify-between h-full items-center">
         <div class="flex items-center gap-2">
-          <img src="blue-logo.svg" class="h-32 w-auto object-contain" alt="DentaNet logo" />
+          <img src="blue-logo.svg" class="h-20 w-auto object-contain" alt="DentaNet logo" />
         </div>
-        <div class="hidden md:flex items-center space-x-8">
-          <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-dashboard.html">Home</a>
-          <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="#">About</a>
-          <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="#">Contact</a>
-          <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-md shadow-indigo-200 dark:shadow-none">Log Out</button>
+        <div class="hidden md:flex items-center gap-8">
+          <button onclick="toggleDarkMode && toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+          </button>
+          <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">Log Out</button>
         </div>
       </div>
     </div>
   </nav>
 
-  <div class="flex flex-1 min-h-0">
-    <aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border my-6 ml-6 hidden lg:flex">
+  <div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
+    <aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
       <div>
         <div class="mb-8">
           <h2 class="text-lg font-bold">LMS</h2>
@@ -87,6 +88,10 @@
           <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-manage-users.html">
             <span class="material-symbols-outlined">group</span>
             <span>Manage Users</span>
+          </a>
+          <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-modules.html">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span>Modules</span>
           </a>
           <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="master-schedule.html">
             <span class="material-symbols-outlined">list_alt</span>
@@ -118,7 +123,7 @@
           <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <span class="material-symbols-outlined text-primary">calendar_clock</span>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Scheduled Exams & Slot Setup</h2>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Exam List & Slot Setup</h2>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Click an exam to expand its slot section</p>
           </div>
@@ -212,12 +217,8 @@
     </main>
   </div>
 
-  <footer class="bg-slate-900 text-slate-400 pt-16 pb-8 border-t border-slate-800">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="text-center text-[10px] text-slate-600 border-t border-slate-800 pt-8">
-        <p>© 2026 DentaNet Admin Hub. Clinical Excellence Through Data Management.</p>
-      </div>
-    </div>
+  <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+    © 2026 DentaNet Admin Hub.
   </footer>
 
   <button
@@ -231,6 +232,9 @@
   <script>
     let allBookingsCache = [];
     let activeRequestTab = "exam";
+    let queryExamId = null;
+    let queryRequestId = null;
+    let queryRequestTab = null;
 
     function escapeHtml(value) {
       return String(value || "")
@@ -272,16 +276,31 @@
       return `${formattedHour}:${m} ${suffix}`;
     }
 
-    function isExamExpired(exam) {
-      if (!exam || !exam.exam_date || !exam.end_time) return false;
+    function getDateOnlyKey(value) {
+      if (!value) return "";
+      const normalized = String(value).slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return "";
+      const yyyy = parsed.getFullYear();
+      const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+      const dd = String(parsed.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
 
-      try {
-        const endTime = String(exam.end_time).slice(0, 5);
-        const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
-        return examEnd.getTime() < Date.now();
-      } catch (err) {
-        return false;
-      }
+    function todayKey() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function isExamExpired(exam) {
+      if (!exam || !exam.exam_date) return false;
+      const examDay = getDateOnlyKey(exam.exam_date);
+      if (!examDay) return false;
+      return examDay < todayKey();
     }
 
     function toggleExamPanel(examId) {
@@ -294,7 +313,7 @@
       icon.textContent = panel.classList.contains("hidden") ? "expand_more" : "expand_less";
     }
 
-    function buildSlotRow(slot) {
+    function buildSlotRow(slot, examExpired = false) {
       const booked = Number(slot.booked_count || 0);
       const max = Number(slot.max_machines || 0);
       const remaining = Math.max(max - booked, 0);
@@ -313,13 +332,15 @@
             <div class="flex flex-wrap gap-2">
               <button
                 onclick="toggleEditSlotForm(${slot.slot_id})"
-                class="px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
+                class="px-4 py-2 ${examExpired ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-amber-500 text-white hover:bg-amber-600"} rounded-lg font-semibold"
+                ${examExpired ? "disabled" : ""}
               >
                 Edit Slot
               </button>
               <button
                 onclick="deleteExamSlot(${slot.slot_id})"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
+                class="px-4 py-2 ${examExpired ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700"} rounded-lg font-semibold"
+                ${examExpired ? "disabled" : ""}
               >
                 Remove Slot
               </button>
@@ -328,15 +349,16 @@
 
           <div id="edit-slot-form-${slot.slot_id}" class="hidden border-t border-slate-200 dark:border-slate-700 pt-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input id="edit-slot-date-${slot.slot_id}" type="date" value="${toDateInputValue(slot.slot_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-              <input id="edit-slot-start-${slot.slot_id}" type="time" value="${String(slot.start_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-              <input id="edit-slot-end-${slot.slot_id}" type="time" value="${String(slot.end_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-              <input id="edit-slot-capacity-${slot.slot_id}" type="number" min="1" value="${max}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+              <input id="edit-slot-date-${slot.slot_id}" type="date" value="${toDateInputValue(slot.slot_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${examExpired ? "disabled" : ""} />
+              <input id="edit-slot-start-${slot.slot_id}" type="time" value="${String(slot.start_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${examExpired ? "disabled" : ""} />
+              <input id="edit-slot-end-${slot.slot_id}" type="time" value="${String(slot.end_time).slice(0,5)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${examExpired ? "disabled" : ""} />
+              <input id="edit-slot-capacity-${slot.slot_id}" type="number" min="1" value="${max}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${examExpired ? "disabled" : ""} />
             </div>
             <div class="mt-3">
               <button
                 onclick="saveSlotEdit(${slot.slot_id})"
-                class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800"
+                class="px-5 py-2.5 ${examExpired ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-primary text-white hover:bg-blue-800"} rounded-lg font-semibold"
+                ${examExpired ? "disabled" : ""}
               >
                 Save Changes
               </button>
@@ -381,17 +403,18 @@
             <div>
               <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Create Slot</h4>
               <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <input id="slot-date-${exam.exam_id}" type="date" value="${toDateInputValue(exam.exam_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                <input id="slot-start-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                <input id="slot-end-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
-                <input id="slot-capacity-${exam.exam_id}" type="number" min="1" value="10" placeholder="Machines" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" />
+                <input id="slot-date-${exam.exam_id}" type="date" value="${toDateInputValue(exam.exam_date)}" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${expired ? "disabled" : ""} />
+                <input id="slot-start-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${expired ? "disabled" : ""} />
+                <input id="slot-end-${exam.exam_id}" type="time" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${expired ? "disabled" : ""} />
+                <input id="slot-capacity-${exam.exam_id}" type="number" min="1" value="10" placeholder="Machines" class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm" ${expired ? "disabled" : ""} />
               </div>
               <div class="mt-3">
                 <button
                   onclick="createExamSlot(${exam.exam_id})"
-                  class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-800"
+                  class="px-5 py-2.5 ${expired ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-primary text-white hover:bg-blue-800"} rounded-lg font-semibold"
+                  ${expired ? "disabled" : ""}
                 >
-                  Add Slot
+                  ${expired ? "Exam Expired" : "Add Slot"}
                 </button>
               </div>
             </div>
@@ -401,7 +424,7 @@
               <div class="space-y-3">
                 ${
                   slots.length
-                    ? slots.map(buildSlotRow).join("")
+                    ? slots.map(slot => buildSlotRow(slot, expired)).join("")
                     : `<p class="text-sm text-slate-500 dark:text-slate-400">No slots created for this exam yet.</p>`
                 }
               </div>
@@ -411,11 +434,18 @@
       `;
     }
 
+    function getExamSortValue(exam) {
+      const datePart = exam?.exam_date || "1970-01-01";
+      const timePart = String(exam?.start_time || "00:00").slice(0, 5);
+      const parsed = new Date(`${datePart}T${timePart}:00`);
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    }
+
     async function loadScheduledExams() {
       const container = document.getElementById("scheduledExamsContainer");
       container.innerHTML = `<p class="text-slate-500">Loading scheduled exams...</p>`;
 
-      const result = await API.exams.getAll(null, "SCHEDULED");
+      const result = await API.exams.getAll();
 
       if (!result.ok) {
         container.innerHTML = `<p class="text-red-600">${result.error || "Failed to load scheduled exams"}</p>`;
@@ -429,15 +459,44 @@
         return;
       }
 
-      const cards = await Promise.all(
-        exams.map(async (exam) => {
+      const sortedExams = [...exams].sort((a, b) => getExamSortValue(b) - getExamSortValue(a));
+      const activeExams = sortedExams.filter(exam => !isExamExpired(exam));
+      const expiredExams = sortedExams.filter(exam => isExamExpired(exam));
+      const activeCards = await Promise.all(
+        activeExams.map(async (exam) => {
           const slotRes = await API.examSlots.getByExamId(exam.exam_id);
           const slots = slotRes.ok ? (slotRes.slots || []) : [];
           return buildExamCard(exam, slots);
         })
       );
 
-      container.innerHTML = cards.join("");
+      let expiredSection = "";
+      if (expiredExams.length) {
+        const expiredCards = await Promise.all(
+          expiredExams.map(async (exam) => {
+            const slotRes = await API.examSlots.getByExamId(exam.exam_id);
+            const slots = slotRes.ok ? (slotRes.slots || []) : [];
+            return buildExamCard(exam, slots);
+          })
+        );
+
+        expiredSection = `
+          <details id="expiredExamsDetails" class="rounded-2xl border border-red-200 dark:border-red-900/40 p-4 mt-3">
+            <summary class="cursor-pointer select-none text-sm font-semibold text-red-700 dark:text-red-300">
+              Expired Exams (${expiredExams.length})
+            </summary>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Expired items are kept for review only.</p>
+            <div class="space-y-4 mt-4">
+              ${expiredCards.join("")}
+            </div>
+          </details>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-4">${activeCards.join("") || '<p class="text-slate-500">No active scheduled exams right now.</p>'}</div>
+        ${expiredSection}
+      `;
     }
 
     async function createExamSlot(examId) {
@@ -541,7 +600,7 @@
         : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
 
       return `
-        <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+        <div id="request-card-${b.request_id}" class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
@@ -604,6 +663,61 @@
       }
 
       pendingContainer.innerHTML = filtered.map(buildRequestCard).join("");
+    }
+
+    function parseContextFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const examIdParam = Number(params.get("exam_id"));
+      const requestIdParam = Number(params.get("request_id"));
+      const tabParam = String(params.get("tab") || "").toLowerCase();
+
+      queryExamId = Number.isFinite(examIdParam) && examIdParam > 0 ? examIdParam : null;
+      queryRequestId = Number.isFinite(requestIdParam) && requestIdParam > 0 ? requestIdParam : null;
+      queryRequestTab = ["exam", "practice", "all"].includes(tabParam) ? tabParam : null;
+    }
+
+    function openExamPanelFromContext() {
+      if (!queryExamId) return;
+
+      const panel = document.getElementById(`exam-panel-${queryExamId}`);
+      const icon = document.getElementById(`exam-toggle-icon-${queryExamId}`);
+      if (!panel) return;
+
+      const expiredDetails = document.getElementById("expiredExamsDetails");
+      if (expiredDetails && expiredDetails.contains(panel)) {
+        expiredDetails.open = true;
+      }
+
+      if (panel.classList.contains("hidden")) {
+        panel.classList.remove("hidden");
+      }
+      if (icon) {
+        icon.textContent = "expand_less";
+      }
+
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function focusRequestCardFromContext() {
+      if (queryRequestTab) {
+        switchRequestTab(queryRequestTab);
+      }
+
+      if (!queryRequestId) return;
+
+      const target = allBookingsCache.find(b => Number(b.request_id) === Number(queryRequestId));
+      if (target && !queryRequestTab) {
+        switchRequestTab(target.slot_type === "PRACTICE" ? "practice" : "exam");
+      }
+
+      const card = document.getElementById(`request-card-${queryRequestId}`);
+      if (!card) return;
+
+      card.classList.add("ring-2", "ring-primary");
+      setTimeout(() => {
+        card.classList.remove("ring-2", "ring-primary");
+      }, 2200);
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
     async function loadBookings() {
@@ -810,6 +924,7 @@
     document.addEventListener("DOMContentLoaded", async function () {
       const admin = await requireAuth("admin");
       if (!admin) return;
+      parseContextFromUrl();
 
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
@@ -821,6 +936,8 @@
       await loadMachines();
       await loadScheduledExams();
       await loadBookings();
+      openExamPanelFromContext();
+      focusRequestCardFromContext();
     });
   </script>
 </body>

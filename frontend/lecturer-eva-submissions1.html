@@ -1,306 +1,306 @@
 <!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>DentaNet | Full-Width API Evaluated Submissions</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#3B82F6",
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-<style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DentaNet | Exam Submission Evaluations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="assets/js/api.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1E3A8A",
+            accent: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A"
+          },
+          boxShadow: {
+            soft: "0 8px 30px rgba(15, 23, 42, 0.06)"
+          }
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #334155;
-        }
-    </style>
+      }
+    };
+  </script>
+  <style type="text/tailwindcss">
+    body { font-family: "Inter", sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    .sidebar-link {
+      @apply flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all;
+    }
+    .sidebar-link-active {
+      @apply text-white bg-primary rounded-xl shadow-lg;
+    }
+  </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
-<nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-<div class="px-4 sm:px-6 lg:px-8">
-<div class="flex justify-between items-center h-16">
-<div class="flex items-center gap-2">
-    <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-</div>
-<div class="flex items-center space-x-4">
-<button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
-<span class="material-icons-round">notifications</span>
-<span class="absolute top-2 right-2 flex h-2 w-2">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-</span>
-</button>
-<div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
-<img alt="Lecturer Profile Small" src="public/images/lec.jpeg"/>
-</div>
-</div>
-</div>
-</div>
-</nav>
-<div class="flex pt-16 min-h-screen">
-<aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
-<div class="p-4 space-y-2 flex-1 overflow-y-auto">
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
-                Dashboard
-            </a>
-<a class="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-schedule-exam.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">event_available</span>
-                Schedule an Exam
-            </a>
-<div class="pt-4 pb-2 px-4">
-<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
-</div>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all" href="lecturer-eva-submissions1.html">
-<span class="material-symbols-outlined">assignment</span>
-                Student Submissions
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-labslot-timetable.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">calendar_view_week</span>
-                Lab Slot Timetable
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-upload-materials.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
-                Upload Study Materials
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-performance-report.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">monitoring</span>
-                Performance Report
-            </a>
-</div>
-<div class="p-4 border-t border-slate-100 dark:border-slate-800">
-<button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
-<span class="material-symbols-outlined">logout</span>
-                Logout
-            </button>
-</div>
-</aside>
-<main class="flex-1 lg:ml-64 bg-slate-50 dark:bg-slate-950">
-<div class="p-8 max-w-7xl mx-auto">
-<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-<div>
-<h1 class="text-2xl font-bold text-slate-900 dark:text-white">API-Evaluated Submissions</h1>
-<p class="text-sm text-slate-500 dark:text-slate-400">Review and validate automated assessments for dental procedures.</p>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 mb-6 flex flex-wrap gap-4 items-center">
-<div class="flex-1 min-w-[200px]">
-<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Select Batch</label>
-<div class="relative">
-<select class="w-full bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-400 rounded-xl text-sm focus:ring-primary focus:border-primary transition-all pr-10 appearance-none">
-<option>2021 Batch</option>
-<option>2022 Batch</option>
-<option>2023 Batch</option>
-</select>
-<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-</div>
-</div>
-<div class="flex-1 min-w-[200px]">
-<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Select Course</label>
-<div class="relative">
-<select class="w-full bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-400 rounded-xl text-sm focus:ring-primary focus:border-primary transition-all pr-10 appearance-none">
-<option>Cavity Preparation</option>
-<option>Tooth Carving</option>
-<option>Root Canal Therapy</option>
-<option>Crown Preparation</option>
-</select>
-<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-</div>
-</div>
-<div class="md:mt-5 flex gap-2">
-<button class="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-600 transition-all flex items-center gap-2">
-<span class="material-symbols-outlined text-lg">filter_list</span>
-                        Apply Filters
-                    </button>
-<button class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                        Reset
-                    </button>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-lg hover:shadow-primary/5 transition-all">
-<div class="flex items-center gap-5">
-<div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Amali Wijesinghe</h3>
-<div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-<span class="flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-sm">id_card</span> IM/2022/091</span>
-<span class="h-1 w-1 bg-slate-300 rounded-full"></span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> Submitted 2h ago</span>
-</div>
-</div>
-</div>
-<div class="flex flex-wrap items-center gap-4">
-<div class="flex flex-col items-end mr-4 hidden sm:flex">
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API Score</span>
-<span class="text-lg font-bold text-primary">88/100</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                API Evaluated
-                            </span>
-<button class="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                                Review Submission
-                                <span class="material-symbols-outlined text-lg">chevron_right</span>
-</button>
-<script>
-// Make all 'Review Submission' buttons go to lecturer-evaluate-submission.html
-document.querySelectorAll('button').forEach(btn => {
-    if (btn.textContent.includes('Review Submission')) {
-        btn.onclick = function() {
-            window.location.href = 'lecturer-evaluate-submission.html';
-        };
-    }
-});
-</script>
-</div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-lg hover:shadow-primary/5 transition-all">
-<div class="flex items-center gap-5">
-<div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Kamal Perera</h3>
-<div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-<span class="flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-sm">id_card</span> IM/2022/045</span>
-<span class="h-1 w-1 bg-slate-300 rounded-full"></span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> Submitted 5h ago</span>
-</div>
-</div>
-</div>
-<div class="flex flex-wrap items-center gap-4">
-<div class="flex flex-col items-end mr-4 hidden sm:flex">
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API Score</span>
-<span class="text-lg font-bold text-primary">92/100</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                API Evaluated
-                            </span>
-<button class="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                                Review Submission
-                                <span class="material-symbols-outlined text-lg">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-lg hover:shadow-primary/5 transition-all">
-<div class="flex items-center gap-5">
-<div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Nimal Silva</h3>
-<div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-<span class="flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-sm">id_card</span> IM/2022/112</span>
-<span class="h-1 w-1 bg-slate-300 rounded-full"></span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> Submitted 8h ago</span>
-</div>
-</div>
-</div>
-<div class="flex flex-wrap items-center gap-4">
-<div class="flex flex-col items-end mr-4 hidden sm:flex">
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API Score</span>
-<span class="text-lg font-bold text-primary">76/100</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                API Evaluated
-                            </span>
-<button class="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                                Review Submission
-                                <span class="material-symbols-outlined text-lg">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-lg hover:shadow-primary/5 transition-all">
-<div class="flex items-center gap-5">
-<div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Sashini Fernando</h3>
-<div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-<span class="flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-sm">id_card</span> IM/2022/088</span>
-<span class="h-1 w-1 bg-slate-300 rounded-full"></span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> Submitted Yesterday</span>
-</div>
-</div>
-</div>
-<div class="flex flex-wrap items-center gap-4">
-<div class="flex flex-col items-end mr-4 hidden sm:flex">
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API Score</span>
-<span class="text-lg font-bold text-primary">81/100</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                API Evaluated
-                            </span>
-<button class="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                                Review Submission
-                                <span class="material-symbols-outlined text-lg">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-</div>
-</main>
-</div>
-<button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
-<span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
-</button>
-<footer class="lg:ml-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 px-8">
-<div class="flex flex-col md:flex-row justify-between items-center gap-4">
-<p class="text-sm text-slate-500 dark:text-slate-400">© 2026 DentaNet LMS. All rights reserved.</p>
-<div class="flex items-center gap-6">
-<a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Privacy Policy</a>
-<a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Terms of Service</a>
-<a class="text-xs font-medium text-slate-400 hover:text-primary transition-colors" href="#">Contact Support</a>
-</div>
-</div>
-</footer>
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+        </div>
+        <div class="flex items-center space-x-4">
+          <a href="lecturer-profile.html" class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 block">
+            <img id="topProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
 
-</body></html>
+  <div class="flex pt-16 min-h-screen">
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        <a class="sidebar-link" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined">dashboard</span>
+          Dashboard
+        </a>
+        <a class="sidebar-link" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined text-slate-400">event_available</span>
+          Schedule an Exam
+        </a>
+        <a class="sidebar-link" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400">upload_file</span>
+          Upload Study Materials
+        </a>
+        <a class="sidebar-link" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined text-slate-400">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+        <a class="sidebar-link sidebar-link-active" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined">assignment</span>
+          Student Submissions
+        </a>
+        <a class="sidebar-link" href="lecturer-profile.html">
+          <span class="material-symbols-outlined text-slate-400">person</span>
+          My Profile
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
+      <div class="max-w-7xl mx-auto space-y-8 pb-14">
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Lecturer Review Queue</p>
+            <h1 class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white">Exam submissions waiting for evaluation</h1>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Review AI results and publish final student outcomes.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-2xl bg-white dark:bg-slate-800 px-4 py-4 shadow-soft border border-slate-200 dark:border-slate-700">
+              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Total</p>
+              <p id="totalCount" class="mt-2 text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-2xl bg-white dark:bg-slate-800 px-4 py-4 shadow-soft border border-slate-200 dark:border-slate-700">
+              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Pending</p>
+              <p id="pendingCount" class="mt-2 text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-2xl bg-white dark:bg-slate-800 px-4 py-4 shadow-soft border border-slate-200 dark:border-slate-700">
+              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Reviewed</p>
+              <p id="reviewedCount" class="mt-2 text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-2xl bg-white dark:bg-slate-800 px-4 py-4 shadow-soft border border-slate-200 dark:border-slate-700">
+              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Published</p>
+              <p id="publishedCount" class="mt-2 text-2xl font-bold">0</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-soft border border-slate-200 dark:border-slate-700">
+          <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Latest exam submissions</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-300">Only submissions from your assigned modules are shown.</p>
+            </div>
+            <input id="searchInput" type="search" placeholder="Search student, registration, exam, or module" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm focus:border-primary focus:ring-primary md:max-w-sm" />
+          </div>
+
+          <div id="messageBox" class="hidden mb-4 rounded-2xl px-4 py-3 text-sm font-medium"></div>
+          <div id="submissionList" class="space-y-4">
+            <div class="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-300">Loading submissions...</div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="mt-6 border-t border-slate-200 dark:border-slate-700 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        DentaNet LMS • Lecturer Workspace
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+      ? API_BASE_URL.replace(/\/api$/, "")
+      : window.location.origin;
+    const queueEndpoint = `${API_ORIGIN}/api/submissions/lecturer/exams`;
+    const params = new URLSearchParams(window.location.search);
+    const moduleFilterId = params.get("module_id");
+    let allSubmissions = [];
+
+    const submissionList = document.getElementById("submissionList");
+    const messageBox = document.getElementById("messageBox");
+    const searchInput = document.getElementById("searchInput");
+
+    function showMessage(message, type = "error") {
+      messageBox.classList.remove("hidden");
+      messageBox.className = type === "success"
+        ? "mb-4 rounded-2xl px-4 py-3 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+        : "mb-4 rounded-2xl px-4 py-3 text-sm font-medium bg-rose-50 text-rose-700 border border-rose-200";
+      messageBox.textContent = message;
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function getStatusMeta(item) {
+      if (item.published_grade !== null && item.published_grade !== undefined) return { label: "Published", classes: "bg-emerald-100 text-emerald-700" };
+      if (item.lecturer_grade !== null && item.lecturer_grade !== undefined) return { label: "Reviewed", classes: "bg-amber-100 text-amber-700" };
+      if (item.api_status === "FAILED") return { label: "AI Failed", classes: "bg-rose-100 text-rose-700" };
+      if (item.api_status === "SUCCESS") return { label: "Ready for Review", classes: "bg-blue-100 text-blue-700" };
+      return { label: "Pending", classes: "bg-slate-100 text-slate-700" };
+    }
+
+    function updateCounters(items) {
+      document.getElementById("totalCount").textContent = items.length;
+      document.getElementById("pendingCount").textContent = items.filter(item => item.lecturer_grade === null || item.lecturer_grade === undefined).length;
+      document.getElementById("reviewedCount").textContent = items.filter(item => item.lecturer_grade !== null && item.lecturer_grade !== undefined).length;
+      document.getElementById("publishedCount").textContent = items.filter(item => item.published_grade !== null && item.published_grade !== undefined).length;
+    }
+
+    function renderList(items) {
+      updateCounters(allSubmissions);
+
+      if (!items.length) {
+        submissionList.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-300">No matching submissions found.</div>';
+        return;
+      }
+
+      submissionList.innerHTML = items.map(item => {
+        const status = getStatusMeta(item);
+        const studentName = `${item.student_first_name} ${item.student_last_name}`;
+        const score = item.api_score !== null && item.api_score !== undefined ? `${Number(item.api_score).toFixed(2)}` : "N/A";
+        const target = `lecturer-evaluate-submission.html?submission_id=${encodeURIComponent(item.submission_id)}${moduleFilterId ? `&module_id=${encodeURIComponent(moduleFilterId)}` : ""}`;
+
+        return `
+          <article class="rounded-3xl border border-slate-200 dark:border-slate-600 p-5 transition hover:border-primary/40 hover:shadow-soft">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <h3 class="text-xl font-bold text-slate-950 dark:text-white">${studentName}</h3>
+                  <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${status.classes}">${status.label}</span>
+                </div>
+                <div class="grid gap-2 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4">
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Registration:</span> ${item.registration_number || "-"}</p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Exam:</span> ${item.exam_name}</p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Module:</span> ${item.module_code || "-"} ${item.module_name ? `- ${item.module_name}` : ""}</p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Submitted:</span> ${formatDateTime(item.submitted_at)}</p>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-3">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">AI Score</p>
+                    <p class="mt-2 text-lg font-bold text-primary">${score}</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-3">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Attempt</p>
+                    <p class="mt-2 text-lg font-bold">${item.attempt_number}</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-3">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Decision</p>
+                    <p class="mt-2 text-lg font-bold">${item.decision || "Not reviewed"}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex shrink-0 flex-col gap-3">
+                <a href="${target}" class="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-accent">Review Submission</a>
+                <a href="${target}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-600 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Open Details</a>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function applySearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) return renderList(allSubmissions);
+
+      const filtered = allSubmissions.filter(item => {
+        const haystack = [
+          item.student_first_name,
+          item.student_last_name,
+          item.registration_number,
+          item.student_email,
+          item.exam_name,
+          item.module_code,
+          item.module_name
+        ].join(" ").toLowerCase();
+        return haystack.includes(query);
+      });
+      renderList(filtered);
+    }
+
+    async function loadQueue() {
+      try {
+        const response = await fetch(queueEndpoint, { headers: getAuthHeaders() });
+        const data = await parseResponse(response);
+        if (!data.ok) throw new Error(data.error || "Failed to load exam submissions");
+
+        allSubmissions = Array.isArray(data.submissions) ? data.submissions : [];
+        if (moduleFilterId) {
+          allSubmissions = allSubmissions.filter(item => String(item.module_id) === String(moduleFilterId));
+        }
+        renderList(allSubmissions);
+      } catch (error) {
+        showMessage(error.message || "Failed to load exam submissions");
+        submissionList.innerHTML = '<div class="rounded-2xl border border-dashed border-rose-200 px-6 py-12 text-center text-sm text-rose-600">Unable to load submissions right now.</div>';
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());
+    searchInput.addEventListener("input", applySearch);
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await requireAuth("lecturer");
+      if (!user) return;
+
+      const profileImage = document.getElementById("topProfileImage");
+      if (profileImage && user.profile_image_url) {
+        profileImage.src = `${API_ORIGIN}${user.profile_image_url}?t=${Date.now()}`;
+      }
+
+      if (moduleFilterId) {
+        showMessage("Showing submissions for the selected module.", "success");
+      }
+      loadQueue();
+    });
+  </script>
+</body>
+</html>

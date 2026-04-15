@@ -42,8 +42,8 @@ body {
     font-family: 'Inter', sans-serif;
 }
 .sidebar-active {
-    background-color: rgba(255, 255, 255, 1);
-    color: var(--sidebar-blue);
+    background-color: #3b82f6;
+    color: #ffffff;
 }
 .dark .sidebar-active {
     background-color: #3b82f6;
@@ -66,27 +66,24 @@ body {
 </style>
 </head>
 
-<body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
-<header class="bg-[var(--nav-blue)] dark:bg-[#0a0f1d] text-white shadow-md border-b dark:border-slate-800">
-<nav class="bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 sticky top-0 z-50">
-<div class="max-w-7xl mx-auto pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8">
-    <div class="flex justify-between h-16 items-center">
-        <div class="flex items-center space-x-2 h-full">
-            <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto object-contain"/>
-        </div>
-        <div class="hidden md:flex items-center space-x-8">
-            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="index.html">Home</a>
-            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="index.html#about">About</a>
-            <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="#">Contact</a>
-            <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-md shadow-indigo-400 dark:shadow-none">Log Out</button>
-        </div>
+<body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+<header class="fixed top-0 left-0 right-0 h-16 bg-indigo-50 dark:bg-slate-900 border-b border-indigo-100 dark:border-slate-800 z-50">
+<div class="h-full flex items-center justify-between px-4 lg:px-8">
+    <div class="flex items-center space-x-2 h-full">
+        <img src="blue-logo.svg" alt="DentaNet Logo" class="h-20 w-auto object-contain"/>
+    </div>
+    <div class="hidden md:flex items-center gap-8">
+        <button onclick="toggleDarkMode && toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block text-yellow-400">light_mode</span>
+        </button>
+        <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">Log Out</button>
     </div>
 </div>
-</nav>
 </header>
 
-<div class="flex flex-1 max-w-[1440px] mx-auto w-full">
-<aside class="w-72 bg-[#0F172A] p-6 flex flex-col space-y-8 text-slate-300 hidden lg:flex border-r border-slate-800">
+<div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
+<aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
     <div class="mb-8">
         <h2 class="text-lg font-bold">LMS</h2>
         <p class="text-xs opacity-70">University of Peradeniya</p>
@@ -99,6 +96,14 @@ body {
         <a class="sidebar-active flex items-center gap-3 p-3 rounded-lg font-semibold shadow-sm" href="admin-manage-users.html">
             <span class="material-symbols-outlined">group</span>
             <span>Manage Users</span>
+        </a>
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="Admin-labslot-timetable.html">
+            <span class="material-symbols-outlined">event_note</span>
+            <span>Lab Timetable</span>
+        </a>
+        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-modules.html">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span>Modules</span>
         </a>
         <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="master-schedule.html">
             <span class="material-symbols-outlined">event_note</span>
@@ -121,7 +126,7 @@ body {
     </div>
 </aside>
 
-<main class="flex-1 p-8">
+<main class="flex-1 px-4 md:px-8 xl:px-10 py-8">
     <div class="flex justify-between items-start mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Manage User Accounts</h1>
@@ -244,18 +249,8 @@ body {
 </main>
 </div>
 
-<footer class="bg-[var(--footer-blue)] dark:bg-[#020617] text-slate-200 mt-12 py-12 px-6 rounded-t-[2.5rem] border-t dark:border-dark-border">
-<div class="max-w-[1440px] mx-auto">
-    <div class="flex flex-wrap justify-center gap-x-12 gap-y-4 mb-8 text-sm font-medium">
-        <a class="hover:text-blue-400 transition-colors" href="#">Privacy Policy</a>
-        <a class="hover:text-blue-400 transition-colors" href="#">Terms of Service</a>
-        <a class="hover:text-blue-400 transition-colors" href="#">Contact Us</a>
-        <a class="hover:text-blue-400 transition-colors" href="#">For Students</a>
-        <a class="hover:text-blue-400 transition-colors" href="#">For Lecturers</a>
-        <a class="hover:text-blue-400 transition-colors" href="#">Lab Services</a>
-    </div>
-    <p class="text-center text-xs opacity-60">Â© 2026 DentaNet LMS Admin Portal. All rights reserved.</p>
-</div>
+<footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+  © 2026 DentaNet Admin Hub.
 </footer>
 
 <!-- Create Lecturer Modal -->

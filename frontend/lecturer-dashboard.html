@@ -190,6 +190,9 @@
 
   <script>
     const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+    const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+      ? API_BASE_URL.replace(/\/api$/, "")
+      : window.location.origin;
     let lecturerModules = [];
 
     function escapeHtml(value) {
@@ -204,7 +207,8 @@
     function buildModuleImageUrl(value) {
       if (!value) return DEFAULT_MODULE_IMAGE;
       if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-      return `http://localhost:3001${value}`;
+      const normalized = String(value).startsWith("/") ? String(value) : `/${String(value)}`;
+      return `${API_ORIGIN}${normalized}`;
     }
 
     function renderLecturerModules(searchTerm = "") {
@@ -354,7 +358,7 @@
       }
 
       if (profileImage && user.profile_image_url) {
-        profileImage.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
+        profileImage.src = `${API_ORIGIN}${user.profile_image_url}?t=${Date.now()}`;
       }
 
       const logoutBtn = document.getElementById("logoutBtn");

@@ -250,11 +250,21 @@
 
 <script>
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('http'))
+  ? API_BASE_URL.replace(/\/api$/, '')
+  : window.location.origin;
 
 const urlParams  = new URLSearchParams(window.location.search);
-const examId     = urlParams.get('exam_id');
-const requestId  = urlParams.get('request_id');
+const examId =
+  urlParams.get('exam_id') ||
+  sessionStorage.getItem('selectedSubmissionExamId') ||
+  '';
+
+const requestId =
+  urlParams.get('request_id') ||
+  sessionStorage.getItem('selectedSubmissionRequestId') ||
+  '';
+
 const moduleId =
   urlParams.get('module_id') ||
   sessionStorage.getItem('selectedStudentModuleId') ||
@@ -293,7 +303,121 @@ const submitBtn = document.getElementById('submitBtn');
 const clearBtn = document.getElementById('clearBtn');
 
 function getToken() {
-  return localStorage.getItem('token');
+  return localStorage.getItem('authToken') || localStorage.getItem('token');
+}
+
+function getSessionEndDate(dateValue, endTimeValue, fallbackTimeValue) {
+  if (!dateValue) return null;
+
+  const timeValue = endTimeValue || fallbackTimeValue || '23:59:59';
+  const parsed = new Date(`${dateValue}T${String(timeValue).slice(0, 8)}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isPastRetentionWindowFromValues(dateValue, endTimeValue, fallbackTimeValue) {
+  const endDate = getSessionEndDate(dateValue, endTimeValue, fallbackTimeValue);
+  if (!endDate) return false;
+
+  const cutoff = new Date(endDate);
+  cutoff.setMonth(cutoff.getMonth() + 3);
+  return new Date() > cutoff;
+}
+
+function hasDatePassedFromValues(dateValue, endTimeValue, fallbackTimeValue) {
+  const endDate = getSessionEndDate(dateValue, endTimeValue, fallbackTimeValue);
+  return !!endDate && new Date() > endDate;
+}
+
+function isUploadAllowedForCurrentPage() {
+  if (!pageData) return false;
+  return pageData.slot_status === 'COMPLETED';
+}
+
+function updateSubmissionAvailability() {
+  if (!pageData) return;
+
+  const isExamMode = submissionMode === 'EXAM';
+  const dateValue = isExamMode ? pageData.slot_date : pageData.booking_date;
+  const endTimeValue = isExamMode ? pageData.exam_end_time : pageData.end_time;
+  const fallbackTimeValue = isExamMode ? pageData.exam_start_time : pageData.start_time;
+  const passed = hasDatePassedFromValues(dateValue, endTimeValue, fallbackTimeValue);
+  const retentionExpired = isPastRetentionWindowFromValues(dateValue, endTimeValue, fallbackTimeValue);
+  const uploadAllowed = isUploadAllowedForCurrentPage();
+
+  submitBtn.disabled = !uploadAllowed || retentionExpired;
+  imageInput.disabled = !uploadAllowed || retentionExpired;
+  clearBtn.disabled = retentionExpired;
+
+  if (retentionExpired) {
+    showAlert("This submission is older than 3 months and is no longer available.");
+    return;
+  }
+
+  if (!uploadAllowed && passed) {
+    showAlert("Exam date already passed. Cannot upload because the slot was not marked completed.");
+    return;
+  }
+
+  if (!uploadAllowed) {
+    showAlert("Upload is locked until the admin marks your slot as completed.");
+  }
+}
+
+async function resolveSubmissionContext() {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("User not logged in");
+  }
+
+  const response = await fetch(`${API_BASE}/api/submissions/student/dashboard-data`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to resolve submission context");
+  }
+
+  const examSessions = Array.isArray(data.examSessions) ? data.examSessions : [];
+  const practiceSessions = Array.isArray(data.practiceSessions) ? data.practiceSessions : [];
+
+  const eligibleExam = examSessions.find(item =>
+    item.slot_status === "COMPLETED" &&
+    !isPastRetentionWindowFromValues(item.slot_date, item.exam_end_time, item.exam_start_time)
+  );
+
+  if (eligibleExam) {
+    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}`;
+    window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
+    return true;
+  }
+
+  const eligiblePractice = practiceSessions.find(item =>
+    item.slot_status === "COMPLETED" &&
+    !isPastRetentionWindowFromValues(item.booking_date, item.end_time, item.start_time)
+  );
+
+  if (eligiblePractice) {
+    const redirectUrl = `practical-exam-submission.html?request_id=${encodeURIComponent(eligiblePractice.request_id)}`;
+    window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
+    return true;
+  }
+
+  let hubUrl = 'submission-hub.html';
+  if (moduleId) {
+    hubUrl += `?module_id=${encodeURIComponent(moduleId)}`;
+  }
+
+  showAlert("No completed submission slot was found. Redirecting to submission hub.");
+  setTimeout(() => {
+    window.location.replace(hubUrl);
+  }, 1200);
+
+  return true;
 }
 
 function showAlert(message, type = 'error') {
@@ -350,14 +474,10 @@ async function loadSubmissionPage() {
 
   try {
 
-    if (!submissionMode) {
-
-      showAlert(
-        "Open this page from submission hub."
-      );
-
-      return;
-    }
+  if (!submissionMode) {
+    showAlert("Missing exam_id or request_id in URL. Open this page from the Submission Hub.");
+    return;
+  }
 
     const token = getToken();
 
@@ -395,6 +515,13 @@ async function loadSubmissionPage() {
     if (!response.ok)
       throw new Error(data.error);
 
+      if (submissionMode === "EXAM" && pageData?.exam_id) {
+  sessionStorage.setItem("selectedSubmissionExamId", String(pageData.exam_id));
+}
+if (pageData?.request_id) {
+  sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
+}
+
     pageData =
       submissionMode === "EXAM"
       ? data.exam
@@ -405,6 +532,7 @@ async function loadSubmissionPage() {
 
     renderPageData();
     renderHistory();
+    updateSubmissionAvailability();
 
   } catch(error){
 
@@ -452,8 +580,89 @@ function renderPageData(){
   }
 
   attemptSummaryInput.value =
-    `${submissionHistory.length} submission`;
+    `${submissionHistory.length} submission${submissionHistory.length === 1 ? '' : 's'}`;
 
+}
+
+function renderHistory() {
+  if (!historyTableBody) return;
+
+  if (!Array.isArray(submissionHistory) || submissionHistory.length === 0) {
+    historyTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-4 py-8 text-sm text-gray-500 text-center">
+          No submissions recorded yet.
+        </td>
+      </tr>
+    `;
+  } else {
+    historyTableBody.innerHTML = submissionHistory.map((item) => {
+      const resultText =
+        item.published_grade != null
+          ? `${item.published_grade}%`
+          : item.final_grade != null
+            ? `${item.final_grade}%`
+            : item.api_score != null
+              ? `${item.api_score}`
+              : "Pending";
+
+      const statusText =
+        item.pass_fail ||
+        item.decision ||
+        item.api_status ||
+        "Pending";
+
+      const submittedOn = item.submitted_at
+        ? formatDate(item.submitted_at)
+        : "-";
+
+      return `
+        <tr>
+          <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+            ${submissionMode === "EXAM"
+              ? (pageData?.exam_name || "-")
+              : (pageData?.purpose || "Practice")}
+          </td>
+          <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+            ${item.attempt_number || "-"}
+          </td>
+          <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+            ${statusText}
+          </td>
+          <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+            ${resultText}
+          </td>
+          <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+            ${submittedOn}
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  const statusExamName = document.getElementById("statusExamName");
+  const statusSubmissionCount = document.getElementById("statusSubmissionCount");
+  const statusLatest = document.getElementById("statusLatest");
+
+  if (statusExamName) {
+    statusExamName.textContent =
+      submissionMode === "EXAM"
+        ? (pageData?.exam_name || "-")
+        : (pageData?.purpose || "Practice");
+  }
+
+  if (statusSubmissionCount) {
+    statusSubmissionCount.textContent = String(submissionHistory.length || 0);
+  }
+
+  if (statusLatest) {
+    const latest = submissionHistory[0];
+    statusLatest.textContent =
+      latest?.pass_fail ||
+      latest?.decision ||
+      latest?.api_status ||
+      "Pending";
+  }
 }
 
 /* ===========================
@@ -556,6 +765,11 @@ async function submitCurrentItem(){
 
   try{
 
+    if (!isUploadAllowedForCurrentPage()) {
+      updateSubmissionAvailability();
+      return;
+    }
+
     if (!selectedFiles.length){
 
       showAlert(
@@ -649,15 +863,12 @@ submitBtn.addEventListener(
 submitCurrentItem
 );
 
-clearBtn.addEventListener(
-"click",
-()=>{
-  selectedFiles=[];
-  commentsInput.value="";
-
+clearBtn.addEventListener("click", () => {
+  selectedFiles = [];
+  commentsInput.value = "";
+  imageInput.value = "";
   renderSelectedFiles();
-}
-);
+});
 
 /* ===========================
    INIT

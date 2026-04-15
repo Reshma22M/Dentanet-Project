@@ -50,7 +50,7 @@ tailwind.config = {
 }
 
 .sidebar-active {
-    @apply bg-white text-slate-900 font-semibold shadow-sm;
+    @apply bg-accent text-white font-semibold shadow-lg shadow-blue-900/20;
 }
 
 .page-card {
@@ -141,7 +141,7 @@ tailwind.config = {
         </div>
     </header>
 
-    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
+    <aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
         <div class="mb-10">
             <h2 class="text-lg font-bold text-white">LMS</h2>
             <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
@@ -175,7 +175,7 @@ tailwind.config = {
 
             <a class="sidebar-link" href="admin-api-monitor.html">
                 <span class="material-symbols-outlined">monitoring</span>
-                <span>AI Evaluation</span>
+                <span>API Monitor</span>
             </a>
 
             <a class="sidebar-link" href="admin-settings.html">
@@ -344,6 +344,9 @@ tailwind.config = {
 
 <script>
 const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+    ? API_BASE_URL.replace(/\/api$/, "")
+    : window.location.origin;
 let allModules = [];
 let allLecturers = [];
 let currentMode = "create";
@@ -367,7 +370,7 @@ async function initializePage() {
 
     const profileImage =
         admin.profile_image_url
-        ? `http://localhost:3001${admin.profile_image_url}?t=${Date.now()}`
+        ? `${API_ORIGIN}${admin.profile_image_url}?t=${Date.now()}`
         : "public/images/admin.jpg";
 
     setText("adminName", fullName);
@@ -752,7 +755,7 @@ function setupModulePreviewBindings() {
                     const preview = document.getElementById("moduleImagePreview");
 
                     if (imageInputEl) imageInputEl.value = result.file_url;
-                    if (preview) preview.src = `http://localhost:3001${result.file_url}`;
+                    if (preview) preview.src = buildModuleImageUrl(result.file_url);
                     if (uploadStatus) uploadStatus.textContent = "Uploaded";
                 } else {
                     if (uploadStatus) uploadStatus.textContent = "Upload failed";
@@ -886,7 +889,8 @@ function showFormMessage(message, type = "success") {
 function buildModuleImageUrl(value) {
     if (!value) return DEFAULT_MODULE_IMAGE;
     if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
-    return `http://localhost:3001${value}`;
+    const normalized = String(value).startsWith("/") ? String(value) : `/${String(value)}`;
+    return `${API_ORIGIN}${normalized}`;
 }
 
 function setText(id, value) {

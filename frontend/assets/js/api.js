@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "http://localhost:3002/api";
 
 // -----------------------------
 // Helpers
@@ -251,8 +251,16 @@ const API = {
     },
 
     bookings: {
-        getAll: async () => {
-            const response = await fetch(`${API_BASE_URL}/bookings`, {
+        getAll: async (filters = {}) => {
+            const params = new URLSearchParams();
+            Object.entries(filters || {}).forEach(([key, value]) => {
+                if (value !== null && value !== undefined && value !== "") {
+                    params.append(key, value);
+                }
+            });
+
+            const url = `${API_BASE_URL}/bookings${params.toString() ? `?${params.toString()}` : ""}`;
+            const response = await fetch(url, {
                 headers: getAuthHeaders()
             });
             return await parseResponse(response);

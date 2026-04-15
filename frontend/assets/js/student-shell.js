@@ -19,7 +19,9 @@
  */
 
 (function () {
-  const API_BASE = "http://localhost:3001";
+  const API_BASE = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+    ? API_BASE_URL.replace(/\/api$/, "")
+    : window.location.origin;
 
   const SIDEBAR_LINKS = [
     { id: "dashboard",  icon: "dashboard",      label: "Dashboard",          href: "student-dashboard.html" },

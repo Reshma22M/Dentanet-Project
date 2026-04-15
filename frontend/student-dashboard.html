@@ -80,7 +80,6 @@
     </main>
   </div>
 
-<<<<<<< HEAD
   <div id="shell-footer"></div>
 
   <div id="enrollModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -97,7 +96,9 @@
     </div>
   </div>
 <script>
-var API_BASE = 'http://localhost:3001';
+var API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('http'))
+  ? API_BASE_URL.replace(/\/api$/, '')
+  : window.location.origin;
 var DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
 var allModules = [];
 var enrolledModuleIds = new Set();
@@ -129,7 +130,8 @@ function formatExamTime(t) {
 function buildModuleImageUrl(v) {
   if (!v) return DEFAULT_MODULE_IMAGE;
   if (String(v).startsWith("http")) return v;
-  return API_BASE + v;
+  var normalized = String(v).startsWith('/') ? String(v) : '/' + String(v);
+  return API_BASE + normalized;
 }
 
 function openStudentModule(moduleId) {

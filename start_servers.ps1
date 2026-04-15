@@ -9,7 +9,9 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; npm s
 
 # 2. Start DEd python API
 Write-Host "`n[2/2] Starting DEd Python API..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd ..\DEd\DEd\backend; .\venv\Scripts\activate; uvicorn main:app --host 0.0.0.0 --port 8000" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd DEd\backend; .\win_venv\Scripts\Activate.ps1; uvicorn main:app --host 0.0.0.0 --port 8000" -WindowStyle Normal
 
 Write-Host "`nBoth servers are starting in separate windows!" -ForegroundColor Green
-Write-Host "You can now open 'frontend/index.html' locally, or run a live server on the frontend folder." -ForegroundColor Green
+Write-Host "Backend API: http://localhost:3001" -ForegroundColor Green
+Write-Host "DEd API: http://localhost:8000" -ForegroundColor Green
+Write-Host "Open the frontend with a static server and use the HTML files directly." -ForegroundColor Green

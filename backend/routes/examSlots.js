@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { promisePool } = require("../config/database");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
+const { createNotification } = require("../services/notifications");
 
 function normalizeDateOnly(value) {
     if (!value) return null;
@@ -157,6 +158,8 @@ router.post("/", authenticateToken, authorizeRole("admin"), async (req, res) => 
             `
             SELECT
                 exam_id,
+                module_id,
+                exam_name,
                 DATE_FORMAT(exam_date, '%Y-%m-%d') AS exam_date,
                 TIME_FORMAT(start_time, '%H:%i') AS start_time,
                 TIME_FORMAT(end_time, '%H:%i') AS end_time,
@@ -284,6 +287,36 @@ router.post("/", authenticateToken, authorizeRole("admin"), async (req, res) => 
             `,
             [result.insertId]
         );
+
+        try {
+            const [enrolledStudents] = await promisePool.query(
+                `
+                SELECT ms.student_id
+                FROM module_students ms
+                WHERE ms.module_id = ?
+                  AND ms.is_active = TRUE
+                `,
+                [exam.module_id]
+            );
+
+            if (enrolledStudents.length) {
+                await Promise.all(
+                    enrolledStudents.map(student =>
+                        createNotification({
+                            recipientRole: "student",
+                            recipientId: student.student_id,
+                            title: "Exam lab slot available",
+                            message: `Lab slots are now available for ${exam.exam_name || "your scheduled exam"}. Book your slot from the submission hub.`,
+                            notificationType: "slot",
+                            relatedEntityType: "exam",
+                            relatedEntityId: exam_id
+                        })
+                    )
+                );
+            }
+        } catch (notificationError) {
+            console.error("Failed to notify students after slot creation:", notificationError);
+        }
 
         return res.status(201).json({
             ok: true,
@@ -414,6 +447,52 @@ router.put("/:slotId", authenticateToken, authorizeRole("admin"), async (req, re
             [slotId]
         );
 
+        try {
+            const [examRows] = await promisePool.query(
+                `
+                SELECT
+                    e.exam_id,
+                    e.module_id,
+                    e.exam_name
+                FROM exams e
+                WHERE e.exam_id = ?
+                LIMIT 1
+                `,
+                [existing.exam_id]
+            );
+
+            if (examRows.length) {
+                const exam = examRows[0];
+                const [enrolledStudents] = await promisePool.query(
+                    `
+                    SELECT ms.student_id
+                    FROM module_students ms
+                    WHERE ms.module_id = ?
+                      AND ms.is_active = TRUE
+                    `,
+                    [exam.module_id]
+                );
+
+                if (enrolledStudents.length) {
+                    await Promise.all(
+                        enrolledStudents.map(student =>
+                            createNotification({
+                                recipientRole: "student",
+                                recipientId: student.student_id,
+                                title: "Exam lab slot updated",
+                                message: `Lab slot details were updated for ${exam.exam_name || "your scheduled exam"}. Please review the new slot time.`,
+                                notificationType: "slot",
+                                relatedEntityType: "exam",
+                                relatedEntityId: exam.exam_id
+                            })
+                        )
+                    );
+                }
+            }
+        } catch (notificationError) {
+            console.error("Failed to notify students after slot update:", notificationError);
+        }
+
         return res.json({
             ok: true,
             message: "Exam slot updated successfully",
@@ -444,7 +523,7 @@ router.delete("/:slotId", authenticateToken, authorizeRole("admin"), async (req,
 
         const [existingRows] = await promisePool.query(
             `
-            SELECT slot_id
+            SELECT slot_id, exam_id
             FROM exam_time_slots
             WHERE slot_id = ?
             LIMIT 1
@@ -467,6 +546,52 @@ router.delete("/:slotId", authenticateToken, authorizeRole("admin"), async (req,
             `,
             [slotId]
         );
+
+        try {
+            const [examRows] = await promisePool.query(
+                `
+                SELECT
+                    e.exam_id,
+                    e.module_id,
+                    e.exam_name
+                FROM exams e
+                WHERE e.exam_id = ?
+                LIMIT 1
+                `,
+                [existingRows[0].exam_id]
+            );
+
+            if (examRows.length) {
+                const exam = examRows[0];
+                const [enrolledStudents] = await promisePool.query(
+                    `
+                    SELECT ms.student_id
+                    FROM module_students ms
+                    WHERE ms.module_id = ?
+                      AND ms.is_active = TRUE
+                    `,
+                    [exam.module_id]
+                );
+
+                if (enrolledStudents.length) {
+                    await Promise.all(
+                        enrolledStudents.map(student =>
+                            createNotification({
+                                recipientRole: "student",
+                                recipientId: student.student_id,
+                                title: "Exam lab slot removed",
+                                message: `A lab slot for ${exam.exam_name || "your scheduled exam"} was removed. Check latest available slots.`,
+                                notificationType: "slot",
+                                relatedEntityType: "exam",
+                                relatedEntityId: exam.exam_id
+                            })
+                        )
+                    );
+                }
+            }
+        } catch (notificationError) {
+            console.error("Failed to notify students after slot removal:", notificationError);
+        }
 
         return res.json({
             ok: true,

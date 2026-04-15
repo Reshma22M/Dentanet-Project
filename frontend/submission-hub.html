@@ -208,7 +208,9 @@
   <div id="shell-footer"></div>
 
 <script>
-const API_BASE = 'http://localhost:3001';
+const API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('http'))
+  ? API_BASE_URL.replace(/\/api$/, '')
+  : window.location.origin;
 
 // ── URL params ──────────────────────────────────────────
 const urlParams   = new URLSearchParams(window.location.search);
@@ -238,6 +240,30 @@ function fmtTime(t) {
   const [h, m] = String(t).split(':');
   const hr = parseInt(h, 10);
   return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+}
+
+function getSessionEndDate(session) {
+  const dateValue = session.slot_date || session.booking_date;
+  const timeValue = session.exam_end_time || session.end_time || session.exam_start_time || session.start_time || '23:59:59';
+  if (!dateValue) return null;
+
+  const iso = `${dateValue}T${String(timeValue).slice(0, 8)}`;
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isPastRetentionWindow(session) {
+  const endDate = getSessionEndDate(session);
+  if (!endDate) return false;
+
+  const cutoff = new Date(endDate);
+  cutoff.setMonth(cutoff.getMonth() + 3);
+  return new Date() > cutoff;
+}
+
+function hasSessionPassed(session) {
+  const endDate = getSessionEndDate(session);
+  return !!endDate && new Date() > endDate;
 }
 
 function statusPill(status) {
@@ -297,8 +323,9 @@ function setupTabs() {
 // ── Submission card builders ─────────────────────────────
 
 function buildPracticeCard(session) {
-  const allowed = ['APPROVED','COMPLETED'].includes(session.slot_status);
+  const allowed = session.slot_status === 'COMPLETED';
   const hasSubmission = !!session.submission_id;
+  const isPassed = hasSessionPassed(session) && !allowed;
 
   // Submission link – carry module_id through
   const subLink = `practical-exam-submission.html?request_id=${session.request_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
@@ -345,15 +372,20 @@ function buildPracticeCard(session) {
              <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>Locked
            </span>`
       }
+      ${isPassed
+        ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>`
+        : ''
+      }
     </div>
   </article>
   `;
 }
 
 function buildExamCard(exam) {
-  const allowed = ['APPROVED','COMPLETED'].includes(exam.slot_status);
+  const allowed = exam.slot_status === 'COMPLETED';
   const hasSubmission = !!exam.submission_id;
   const isHighlighted = focusExamId && String(exam.exam_id) === String(focusExamId);
+  const isPassed = hasSessionPassed(exam) && !allowed;
 
   // Submission link – carry module_id through
   const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
@@ -401,8 +433,12 @@ function buildExamCard(exam) {
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
              <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>
-             ${exam.slot_status === 'PENDING' ? 'Awaiting Approval' : 'Locked'}
+             ${isPassed ? 'Date Passed' : exam.slot_status === 'PENDING' ? 'Awaiting Approval' : 'Locked'}
            </span>`
+      }
+      ${isPassed
+        ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>`
+        : ''
       }
     </div>
   </article>
@@ -422,6 +458,7 @@ function emptyState(icon, message) {
 function renderPractice(sessions) {
   const container = document.getElementById('practiceContainer');
   const badge     = document.getElementById('practiceCountBadge');
+  sessions = sessions.filter(session => !isPastRetentionWindow(session));
   badge.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`;
 
   if (!sessions.length) {
@@ -435,6 +472,7 @@ function renderPractice(sessions) {
 function renderExams(exams) {
   const container = document.getElementById('examContainer');
   const badge     = document.getElementById('examCountBadge');
+  exams = exams.filter(exam => !isPastRetentionWindow(exam));
   badge.textContent = `${exams.length} exam${exams.length !== 1 ? 's' : ''}`;
 
   if (!exams.length) {
@@ -454,7 +492,7 @@ function renderExams(exams) {
 
 async function load() {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) { showAlert('Not logged in'); return; }
 
     let endpoint;
@@ -479,17 +517,24 @@ async function load() {
 
       // Update sidebar links to keep module context
       if (moduleId) {
-        document.getElementById('sidebarBookingLink').href =
-          `lab-slot-booking.html?module_id=${encodeURIComponent(moduleId)}`;
-        document.getElementById('sidebarMaterialsLink').href =
-          `study-materials.html?module_id=${encodeURIComponent(moduleId)}`;
-        document.getElementById('backToModuleLink').href =
-          `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+        const bookingLink = document.getElementById('sidebarBookingLink');
+        const materialsLink = document.getElementById('sidebarMaterialsLink');
+        const backLink = document.getElementById('backToModuleLink');
+
+        if (bookingLink) {
+          bookingLink.href = `lab-slot-booking.html?module_id=${encodeURIComponent(moduleId)}`;
+        }
+        if (materialsLink) {
+          materialsLink.href = `study-materials.html?module_id=${encodeURIComponent(moduleId)}`;
+        }
+        if (backLink) {
+          backLink.href = `student-module-details.html?module_id=${encodeURIComponent(moduleId)}`;
+        }
       }
     }
 
-    const practices = Array.isArray(data.practiceSessions) ? data.practiceSessions : [];
-    const exams     = Array.isArray(data.examSessions)     ? data.examSessions     : [];
+    const practices = Array.isArray(data.practiceSessions) ? data.practiceSessions.filter(session => !isPastRetentionWindow(session)) : [];
+    const exams     = Array.isArray(data.examSessions)     ? data.examSessions.filter(exam => !isPastRetentionWindow(exam)) : [];
 
     renderPractice(practices);
     renderExams(exams);
@@ -529,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (nameEl) nameEl.textContent = fullName;
   if (user.profile_image_url) {
     const img = document.getElementById('studentProfileImage');
-    if (img) img.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
+    if (img) img.src = `${API_BASE}${user.profile_image_url}?t=${Date.now()}`;
   }
 
   const logoutBtn = document.getElementById('logoutBtn');

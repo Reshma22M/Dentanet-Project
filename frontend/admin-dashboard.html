@@ -51,7 +51,7 @@ tailwind.config = {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all;
 }
 .sidebar-active {
-    @apply bg-white text-slate-900 font-semibold shadow-sm;
+    @apply bg-accent text-white font-semibold shadow-lg shadow-blue-900/20;
 }
 .dashboard-card {
     @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-soft;
@@ -89,18 +89,6 @@ tailwind.config = {
 .modal-panel {
     @apply w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl;
 }
-.calendar-day {
-    @apply min-h-[88px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-3;
-}
-.calendar-day-muted {
-    @apply text-slate-400 dark:text-slate-500;
-}
-.calendar-day-active {
-    @apply border-primary/40 ring-2 ring-primary/10 bg-blue-50 dark:bg-slate-900;
-}
-.task-pill {
-    @apply mt-2 block rounded-lg px-2 py-1 text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20;
-}
 </style>
 </head>
 
@@ -127,54 +115,42 @@ tailwind.config = {
         </div>
     </header>
 
-    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
-        <div class="mb-10">
-            <h2 class="text-lg font-bold text-white">LMS</h2>
-            <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
-        </div>
-
-        <nav class="space-y-2">
-            <a class="sidebar-link sidebar-active" href="admin-dashboard.html">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a class="sidebar-link" href="admin-manage-users.html">
-                <span class="material-symbols-outlined">group</span>
-                <span>Manage Users</span>
-            </a>
-
-            <a class="sidebar-link" href="admin-modules.html" id="modulesNavLink">
-                <span class="material-symbols-outlined">menu_book</span>
-                <span>Modules</span>
-            </a>
-
-            <a class="sidebar-link" href="master-schedule.html">
-                <span class="material-symbols-outlined">event_note</span>
-                <span>Calendar</span>
-            </a>
-
-            <a class="sidebar-link" href="Admin-labslot-timetable.html">
-                <span class="material-symbols-outlined">calendar_view_week</span>
-                <span>Lab Timetable</span>
-            </a>
-
-            <a class="sidebar-link" href="admin-api-monitor.html">
-                <span class="material-symbols-outlined">monitoring</span>
-                <span>AI Evaluation</span>
-            </a>
-
-            <a class="sidebar-link" href="admin-settings.html">
-                <span class="material-symbols-outlined">settings</span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="mt-auto pt-6 border-t border-white/10">
-            <a class="sidebar-link" href="#">
-                <span class="material-symbols-outlined">help</span>
-                <span>Help and Support</span>
-            </a>
+    <aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
+        <div>
+            <div class="mb-8">
+                <h2 class="text-lg font-bold">LMS</h2>
+                <p class="text-xs opacity-70">University of Peradeniya</p>
+            </div>
+            <nav class="space-y-2">
+                <a class="sidebar-active flex items-center gap-3 p-3 rounded-lg font-semibold shadow-sm" href="admin-dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="Admin-labslot-timetable.html">
+                    <span class="material-symbols-outlined">event_note</span>
+                    <span>Lab Timetable</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-manage-users.html">
+                    <span class="material-symbols-outlined">group</span>
+                    <span>Manage Users</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-modules.html">
+                    <span class="material-symbols-outlined">menu_book</span>
+                    <span>Modules</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="master-schedule.html">
+                    <span class="material-symbols-outlined">list_alt</span>
+                    <span>Calendar</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
+                    <span class="material-symbols-outlined">monitoring</span>
+                    <span>API Monitor</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
         </div>
     </aside>
 
@@ -255,90 +231,27 @@ tailwind.config = {
             </section>
 
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
                 <section class="xl:col-span-2 space-y-8">
-
-                    <div id="modules-overview" class="dashboard-card overflow-hidden">
-                        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div>
-                                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Modules Overview</h2>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    Open a module to manage users, exams, materials, and module-related activity.
-                                </p>
+                    <div class="dashboard-card p-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-blue-500">notifications</span>
+                                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Notifications</h2>
                             </div>
-
-                            
+                            <a href="Admin-labslot-timetable.html" class="text-xs font-semibold text-primary hover:underline">Open Flow</a>
                         </div>
-
-                        <div id="modulesGrid" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="col-span-full text-sm text-slate-500">Loading modules...</div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card overflow-hidden">
-                        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                            <div>
-                                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recent User Accounts</h2>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Latest registered accounts in the system.</p>
-                            </div>
-                            <a href="admin-manage-users.html" class="text-sm font-semibold text-primary hover:underline">View all</a>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-800/50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email / ID</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recentUsersTable" class="divide-y divide-slate-200 dark:divide-slate-700">
-                                    <tr>
-                                        <td colspan="3" class="px-6 py-6 text-sm text-slate-500">Loading users...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="adminNotificationsBox" class="space-y-3 text-sm">
+                            <p class="text-slate-500 dark:text-slate-400">Loading notifications...</p>
                         </div>
                     </div>
                 </section>
 
-                <aside class="space-y-8">
-                    <div class="dashboard-card p-6">
-                        <div class="flex items-center justify-between mb-5">
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined text-primary">calendar_month</span>
-                                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Planner</h2>
-                            </div>
-                            <span id="calendarMonthLabel" class="text-sm font-semibold text-slate-500 dark:text-slate-400"></span>
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400 uppercase mb-3">
-                            <div>Sun</div>
-                            <div>Mon</div>
-                            <div>Tue</div>
-                            <div>Wed</div>
-                            <div>Thu</div>
-                            <div>Fri</div>
-                            <div>Sat</div>
-                        </div>
-
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
-
-                        <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Upcoming Work</h3>
-                            <div id="plannerTasksBox" class="space-y-3 text-sm">
-                                <p class="text-slate-500 dark:text-slate-400">Loading planner items...</p>
-                            </div>
-                        </div>
-                    </div>
-
+                <aside class="xl:col-span-1 space-y-8">
                     <div class="dashboard-card p-6">
                         <div class="flex items-center gap-3 mb-4">
                             <span class="material-symbols-outlined text-amber-500">pending</span>
-                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pending Requests</h2>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pending Activity</h2>
                         </div>
-
                         <div id="pendingRequestsBox" class="space-y-3 text-sm">
                             <p class="text-slate-500 dark:text-slate-400">No pending requests loaded yet.</p>
                         </div>
@@ -348,7 +261,7 @@ tailwind.config = {
         </main>
 
         <footer class="border-t border-slate-200 dark:border-slate-800 px-4 md:px-8 xl:px-10 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-            © 2026 DentaNet Admin Hub.
+            Â© 2026 DentaNet Admin Hub.
         </footer>
     </div>
 </div>
@@ -419,6 +332,9 @@ tailwind.config = {
 <script>
 const DEFAULT_MODULE_IMAGE =
     "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
+const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+    ? API_BASE_URL.replace(/\/api$/, "")
+    : window.location.origin;
 
 let latestModules = [];
 let latestPendingBookings = [];
@@ -441,7 +357,7 @@ async function initializeDashboard() {
 
     const profileImage =
         admin.profile_image_url
-        ? `http://localhost:3001${admin.profile_image_url}?t=${Date.now()}`
+        ? `${API_ORIGIN}${admin.profile_image_url}?t=${Date.now()}`
         : "public/images/admin.jpg";
 
     const adminName = document.getElementById("adminName");
@@ -453,104 +369,9 @@ async function initializeDashboard() {
     await Promise.all([
         loadUsers(),
         loadBookings(),
-        loadModules()
+        loadModules(),
+        loadAdminNotifications()
     ]);
-
-    renderCalendar();
-}
-
-function renderCalendar() {
-    const grid = document.getElementById("calendarGrid");
-    const label = document.getElementById("calendarMonthLabel");
-    if (!grid || !label) return;
-
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-
-    const monthName = today.toLocaleString(undefined, { month: "long", year: "numeric" });
-    label.textContent = monthName;
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const totalDays = new Date(year, month + 1, 0).getDate();
-
-    const taskMap = {};
-
-    latestPendingBookings.slice(0, 8).forEach(item => {
-        if (!item.booking_date) return;
-        const d = new Date(item.booking_date);
-        if (d.getMonth() !== month || d.getFullYear() !== year) return;
-        const day = d.getDate();
-        if (!taskMap[day]) taskMap[day] = [];
-        taskMap[day].push("Request");
-    });
-
-    latestModules.slice(0, 8).forEach(item => {
-        if (!item.created_at) return;
-        const created = new Date(item.created_at);
-        if (created.getMonth() !== month || created.getFullYear() !== year) return;
-        const day = created.getDate();
-        if (!taskMap[day]) taskMap[day] = [];
-        taskMap[day].push("Module");
-    });
-
-    grid.innerHTML = "";
-
-    for (let i = 0; i < firstDay; i++) {
-        const blank = document.createElement("div");
-        blank.className = "calendar-day calendar-day-muted";
-        grid.appendChild(blank);
-    }
-
-    for (let day = 1; day <= totalDays; day++) {
-        const cell = document.createElement("div");
-        const isToday = day === today.getDate();
-        const items = taskMap[day] || [];
-
-        cell.className = `calendar-day ${isToday ? "calendar-day-active" : ""}`;
-        cell.innerHTML = `
-            <div class="flex items-center justify-between">
-                <span class="text-sm font-bold ${isToday ? "text-primary" : "text-slate-700 dark:text-slate-200"}">${day}</span>
-            </div>
-            ${items.slice(0, 2).map(item => `<span class="task-pill">${item}</span>`).join("")}
-        `;
-        grid.appendChild(cell);
-    }
-
-    renderPlannerTasks();
-}
-
-function renderPlannerTasks() {
-    const box = document.getElementById("plannerTasksBox");
-    if (!box) return;
-
-    const items = [];
-
-    latestPendingBookings.slice(0, 2).forEach(b => {
-        items.push({
-            title: "Review pending lab request",
-            text: `${b.booking_date || "-"} • ${b.start_time || "-"} - ${b.end_time || "-"}`
-        });
-    });
-
-    latestModules.slice(0, 2).forEach(m => {
-        items.push({
-            title: "Review new module",
-            text: `${m.module_code || "-"} • ${m.module_name || "Module"}`
-        });
-    });
-
-    if (!items.length) {
-        box.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No planner items available right now.</p>`;
-        return;
-    }
-
-    box.innerHTML = items.map(item => `
-        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
-            <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(item.title)}</p>
-            <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(item.text)}</p>
-        </div>
-    `).join("");
 }
 
 function setupLogout() {
@@ -576,48 +397,18 @@ async function loadUsers() {
         setText("totalUsersCount", totalUsers);
         setText("studentCount", students);
         setText("lecturerCount", lecturers);
-
-        const recentUsers = users.slice(0, 5);
-        const tbody = document.getElementById("recentUsersTable");
-
-        if (!tbody) return;
-
-        if (recentUsers.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="3" class="px-6 py-6 text-sm text-slate-500">No users found.</td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = recentUsers.map(user => `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
-                    ${escapeHtml(`${user.first_name || ""} ${user.last_name || ""}`.trim())}
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 capitalize">
-                    ${escapeHtml(user.account_type || "-")}
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    ${escapeHtml(user.email || user.identifier || "-")}
-                </td>
-            </tr>
-        `).join("");
     } catch (error) {
         console.error("Failed to load users:", error);
     }
 }
 
-async function loadBookings() {
+async function legacyLoadBookingsDoNotUse() {
     try {
         const bookingsResult = await API.bookings.getAll();
 
-        if (!(bookingsResult.ok && bookingsResult.bookings)) return;
-
-        const pending = bookingsResult.bookings.filter(
-            b => String(b.status).toLowerCase() === "pending"
-        );
+        const pending = (bookingsResult.ok && bookingsResult.bookings)
+            ? bookingsResult.bookings.filter(b => String(b.status).toLowerCase() === "pending")
+            : [];
 
         latestPendingBookings = pending;
         setText("pendingCount", pending.length);
@@ -625,35 +416,160 @@ async function loadBookings() {
         const pendingBox = document.getElementById("pendingRequestsBox");
         if (!pendingBox) return;
 
-        if (pending.length === 0) {
-            pendingBox.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No pending requests right now.</p>`;
+        if (!pending.length) {
+            pendingBox.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No pending activity right now.</p>`;
             return;
         }
 
-        pendingBox.innerHTML = pending.slice(0, 4).map(b => `
+        pendingBox.innerHTML = pending.slice(0, 5).map(b => `
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/40">
-                <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(b.slot_type || "Booking Request")}</p>
-                <p class="text-slate-500 dark:text-slate-400 mt-1">
-                    ${escapeHtml(b.booking_date || "-")} • ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
+                <p class="font-semibold text-slate-900 dark:text-white">
+                    ${escapeHtml((b.slot_type || "Booking") + " request")}
                 </p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">
+                    ${escapeHtml((b.first_name || "") + " " + (b.last_name || ""))} â€¢
+                    ${escapeHtml(b.booking_date || "-")} â€¢
+                    ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
+                </p>
+                <div class="mt-3">
+                    <a href="Admin-labslot-timetable.html" class="text-sm font-semibold text-primary hover:underline">
+                        Review request
+                    </a>
+                </div>
             </div>
         `).join("");
     } catch (error) {
         console.error("Failed to load bookings:", error);
     }
+    try {
+        const [bookingsResult, notificationsResult] = await Promise.all([
+            API.bookings.getAll(),
+            API.notifications.getByUser()
+        ]);
+
+        const pending = (bookingsResult.ok && bookingsResult.bookings)
+            ? bookingsResult.bookings.filter(b => String(b.status).toLowerCase() === "pending")
+            : [];
+
+        const notifications = (notificationsResult.ok && Array.isArray(notificationsResult.notifications))
+            ? notificationsResult.notifications.filter(n => !n.is_read)
+            : [];
+
+        latestPendingBookings = pending;
+        setText("pendingCount", pending.length + notifications.length);
+
+        const pendingBox = document.getElementById("pendingRequestsBox");
+        if (!pendingBox) return;
+
+        const bookingCards = pending.slice(0, 3).map(b => `
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/40">
+                <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(b.slot_type || "Booking Request")}</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">
+                    ${escapeHtml(b.booking_date || "-")} â€¢ ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
+                </p>
+            </div>
+        `);
+
+        const notificationCards = notifications.slice(0, 3).map(n => `
+            <div class="rounded-xl border border-blue-200 dark:border-blue-900 p-4 bg-blue-50/70 dark:bg-blue-950/20">
+                <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(n.title || "Notification")}</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(n.message || "")}</p>
+            </div>
+        `);
+
+        const cards = [...notificationCards, ...bookingCards];
+
+        if (!cards.length) {
+            pendingBox.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No pending activity right now.</p>`;
+            return;
+        }
+
+        pendingBox.innerHTML = cards.join("");
+    } catch (error) {
+        console.error("Failed to load bookings:", error);
+    }
+  }
+
+async function legacyLoadAdminNotificationsDoNotUse() {
+    try {
+        const result = await API.notifications.getByUser();
+        const box = document.getElementById("adminNotificationsBox");
+        if (!box) return;
+
+        const notifications = (result.ok && Array.isArray(result.notifications))
+            ? result.notifications.slice(0, 6)
+            : [];
+
+        if (!notifications.length) {
+            box.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No notifications right now.</p>`;
+            return;
+        }
+
+        box.innerHTML = notifications.map(n => {
+            const type = String(n.notification_type || "").toLowerCase();
+
+            let actionLink = "#";
+            let actionText = "Open";
+
+            if (type === "exam") {
+                actionLink = "admin-modules.html";
+                actionText = "Review exam";
+            } else if (
+                type === "slot_request" ||
+                type === "slot_approval" ||
+                type === "slot_rejection" ||
+                type === "submission"
+            ) {
+                actionLink = "Admin-labslot-timetable.html";
+                actionText = "Open bookings";
+            } else if (type === "result" || type === "evaluation") {
+                actionLink = "admin-api-monitor.html";
+                actionText = "Open evaluation";
+            }
+
+            return `
+                <div class="rounded-xl border ${n.is_read ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40' : 'border-blue-200 dark:border-blue-900 bg-blue-50/70 dark:bg-blue-950/20'} p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">
+                                ${escapeHtml(n.title || "Notification")}
+                            </p>
+                            <p class="text-slate-500 dark:text-slate-400 mt-1">
+                                ${escapeHtml(n.message || "")}
+                            </p>
+                            <p class="text-xs text-slate-400 mt-2">
+                                ${formatDate(n.created_at)}
+                            </p>
+                        </div>
+                        <a href="${actionLink}" class="text-sm font-semibold text-primary hover:underline whitespace-nowrap">
+                            ${actionText}
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    } catch (error) {
+        console.error("Failed to load admin notifications:", error);
+        const box = document.getElementById("adminNotificationsBox");
+        if (box) {
+            box.innerHTML = `<p class="text-rose-500">Failed to load notifications.</p>`;
+        }
+    }
 }
 
 async function loadModules() {
     const container = document.getElementById("modulesGrid");
-    if (!container) return;
-
-    container.innerHTML = `<div class="col-span-full text-sm text-slate-500">Loading modules...</div>`;
+    if (container) {
+        container.innerHTML = `<div class="col-span-full text-sm text-slate-500">Loading modules...</div>`;
+    }
 
     try {
         const result = await API.modules.getAll();
 
         if (!(result.ok && Array.isArray(result.modules))) {
-            container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+            if (container) {
+                container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+            }
             return;
         }
 
@@ -664,7 +580,7 @@ async function loadModules() {
         latestModules = modules;
         setText("moduleCount", modules.filter(m => normalizeBool(m.is_active)).length);
 
-        if (modules.length === 0) {
+        if (modules.length === 0 && container) {
             container.innerHTML = `
                 <div class="col-span-full rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 p-10 text-center">
                     <span class="material-symbols-outlined text-4xl text-slate-400">library_books</span>
@@ -675,9 +591,13 @@ async function loadModules() {
             return;
         }
 
+        if (!container) {
+            return;
+        }
+
         container.innerHTML = modules.map(module => {
             const imageUrl = module.module_image_url
-                ? (module.module_image_url.startsWith("http") ? module.module_image_url : `http://localhost:3001${module.module_image_url}`)
+                ? (module.module_image_url.startsWith("http") ? module.module_image_url : `${API_ORIGIN}${module.module_image_url}`)
                 : DEFAULT_MODULE_IMAGE;
 
             const activeClass = normalizeBool(module.is_active) ? "badge badge-active" : "badge badge-inactive";
@@ -726,7 +646,9 @@ async function loadModules() {
         }).join("");
     } catch (error) {
         console.error("Failed to load modules:", error);
-        container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+        if (container) {
+            container.innerHTML = `<div class="col-span-full text-sm text-rose-500">Failed to load modules.</div>`;
+        }
     }
 }
 
@@ -755,11 +677,12 @@ function setupCreateModuleModal() {
             closeCreateModuleModal();
         });
     }
-
+    
     if (refreshBtn) {
         refreshBtn.addEventListener("click", async function () {
             await loadModules();
-            renderCalendar();
+            await loadAdminNotifications();
+            await loadBookings();
         });
     }
 
@@ -849,7 +772,7 @@ function setupModulePreviewBindings() {
 
             const value = this.value.trim();
             preview.src = value
-                ? (value.startsWith("http") ? value : `http://localhost:3001${value}`)
+                ? (value.startsWith("http") ? value : `${API_ORIGIN}${value}`)
                 : DEFAULT_MODULE_IMAGE;
         });
     }
@@ -874,7 +797,7 @@ function setupModulePreviewBindings() {
                     const preview = document.getElementById("moduleImagePreview");
 
                     if (imageInputEl) imageInputEl.value = result.file_url;
-                    if (preview) preview.src = `http://localhost:3001${result.file_url}`;
+                    if (preview) preview.src = `${API_ORIGIN}${result.file_url}`;
                     if (uploadStatus) uploadStatus.textContent = "Uploaded";
                 } else {
                     if (uploadStatus) uploadStatus.textContent = "Upload failed";
@@ -942,7 +865,8 @@ async function handleCreateModuleSubmit(event) {
 
         showModuleMessage("Module created successfully.", "success");
         await loadModules();
-        renderCalendar();
+        await loadAdminNotifications();
+        await loadBookings();
 
         setTimeout(() => {
             closeCreateModuleModal();
@@ -1000,6 +924,159 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
     return escapeHtml(value);
+}
+
+function getNotificationAction(notification) {
+    const type = String(notification.notification_type || "").toLowerCase();
+    const entityType = String(notification.related_entity_type || "").toLowerCase();
+    const entityId = notification.related_entity_id;
+
+    if (type === "exam" || entityType === "exam") {
+        return entityId
+            ? {
+                actionLink: `Admin-labslot-timetable.html?exam_id=${encodeURIComponent(entityId)}`,
+                actionText: "Exam Scheduled"
+            }
+            : {
+                actionLink: "Admin-labslot-timetable.html",
+                actionText: "Exam Update"
+            };
+    }
+
+    if (type === "slot_request" || entityType === "slot_request") {
+        return entityId
+            ? {
+                actionLink: `Admin-labslot-timetable.html?request_id=${encodeURIComponent(entityId)}`,
+                actionText: "Slot Request"
+            }
+            : {
+                actionLink: "Admin-labslot-timetable.html?tab=all",
+                actionText: "Request Update"
+            };
+    }
+
+    if (type === "slot_approval" || type === "slot_rejection" || entityType === "slot") {
+        return {
+            actionLink: "Admin-labslot-timetable.html",
+            actionText: type === "slot_approval" ? "Slot Approved" : "Slot Update"
+        };
+    }
+
+    if (type === "module" || entityType === "module") {
+        return {
+            actionLink: "admin-modules.html",
+            actionText: "Module Update"
+        };
+    }
+
+    if (type === "submission" || type === "evaluation" || type === "result") {
+        return {
+            actionLink: "admin-dashboard.html",
+            actionText: "Academic Update"
+        };
+    }
+
+    return {
+        actionLink: "admin-dashboard.html",
+        actionText: "New Alert"
+    };
+}
+
+function formatNotificationTime(value) {
+    if (!value) return "--:--";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "--:--";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+async function loadBookings() {
+    try {
+        const bookingsResult = await API.bookings.getAll();
+
+        const pending = (bookingsResult.ok && bookingsResult.bookings)
+            ? bookingsResult.bookings.filter(b => String(b.status).toLowerCase() === "pending")
+            : [];
+
+        latestPendingBookings = pending;
+        setText("pendingCount", pending.length);
+
+        const pendingBox = document.getElementById("pendingRequestsBox");
+        if (!pendingBox) return;
+
+        if (!pending.length) {
+            pendingBox.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No pending activity right now.</p>`;
+            return;
+        }
+
+        pendingBox.innerHTML = pending.slice(0, 5).map(b => `
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/40">
+                <p class="font-semibold text-slate-900 dark:text-white">
+                    ${escapeHtml((b.slot_type || "Booking") + " request")}
+                </p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">
+                    ${escapeHtml((b.first_name || "") + " " + (b.last_name || ""))} â€¢
+                    ${escapeHtml(b.booking_date || "-")} â€¢
+                    ${escapeHtml(b.start_time || "-")} - ${escapeHtml(b.end_time || "-")}
+                </p>
+                <div class="mt-3">
+                    <a href="Admin-labslot-timetable.html?request_id=${encodeURIComponent(b.request_id)}" class="text-sm font-semibold text-primary hover:underline">
+                        Review request
+                    </a>
+                </div>
+            </div>
+        `).join("");
+    } catch (error) {
+        console.error("Failed to load bookings:", error);
+    }
+}
+
+async function loadAdminNotifications() {
+    try {
+        const result = await API.notifications.getByUser();
+        const box = document.getElementById("adminNotificationsBox");
+        if (!box) return;
+
+        const notifications = (result.ok && Array.isArray(result.notifications))
+            ? result.notifications
+                .filter(n => !["submission", "evaluation", "result"].includes(String(n.notification_type || "").toLowerCase()))
+                .slice(0, 6)
+            : [];
+
+        if (!notifications.length) {
+            box.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No notifications right now.</p>`;
+            return;
+        }
+
+        box.innerHTML = notifications.map(n => {
+            const { actionLink, actionText } = getNotificationAction(n);
+            const cardClass = n.is_read
+                ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50"
+                : "border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20";
+            const dotClass = n.is_read
+                ? "bg-slate-300 dark:bg-slate-600"
+                : "bg-blue-500";
+
+            return `
+                <a href="${actionLink}" class="group block rounded-xl border ${cardClass} px-4 py-3 hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="flex items-center gap-3 min-w-0">
+                            <span class="w-2.5 h-2.5 rounded-full ${dotClass}"></span>
+                            <span class="text-sm font-semibold text-slate-900 dark:text-white truncate">${escapeHtml(n.title || actionText)}</span>
+                        </span>
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${formatNotificationTime(n.created_at)}</span>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${escapeHtml(n.message || "No additional details.")}</p>
+                    <p class="mt-2 text-xs font-semibold text-primary">${escapeHtml(actionText)}</p>
+                </a>
+            `;
+        }).join("");
+    } catch (error) {
+        console.error("Failed to load admin notifications:", error);
+        const box = document.getElementById("adminNotificationsBox");
+        if (box) {
+            box.innerHTML = `<p class="text-rose-500">Failed to load notifications.</p>`;
+        }
+    }
 }
 </script>
 </body>

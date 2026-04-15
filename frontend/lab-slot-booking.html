@@ -164,6 +164,23 @@ body { font-family: 'Inter', sans-serif; }
 <script>
 let SELECTED_EXAM_ID = null;
 let EXAMS_CACHE = [];
+const PAGE_PARAMS = new URLSearchParams(window.location.search);
+const CURRENT_MODULE_ID =
+  PAGE_PARAMS.get("module_id") ||
+  sessionStorage.getItem("selectedStudentModuleId") ||
+  sessionStorage.getItem("selectedModuleId") ||
+  "";
+
+if (CURRENT_MODULE_ID) {
+  sessionStorage.setItem("selectedStudentModuleId", String(CURRENT_MODULE_ID));
+  sessionStorage.setItem("selectedModuleId", String(CURRENT_MODULE_ID));
+}
+
+function getExamStorageKey() {
+  return CURRENT_MODULE_ID
+    ? `selectedExamId:${CURRENT_MODULE_ID}`
+    : "selectedExamId";
+}
 
 function switchTab(tab) {
   const examTab = document.getElementById("examTab");
@@ -244,12 +261,11 @@ function isSlotExpired(slot) {
 }
 
 function getSelectedExamId() {
-  const params = new URLSearchParams(window.location.search);
-  const urlId = params.get("exam_id");
-  const savedId = localStorage.getItem("selectedExamId");
+  const urlId = PAGE_PARAMS.get("exam_id");
+  const savedId = localStorage.getItem(getExamStorageKey());
 
   if (urlId) {
-    localStorage.setItem("selectedExamId", urlId);
+    localStorage.setItem(getExamStorageKey(), urlId);
     return Number(urlId);
   }
 
@@ -261,10 +277,13 @@ function getSelectedExamId() {
 }
 
 async function loadScheduledExamsList() {
-  const examsResult = await API.exams.getAll(null, "SCHEDULED");
+  const examsResult = await API.exams.getAll(CURRENT_MODULE_ID || null, "SCHEDULED");
   if (!examsResult.ok) return [];
 
-  return (examsResult.exams || []).filter(exam => !isExamExpired(exam));
+  return (examsResult.exams || []).filter(exam => {
+    const inScope = !CURRENT_MODULE_ID || String(exam.module_id) === String(CURRENT_MODULE_ID);
+    return inScope && !isExamExpired(exam);
+  });
 }
 
 async function findDefaultUpcomingExamId() {
@@ -278,11 +297,18 @@ async function loadSelectedExam(examBookings) {
   container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">Loading selected exam...</p>`;
 
   SELECTED_EXAM_ID = getSelectedExamId();
+  EXAMS_CACHE = await loadScheduledExamsList();
+
+  const stillValid = EXAMS_CACHE.some(exam => String(exam.exam_id) === String(SELECTED_EXAM_ID));
+  if (SELECTED_EXAM_ID && !stillValid) {
+    SELECTED_EXAM_ID = null;
+  }
 
   if (!SELECTED_EXAM_ID) {
-    SELECTED_EXAM_ID = await findDefaultUpcomingExamId();
+    const upcoming = EXAMS_CACHE[0];
+    SELECTED_EXAM_ID = upcoming ? Number(upcoming.exam_id) : null;
     if (SELECTED_EXAM_ID) {
-      localStorage.setItem("selectedExamId", String(SELECTED_EXAM_ID));
+      localStorage.setItem(getExamStorageKey(), String(SELECTED_EXAM_ID));
     }
   }
 
@@ -299,6 +325,11 @@ async function loadSelectedExam(examBookings) {
   }
 
   const exam = examResult.exam;
+
+  if (CURRENT_MODULE_ID && String(exam.module_id) !== String(CURRENT_MODULE_ID)) {
+    container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No scheduled exam found for this module.</p>`;
+    return;
+  }
 
   if (isExamExpired(exam)) {
     container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">The selected exam has already expired.</p>`;
@@ -449,7 +480,9 @@ async function cancelBooking(requestId) {
 }
 
 async function loadBookings() {
-  const result = await API.bookings.getAll();
+  const result = await API.bookings.getAll({
+    module_id: CURRENT_MODULE_ID || null
+  });
 
   if (!result.ok) {
     document.getElementById("examStatusContent").innerHTML =
@@ -558,7 +591,8 @@ document.getElementById("practiceBookingForm").addEventListener("submit", async 
     bookingDate,
     startTime,
     endTime,
-    purpose
+    purpose,
+    examId: SELECTED_EXAM_ID || null
   });
 
   if (!result.ok) {

@@ -1,451 +1,481 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en" class="light">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>DentaNet | Student Submission Evaluation</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#3B82F6",
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-<style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DentaNet | Evaluate Exam Submission</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="assets/js/api.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1E3A8A",
+            accent: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A"
+          },
+          boxShadow: {
+            soft: "0 8px 30px rgba(15, 23, 42, 0.06)"
+          }
         }
-    </style>
+      }
+    };
+  </script>
+  <style type="text/tailwindcss">
+    body { font-family: "Inter", sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    .sidebar-link {
+      @apply flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all;
+    }
+    .sidebar-link-active {
+      @apply text-white bg-primary rounded-xl shadow-lg;
+    }
+  </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
-<nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-<div class="px-4 sm:px-6 lg:px-8">
-<div class="flex justify-between items-center h-16">
-<div class="flex items-center gap-2">
-<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
-<span class="material-icons-round">medical_services</span>
-</div>
-  <div class="flex items-center gap-2">
-      <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-  </div></div>
-<div class="hidden md:flex items-center gap-8">
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium text-sm" href="lecturer-dashboard.html">Dashboard</a>
-<a class="text-primary dark:text-blue-400 border-b-2 border-primary font-semibold text-sm pb-1" href="#">Submissions</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium text-sm" href="#">Lab Slots</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium text-sm" href="lecturer-upload-materials.html">Materials</a>
-</div>
-<div class="flex items-center space-x-4">
-<button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
-<span class="material-icons-round">notifications</span>
-<span class="absolute top-2 right-2 flex h-2 w-2">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-</span>
-</button>
-<div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
-<img alt="Lecturer Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALWuF6B5oX9ygl8OyWrBzwQ5hcxBZfSmOfVC2mhbqNuZydzqe-vKZ9WSckygK9rL6x0ziev2B08UbefEelTkqB5VDxMRfESSF0_5ISWheGiSRb83eXQgtKBICXptyJbqXp5lRAz-_Cd8I9CM2YUYR0i4nSNxJvyCJB6r9TYRaxUm-JRxlHhDwYej-YeryjUpQb5GbK8kmSRFqOw94ONvM5Lnq9qSyQ5rI2QR7pTUtHLtvBRTaoGpWTW-9kQoxsue3uziHWW_37jXU"/>
-</div>
-</div>
-</div>
-</div>
-</nav>
-
-<main class="pt-16 min-h-screen">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<!-- Header -->
-<div class="mb-8">
-<div class="flex items-center gap-3 mb-2">
-<a href="lecturer-eva-submissions1.html" class="text-slate-500 hover:text-primary transition-colors">
-<span class="material-symbols-outlined">arrow_back</span>
-</a>
-<h1 class="text-3xl font-bold text-slate-900 dark:text-white">Cavity Preparation Exam - Evaluation</h1>
-</div>
-<div class="flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
-<span class="flex items-center gap-1">
-<span class="material-symbols-outlined text-sm">person</span>
-                    Student: <strong class="text-slate-900 dark:text-white">Reshma Mohamed</strong> (IM/2022/087)
-                </span>
-<span class="flex items-center gap-1">
-<span class="material-symbols-outlined text-sm">calendar_today</span>
-                    Submitted: <strong>October 17, 2025</strong>
-</span>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-<!-- Left Column - Main Content -->
-<div class="lg:col-span-2 space-y-8">
-<!-- Submission Images -->
-<section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-<h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-<span class="material-icons-round text-primary">collections</span> 
-                        Student Submissions
-                    </h2>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div class="aspect-video rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 group relative cursor-pointer" onclick="openImageModal(this.querySelector('img').src)">
-<img alt="Cavity preparation - Occlusal view" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrC1fwu2gFcPNf6ySjGAp4bQayXOyxRQFC9nQFO1XC619z8Y5PabQCV4QH9bQSTdxUmMr8Leh9165S-irGJzIBcPO6eHFU4I5R1GHchCk40n0P5fV45Zi8xaIJIUQ8pd_CVSr7gazlEL6KVrkEYPh1A3HGDWNnJEPtUFv4aA4cOevDthIeOHU7ay4yxN2ZN7kQY9PAHSuhMLsziQ0lxYPRsAvvrAhsLvPOCjoYzUHFdkC553VO3e5flVM528G6b4bg0xPGJFm2Ico"/>
-<div class="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-lg font-medium">
-<span class="material-icons-round text-xs align-middle mr-1">camera_alt</span>
-                            Angle: Occlusal View
-                        </div>
-<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-<span class="material-icons-round text-white bg-black/50 p-2 rounded-lg">zoom_in</span>
-</div>
-</div>
-<div class="aspect-video rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 group relative cursor-pointer" onclick="openImageModal(this.querySelector('img').src)">
-<img alt="Cavity preparation - Lateral view" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7xqggS7u6Sks2gSV3Or_F9kq1N1k_0IYzhDl_fKQXATXtglYtUSNuaussT7Y-SwP6EmJfsdar_MSYv-slr-Bf43yXmqOLrScIOxLaYzwW7_9LSp0B5XuJBs9gdtduN8_2E8r-Whbe-Q-FA9m9lUOWdSWtYgpN5MMcTa11vRyBpFt_6TKJ8cJXjWPQDf4Ro9XoUzHA-ntW8Q5z7tUAnadQtDzZlLvtXq6HYzdMyAqbcoB5SWHXLrNhxNveELZIjlIrp8AgPz_NcGA"/>
-<div class="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-lg font-medium">
-<span class="material-icons-round text-xs align-middle mr-1">camera_alt</span>
-                            Angle: Lateral View
-                        </div>
-<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-<span class="material-icons-round text-white bg-black/50 p-2 rounded-lg">zoom_in</span>
-</div>
-</div>
-</div>
-</section>
-
-<!-- AI Evaluation Results -->
-<section class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
-<div class="flex items-center gap-2 mb-6">
-<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-2xl">psychology</span>
-<h2 class="text-xl font-bold text-slate-900 dark:text-white">AI Evaluation Results</h2>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">AI Grade</p>
-<p class="text-3xl font-bold text-blue-600 dark:text-blue-400">85<span class="text-lg">/100</span></p>
-</div>
-<div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Confidence Level</p>
-<div class="flex items-center gap-2 mt-2">
-<div class="flex gap-1">
-<span class="w-3 h-3 rounded-full bg-green-500"></span>
-<span class="w-3 h-3 rounded-full bg-green-500"></span>
-<span class="w-3 h-3 rounded-full bg-green-500"></span>
-<span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-</div>
-<span class="font-bold text-green-600 dark:text-green-400 text-sm">High</span>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Processing Time</p>
-<p class="text-lg font-semibold text-slate-900 dark:text-white mt-1">2.3 seconds</p>
-</div>
-</div>
-<div class="mt-4">
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">AI Feedback</p>
-<p class="text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800/50 p-4 rounded-xl">
-                        Excellent preparation overall. Minor adjustments needed in the distal aspect for optimal depth consistency. The outline form is well-defined with good wall convergence.
-                    </p>
-</div>
-</section>
-
-<!-- Manual Evaluation Form -->
-<section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-<div class="flex items-center gap-2 mb-6">
-<span class="material-icons-round text-primary">edit_note</span>
-<h2 class="text-xl font-bold text-slate-900 dark:text-white">Manual Evaluation & Override</h2>
-</div>
-<form id="evaluationForm" class="space-y-6">
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            Final Grade (0-100) <span class="text-red-500">*</span>
-</label>
-<input id="finalGrade" class="w-full md:w-1/3 px-4 py-3 bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-400 dark:border-slate-400 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-slate-900 dark:text-white font-bold text-lg" max="100" min="0" required type="number" value="90"/>
-</div>
-
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            Lecturer Feedback <span class="text-red-500">*</span>
-</label>
-<textarea id="lecturerFeedback" class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-400 dark:border-slate-400 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-slate-700 dark:text-slate-200 resize-none" placeholder="Provide detailed feedback to the student..." required rows="5">Outstanding work, Reshma. The cavity preparation is precise and meets all requirements. The minor adjustment suggested by the AI has been addressed perfectly. Keep up the excellent work!</textarea>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Status</label>
-<select class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-400 dark:border-slate-400 rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-white">
-<option value="pass">Pass</option>
-<option value="fail">Fail</option>
-<option value="retake">Retake Required</option>
-</select>
-</div>
-
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Evaluation Date</label>
-<input class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-400 dark:border-slate-400 rounded-lg text-slate-700 dark:text-slate-300" readonly type="text" value="January 25, 2026"/>
-</div>
-</div>
-</form>
-</section>
-</div>
-
-<!-- Right Column - Sidebar -->
-<div class="space-y-6">
-<!-- Student Information -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-<h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-<span class="material-symbols-outlined text-primary text-lg">person</span>
-                        Student Information
-                    </h3>
-<div class="space-y-4">
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Student ID</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">IM/2022/087</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Full Name</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">Reshma Mohamed</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Year</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">2nd Year</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Email</p>
-<p class="text-sm font-medium text-primary">reshma.m@pdn.ac.lk</p>
-</div>
-</div>
-</div>
-
-<!-- Exam Details -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-<h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-<span class="material-symbols-outlined text-primary text-lg">assignment</span>
-                        Exam Details
-                    </h3>
-<div class="space-y-4">
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Exam Name</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">Cavity Preparation Exam</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Submission Date</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">October 17, 2025</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Attempt Number</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">1st Attempt</p>
-</div>
-<div>
-<p class="text-xs font-bold text-slate-400 uppercase">Course</p>
-<p class="text-sm font-semibold text-slate-900 dark:text-white">Operative Dentistry</p>
-</div>
-</div>
-</div>
-
-<!-- AI Criteria Override -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-<h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">AI Evaluation Criteria</h3>
-<div class="space-y-4">
-<div>
-    <div class="flex justify-between text-xs mb-1.5">
-        <span class="font-medium text-slate-700 dark:text-slate-300">Smooth Outline</span>
-        <span id="smoothOutlineResult" class="font-bold"></span>
-    </div>
-</div>
-<div>
-    <div class="flex justify-between text-xs mb-1.5">
-        <span class="font-medium text-slate-700 dark:text-slate-300">Flat Floor</span>
-        <span id="flatFloorResult" class="font-bold"></span>
-    </div>
-</div>
-<div>
-    <div class="flex justify-between text-xs mb-1.5">
-        <span class="font-medium text-slate-700 dark:text-slate-300">Depth</span>
-        <span id="depthResult" class="font-bold"></span>
-    </div>
-</div>
-<div>
-    <div class="flex justify-between text-xs mb-1.5">
-        <span class="font-medium text-slate-700 dark:text-slate-300">Undercut</span>
-        <span id="undercutResult" class="font-bold"></span>
-    </div>
-</div>
-
-<div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
-<script>
-// Example: Replace with actual API results
-const aiResults = {
-    smoothOutline: 'Acceptable',
-    flatFloor: 'Non Acceptable',
-    depth: 'Acceptable',
-    undercut: 'Acceptable'
-};
-document.getElementById('smoothOutlineResult').textContent = aiResults.smoothOutline;
-document.getElementById('flatFloorResult').textContent = aiResults.flatFloor;
-document.getElementById('depthResult').textContent = aiResults.depth;
-document.getElementById('undercutResult').textContent = aiResults.undercut;
-</script>
-<label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Override Reason (Optional)</label>
-<textarea class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800/60 border border-slate-400 dark:border-slate-400 rounded-lg focus:ring-2 focus:ring-primary text-slate-700 dark:text-slate-200 text-xs resize-none" placeholder="Enter reason for overriding AI evaluation..." rows="3"></textarea>
-</div>
-</div>
-</div>
-
-<!-- Action Buttons -->
-<div class="space-y-3 sticky top-24">
-<button onclick="submitEvaluation()" class="w-full py-3.5 px-4 bg-primary hover:bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">send</span>
-                        Submit Evaluation
-                    </button>
-<button onclick="saveDraft()" class="w-full py-3 px-4 border-2 border-slate-300 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">save</span>
-                        Save Draft
-                    </button>
-</div>
-</div>
-</div>
-</div>
-</main>
-
-<!-- Image Modal -->
-<div id="imageModal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4" onclick="closeImageModal()">
-<div class="relative max-w-5xl w-full">
-<button class="absolute -top-12 right-0 text-white hover:text-slate-300 transition-colors">
-<span class="material-icons-round text-4xl">close</span>
-</button>
-<img id="modalImage" alt="Full size image" class="w-full h-auto rounded-lg shadow-2xl"/>
-</div>
-</div>
-
-<button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
-<span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
-</button>
-
-<script>
-// Image modal functions
-function openImageModal(src) {
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    modalImg.src = src;
-}
-
-function closeImageModal() {
-    const modal = document.getElementById('imageModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-
-// Save draft function
-function saveDraft() {
-    const grade = document.getElementById('finalGrade').value;
-    const feedback = document.getElementById('lecturerFeedback').value;
-    
-    // Simulate saving
-    alert('Draft saved successfully! You can continue editing this evaluation later.');
-    console.log('Draft saved:', { grade, feedback, timestamp: new Date() });
-}
-
-// Submit evaluation function
-function submitEvaluation() {
-    const grade = document.getElementById('finalGrade').value;
-    const feedback = document.getElementById('lecturerFeedback').value;
-    
-    if (!grade || !feedback) {
-        alert('Please fill in both the grade and feedback before submitting.');
-        return;
-    }
-    
-    if (confirm('Are you sure you want to submit this evaluation? The student will receive an email notification and dashboard alert.')) {
-        // Simulate submission
-        const evaluationData = {
-            studentId: 'IM/2022/087',
-            studentName: 'Reshma Mohamed',
-            studentEmail: 'reshma.m@pdn.ac.lk',
-            examName: 'Cavity Preparation Exam',
-            finalGrade: grade,
-            lecturerFeedback: feedback,
-            aiGrade: 85,
-            submissionDate: 'October 17, 2025',
-            evaluationDate: 'January 25, 2026',
-            lecturerName: 'Dr. Kasun Perera'
-        };
-        
-        console.log('Submitting evaluation:', evaluationData);
-        
-        // Simulate API call
-        setTimeout(() => {
-            // Show success message
-            showSuccessNotification();
-            
-            // Simulate sending email and dashboard notification
-            console.log('📧 Email sent to:', evaluationData.studentEmail);
-            console.log('🔔 Dashboard notification created for student:', evaluationData.studentId);
-            
-            // Redirect after 3 seconds
-            setTimeout(() => {
-                alert('Evaluation submitted successfully!\n\n✅ Student notified via email\n✅ Dashboard notification sent\n\nRedirecting to submissions list...');
-                // window.location.href = 'lecturer-submissions.html';
-            }, 2000);
-        }, 500);
-    }
-}
-
-// Success notification
-function showSuccessNotification() {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-24 right-6 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-[80] flex items-center gap-3 animate-slide-in';
-    notification.innerHTML = `
-        <span class="material-icons-round text-2xl">check_circle</span>
-        <div>
-            <p class="font-bold">Evaluation Submitted!</p>
-            <p class="text-sm opacity-90">Student has been notified</p>
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
         </div>
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
+        <div class="flex items-center space-x-4">
+          <a href="lecturer-profile.html" class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 block">
+            <img id="topProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
 
-// Form validation
-document.getElementById('finalGrade').addEventListener('input', function(e) {
-    const value = parseInt(e.target.value);
-    if (value < 0) e.target.value = 0;
-    if (value > 100) e.target.value = 100;
-});
-</script>
+  <div class="flex pt-16 min-h-screen">
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        <a class="sidebar-link" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined">dashboard</span>
+          Dashboard
+        </a>
+        <a class="sidebar-link" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined text-slate-400">event_available</span>
+          Schedule an Exam
+        </a>
+        <a class="sidebar-link" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400">upload_file</span>
+          Upload Study Materials
+        </a>
+        <a class="sidebar-link" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined text-slate-400">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+        <a class="sidebar-link sidebar-link-active" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined">assignment</span>
+          Student Submissions
+        </a>
+        <a class="sidebar-link" href="lecturer-profile.html">
+          <span class="material-symbols-outlined text-slate-400">person</span>
+          My Profile
+        </a>
+      </div>
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
 
-<style>
-@keyframes slide-in {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
+    <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
+      <div class="max-w-7xl mx-auto space-y-6 pb-14">
+        <a href="lecturer-eva-submissions1.html" id="backToQueueLink" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+          <span class="material-icons-round text-base">arrow_back</span>
+          Back to exam submissions
+        </a>
+
+        <div id="messageBox" class="hidden rounded-2xl px-4 py-3 text-sm font-medium"></div>
+
+        <div id="loadingState" class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-300 shadow-soft">
+          Loading submission details...
+        </div>
+
+        <div id="pageContent" class="hidden space-y-8">
+          <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Exam Submission Review</p>
+                <h1 id="pageTitle" class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white">Submission</h1>
+                <p id="pageSubtitle" class="mt-3 text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">AI Score</p>
+                  <p id="aiScoreStat" class="mt-2 text-2xl font-bold text-primary">-</p>
+                </div>
+                <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Current Status</p>
+                  <p id="statusStat" class="mt-2 text-lg font-bold">-</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="grid gap-8 xl:grid-cols-12">
+            <section class="xl:col-span-8 space-y-8">
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <div class="mb-4 flex items-center justify-between">
+                  <h2 class="text-xl font-bold text-slate-900 dark:text-white">Submitted images</h2>
+                  <span id="imageCount" class="text-sm font-semibold text-slate-500 dark:text-slate-300">0 files</span>
+                </div>
+                <div id="imageGrid" class="grid gap-4 sm:grid-cols-2"></div>
+              </section>
+
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">DEd AI evaluation</h2>
+                <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Smooth Outline</p>
+                    <p id="smoothValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Flat Floor</p>
+                    <p id="flatValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Depth</p>
+                    <p id="depthValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Undercut</p>
+                    <p id="undercutValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-2">
+                  <div class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Confidence</p>
+                    <p id="confidenceValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Evaluated At</p>
+                    <p id="evaluatedAtValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                </div>
+
+                <div class="mt-5">
+                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Raw DEd response</p>
+                  <pre id="rawResponse" class="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">No raw response stored.</pre>
+                </div>
+              </section>
+
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Lecturer review</h2>
+                <form id="reviewForm" class="mt-5 space-y-5">
+                  <div class="grid gap-5 md:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Final Grade</span>
+                      <input id="finalGrade" type="number" min="0" max="100" step="0.01" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" required />
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Decision</span>
+                      <select id="decision" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" required>
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                        <option value="RETAKE">RETAKE</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lecturer Feedback</span>
+                    <textarea id="lecturerFeedback" rows="5" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" placeholder="Write feedback for the student..."></textarea>
+                  </label>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Override Reason</span>
+                    <textarea id="overrideReason" rows="3" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" placeholder="Explain any override to the AI result if needed..."></textarea>
+                  </label>
+
+                  <div class="flex flex-col gap-3 sm:flex-row">
+                    <button id="saveReviewBtn" type="submit" class="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-accent">Save Review</button>
+                    <button id="publishBtn" type="button" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-600 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Publish Final Result</button>
+                  </div>
+                </form>
+              </section>
+            </section>
+
+            <aside class="xl:col-span-4 space-y-6">
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Student</h3>
+                <div class="mt-4 space-y-3 text-sm">
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Name:</span> <span id="studentName">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Registration:</span> <span id="studentRegistration">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Email:</span> <span id="studentEmail">-</span></p>
+                </div>
+              </section>
+
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Exam Details</h3>
+                <div class="mt-4 space-y-3 text-sm">
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Exam:</span> <span id="examName">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Module:</span> <span id="moduleName">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Attempt:</span> <span id="attemptNumber">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Submitted:</span> <span id="submittedAt">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Slot:</span> <span id="slotInfo">-</span></p>
+                </div>
+              </section>
+
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Submission Notes</h3>
+                <p id="submissionComments" class="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">No comments provided.</p>
+              </section>
+
+              <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Published Result</h3>
+                <div class="mt-4 space-y-3 text-sm">
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Final Grade:</span> <span id="publishedGrade">Not published</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Pass/Fail:</span> <span id="publishedDecision">-</span></p>
+                  <p><span class="font-semibold text-slate-900 dark:text-white">Published At:</span> <span id="publishedAt">-</span></p>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <footer class="mt-6 border-t border-slate-200 dark:border-slate-700 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        DentaNet LMS • Lecturer Workspace
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+      ? API_BASE_URL.replace(/\/api$/, "")
+      : window.location.origin;
+    const params = new URLSearchParams(window.location.search);
+    const submissionId = params.get("submission_id");
+    const moduleId = params.get("module_id");
+
+    const loadingState = document.getElementById("loadingState");
+    const pageContent = document.getElementById("pageContent");
+    const messageBox = document.getElementById("messageBox");
+    const reviewForm = document.getElementById("reviewForm");
+    const saveReviewBtn = document.getElementById("saveReviewBtn");
+    const publishBtn = document.getElementById("publishBtn");
+
+    let submissionData = null;
+
+    function showMessage(message, type = "error") {
+      messageBox.classList.remove("hidden");
+      messageBox.className = type === "success"
+        ? "rounded-2xl px-4 py-3 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+        : "rounded-2xl px-4 py-3 text-sm font-medium bg-rose-50 text-rose-700 border border-rose-200";
+      messageBox.textContent = message;
     }
-    to {
-        transform: translateX(0);
-        opacity: 1;
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
     }
-}
 
-.animate-slide-in {
-    animation: slide-in 0.3s ease-out;
-}
-</style>
+    function formatSlot(dateValue, startTime, endTime) {
+      const datePart = dateValue ? new Date(dateValue).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      }) : "-";
+      const timePart = startTime && endTime ? `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}` : "-";
+      return `${datePart} | ${timePart}`;
+    }
 
+    function getCurrentStatus(submission) {
+      if (submission.published_grade !== null && submission.published_grade !== undefined) return "Published";
+      if (submission.lecturer_grade !== null && submission.lecturer_grade !== undefined) return "Reviewed";
+      if (submission.api_status === "FAILED") return "AI Failed";
+      if (submission.api_status === "SUCCESS") return "Ready for Review";
+      return "Pending";
+    }
+
+    function renderImages(files) {
+      const imageGrid = document.getElementById("imageGrid");
+      document.getElementById("imageCount").textContent = `${files.length} file${files.length === 1 ? "" : "s"}`;
+
+      if (!files.length) {
+        imageGrid.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-300 sm:col-span-2">No submission images found.</div>';
+        return;
+      }
+
+      imageGrid.innerHTML = files.map((file, index) => {
+        const src = `${API_ORIGIN}${file.file_url}`;
+        return `
+          <figure class="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+            <img src="${src}" alt="Submission image ${index + 1}" class="h-72 w-full object-cover" />
+            <figcaption class="flex items-center justify-between px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-300">
+              <span>Image ${index + 1}</span>
+              <a href="${src}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Open full size</a>
+            </figcaption>
+          </figure>
+        `;
+      }).join("");
+    }
+
+    function renderSubmission(submission, files) {
+      document.getElementById("pageTitle").textContent = submission.exam_name || "Exam Submission";
+      document.getElementById("pageSubtitle").textContent = `${submission.student_first_name} ${submission.student_last_name} | ${submission.registration_number || "No registration"} | Attempt ${submission.attempt_number}`;
+      document.getElementById("aiScoreStat").textContent = submission.api_score !== null && submission.api_score !== undefined ? Number(submission.api_score).toFixed(2) : "N/A";
+      document.getElementById("statusStat").textContent = getCurrentStatus(submission);
+
+      document.getElementById("studentName").textContent = `${submission.student_first_name} ${submission.student_last_name}`;
+      document.getElementById("studentRegistration").textContent = submission.registration_number || "-";
+      document.getElementById("studentEmail").textContent = submission.student_email || "-";
+      document.getElementById("examName").textContent = submission.exam_name || "-";
+      document.getElementById("moduleName").textContent = `${submission.module_code || ""}${submission.module_code && submission.module_name ? " - " : ""}${submission.module_name || ""}` || "-";
+      document.getElementById("attemptNumber").textContent = String(submission.attempt_number || "-");
+      document.getElementById("submittedAt").textContent = formatDateTime(submission.submitted_at);
+      document.getElementById("slotInfo").textContent = formatSlot(submission.slot_date, submission.exam_start_time, submission.exam_end_time);
+      document.getElementById("submissionComments").textContent = submission.comments || "No comments provided.";
+
+      document.getElementById("smoothValue").textContent = submission.smooth_outline_status || "-";
+      document.getElementById("flatValue").textContent = submission.flat_floor_status || "-";
+      document.getElementById("depthValue").textContent = submission.depth_status || "-";
+      document.getElementById("undercutValue").textContent = submission.undercut_status || "-";
+      document.getElementById("confidenceValue").textContent = submission.confidence !== null && submission.confidence !== undefined ? `${Number(submission.confidence).toFixed(2)}%` : "-";
+      document.getElementById("evaluatedAtValue").textContent = formatDateTime(submission.evaluated_at);
+      document.getElementById("rawResponse").textContent = submission.raw_response_json ? JSON.stringify(submission.raw_response_json, null, 2) : "No raw response stored.";
+
+      document.getElementById("publishedGrade").textContent = submission.published_grade !== null && submission.published_grade !== undefined ? Number(submission.published_grade).toFixed(2) : "Not published";
+      document.getElementById("publishedDecision").textContent = submission.pass_fail || "-";
+      document.getElementById("publishedAt").textContent = formatDateTime(submission.published_at);
+
+      document.getElementById("finalGrade").value = submission.lecturer_grade !== null && submission.lecturer_grade !== undefined
+        ? Number(submission.lecturer_grade)
+        : (submission.api_score !== null && submission.api_score !== undefined ? Number(submission.api_score).toFixed(2) : "");
+      document.getElementById("decision").value = submission.decision || "PASS";
+      document.getElementById("lecturerFeedback").value = submission.lecturer_feedback || "";
+      document.getElementById("overrideReason").value = submission.override_reason || "";
+
+      renderImages(files);
+    }
+
+    async function loadSubmission() {
+      if (!submissionId) {
+        loadingState.textContent = "No submission id was provided.";
+        showMessage("Open this page from the lecturer submission queue.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_ORIGIN}/api/submissions/lecturer/exams/${encodeURIComponent(submissionId)}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await parseResponse(response);
+        if (!data.ok) throw new Error(data.error || "Failed to load submission detail");
+
+        submissionData = data.submission;
+        renderSubmission(submissionData, data.files || []);
+        loadingState.classList.add("hidden");
+        pageContent.classList.remove("hidden");
+      } catch (error) {
+        loadingState.textContent = "Unable to load the submission detail.";
+        showMessage(error.message || "Failed to load submission detail");
+      }
+    }
+
+    async function saveReview(event) {
+      event.preventDefault();
+      if (!submissionId) return;
+
+      saveReviewBtn.disabled = true;
+      saveReviewBtn.textContent = "Saving...";
+
+      try {
+        const payload = {
+          finalGrade: Number(document.getElementById("finalGrade").value),
+          decision: document.getElementById("decision").value,
+          lecturerFeedback: document.getElementById("lecturerFeedback").value.trim(),
+          overrideReason: document.getElementById("overrideReason").value.trim()
+        };
+
+        const response = await fetch(`${API_ORIGIN}/api/submissions/${encodeURIComponent(submissionId)}/review`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload)
+        });
+        const data = await parseResponse(response);
+        if (!data.ok) throw new Error(data.error || "Failed to save review");
+
+        showMessage("Lecturer review saved successfully.", "success");
+        await loadSubmission();
+      } catch (error) {
+        showMessage(error.message || "Failed to save review");
+      } finally {
+        saveReviewBtn.disabled = false;
+        saveReviewBtn.textContent = "Save Review";
+      }
+    }
+
+    async function publishResult() {
+      if (!submissionId) return;
+
+      publishBtn.disabled = true;
+      publishBtn.textContent = "Publishing...";
+
+      try {
+        const response = await fetch(`${API_ORIGIN}/api/submissions/${encodeURIComponent(submissionId)}/publish`, {
+          method: "POST",
+          headers: getAuthHeaders()
+        });
+        const data = await parseResponse(response);
+        if (!data.ok) throw new Error(data.error || "Failed to publish final result");
+
+        showMessage("Final result published successfully.", "success");
+        await loadSubmission();
+      } catch (error) {
+        showMessage(error.message || "Failed to publish final result");
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = "Publish Final Result";
+      }
+    }
+
+    reviewForm.addEventListener("submit", saveReview);
+    publishBtn.addEventListener("click", publishResult);
+    document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await requireAuth("lecturer");
+      if (!user) return;
+
+      const profileImage = document.getElementById("topProfileImage");
+      if (profileImage && user.profile_image_url) {
+        profileImage.src = `${API_ORIGIN}${user.profile_image_url}?t=${Date.now()}`;
+      }
+
+      const backLink = document.getElementById("backToQueueLink");
+      if (backLink && moduleId) {
+        backLink.href = `lecturer-eva-submissions1.html?module_id=${encodeURIComponent(moduleId)}`;
+      }
+
+      loadSubmission();
+    });
+  </script>
 </body>
 </html>

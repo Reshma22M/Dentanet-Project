@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { evaluateImages } = require("../services/ai_evaluator");
+const { createNotification } = require("../services/notifications");
 
 // -------------------------------------------------------
 // Upload config
@@ -63,6 +64,31 @@ async function canLecturerAccessSubmission(submissionId, lecturerId) {
     `, [lecturerId, submissionId]);
 
     return rows.length > 0;
+}
+
+function tryParseJson(value) {
+    if (!value) return null;
+
+    if (typeof value === "object") {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        return null;
+    }
+}
+
+function mapAiStatusForDb(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (normalized === "ideal" || normalized === "acceptable") {
+        return "acceptable";
+    }
+    if (normalized === "needs improvement" || normalized === "unacceptable") {
+        return "non-acceptable";
+    }
+    return null;
 }
 
 
@@ -292,7 +318,7 @@ router.get("/student/module/:module_id", authenticateToken, async (req, res) => 
             ORDER BY ets.slot_date DESC, ets.start_time DESC
         `, [studentId, moduleId]);
 
-        // Practice sessions for slots linked to exams in this module
+        // Practice sessions scoped by optional exam linkage to this module
         const [practiceSessions] = await promisePool.query(`
             SELECT
                 sr.request_id,
@@ -317,6 +343,10 @@ router.get("/student/module/:module_id", authenticateToken, async (req, res) => 
             FROM practice_slot_requests psr
             JOIN slot_requests sr
                 ON psr.request_id = sr.request_id
+            LEFT JOIN exam_slot_requests esr
+                ON esr.request_id = sr.request_id
+            LEFT JOIN exams e
+                ON e.exam_id = esr.exam_id
 
             LEFT JOIN (
                 SELECT s1.*
@@ -343,8 +373,9 @@ router.get("/student/module/:module_id", authenticateToken, async (req, res) => 
                 ON fr.submission_id = latest.submission_id
 
             WHERE sr.student_user_id = ?
+              AND e.module_id = ?
             ORDER BY sr.booking_date DESC, sr.start_time DESC
-        `, [studentId]);
+        `, [studentId, moduleId]);
 
         // Fetch module info
         const [moduleRows] = await promisePool.query(`
@@ -537,6 +568,255 @@ router.get("/practice/:request_id", authenticateToken, async (req, res) => {
 });
 
 // =======================================================
+// LECTURER EXAM SUBMISSION QUEUE
+// =======================================================
+router.get("/lecturer/exams", authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== "lecturer") {
+            return res.status(403).json({
+                ok: false,
+                error: "Only lecturers can access exam evaluation submissions"
+            });
+        }
+
+        const lecturerId = req.user.id;
+
+        const [rows] = await promisePool.query(`
+            SELECT
+                latest.submission_id,
+                latest.request_id,
+                latest.student_id,
+                latest.attempt_number,
+                latest.comments,
+                latest.submitted_at,
+                latest.updated_at,
+
+                stu.first_name AS student_first_name,
+                stu.last_name AS student_last_name,
+                stu.email AS student_email,
+                stu.registration_number,
+
+                e.exam_id,
+                e.exam_name,
+                e.description AS exam_description,
+                e.module_id,
+                e.passing_grade,
+
+                m.module_code,
+                m.module_name,
+
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time,
+
+                ae.api_status,
+                ae.api_score,
+                ae.confidence,
+                ae.smooth_outline_status,
+                ae.flat_floor_status,
+                ae.depth_status,
+                ae.undercut_status,
+                ae.evaluated_at,
+
+                lr.final_grade AS lecturer_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+                lr.override_reason,
+                lr.reviewed_at,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail,
+                fr.published_at
+            FROM (
+                SELECT s1.*
+                FROM submissions s1
+                INNER JOIN (
+                    SELECT request_id, MAX(attempt_number) AS latest_attempt
+                    FROM submissions
+                    WHERE submission_type = 'EXAM'
+                    GROUP BY request_id
+                ) latest_pick
+                    ON latest_pick.request_id = s1.request_id
+                   AND latest_pick.latest_attempt = s1.attempt_number
+                WHERE s1.submission_type = 'EXAM'
+            ) latest
+            JOIN slot_requests sr
+                ON sr.request_id = latest.request_id
+            JOIN exam_slot_requests esr
+                ON esr.request_id = sr.request_id
+            JOIN exams e
+                ON e.exam_id = esr.exam_id
+            JOIN modules m
+                ON m.module_id = e.module_id
+            JOIN module_lecturers ml
+                ON ml.module_id = e.module_id
+               AND ml.lecturer_id = ?
+               AND ml.is_active = TRUE
+            JOIN students stu
+                ON stu.student_id = latest.student_id
+            LEFT JOIN exam_time_slots ets
+                ON ets.slot_id = esr.slot_id
+            LEFT JOIN api_evaluations ae
+                ON ae.submission_id = latest.submission_id
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = latest.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = latest.submission_id
+            ORDER BY latest.submitted_at DESC, latest.submission_id DESC
+        `, [lecturerId]);
+
+        return res.json({
+            ok: true,
+            submissions: rows
+        });
+    } catch (error) {
+        console.error("Load lecturer exam submissions error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load lecturer exam submissions"
+        });
+    }
+});
+
+// =======================================================
+// LECTURER EXAM SUBMISSION DETAIL
+// =======================================================
+router.get("/lecturer/exams/:submission_id", authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== "lecturer") {
+            return res.status(403).json({
+                ok: false,
+                error: "Only lecturers can access exam evaluation submissions"
+            });
+        }
+
+        const lecturerId = req.user.id;
+        const submissionId = req.params.submission_id;
+
+        const allowed = await canLecturerAccessSubmission(submissionId, lecturerId);
+
+        if (!allowed) {
+            return res.status(403).json({
+                ok: false,
+                error: "You can only access submissions for your assigned module"
+            });
+        }
+
+        const [rows] = await promisePool.query(`
+            SELECT
+                s.submission_id,
+                s.request_id,
+                s.student_id,
+                s.submission_type,
+                s.attempt_number,
+                s.comments,
+                s.submitted_at,
+                s.updated_at,
+
+                stu.first_name AS student_first_name,
+                stu.last_name AS student_last_name,
+                stu.email AS student_email,
+                stu.registration_number,
+                stu.profile_image_url AS student_profile_image_url,
+
+                e.exam_id,
+                e.exam_name,
+                e.description AS exam_description,
+                e.module_id,
+                e.passing_grade,
+                e.status AS exam_status,
+
+                m.module_code,
+                m.module_name,
+
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time,
+
+                ae.api_status,
+                ae.api_score,
+                ae.confidence,
+                ae.smooth_outline_status,
+                ae.flat_floor_status,
+                ae.depth_status,
+                ae.undercut_status,
+                NULL AS raw_response_json,
+                ae.evaluated_at,
+
+                lr.final_grade AS lecturer_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+                lr.override_reason,
+                lr.reviewed_at,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail,
+                fr.published_at
+            FROM submissions s
+            JOIN slot_requests sr
+                ON sr.request_id = s.request_id
+            JOIN exam_slot_requests esr
+                ON esr.request_id = sr.request_id
+            JOIN exams e
+                ON e.exam_id = esr.exam_id
+            JOIN modules m
+                ON m.module_id = e.module_id
+            JOIN students stu
+                ON stu.student_id = s.student_id
+            LEFT JOIN exam_time_slots ets
+                ON ets.slot_id = esr.slot_id
+            LEFT JOIN api_evaluations ae
+                ON ae.submission_id = s.submission_id
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = s.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = s.submission_id
+            WHERE s.submission_id = ?
+              AND s.submission_type = 'EXAM'
+            LIMIT 1
+        `, [submissionId]);
+
+        if (!rows.length) {
+            return res.status(404).json({
+                ok: false,
+                error: "Exam submission not found"
+            });
+        }
+
+        const [files] = await promisePool.query(`
+            SELECT
+                file_id,
+                file_url,
+                file_type,
+                file_size_bytes,
+                uploaded_at
+            FROM submission_files
+            WHERE submission_id = ?
+            ORDER BY file_id ASC
+        `, [submissionId]);
+
+        const submission = {
+            ...rows[0],
+            raw_response_json: tryParseJson(rows[0].raw_response_json)
+        };
+
+        return res.json({
+            ok: true,
+            submission,
+            files
+        });
+    } catch (error) {
+        console.error("Load lecturer exam submission detail error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load lecturer exam submission detail"
+        });
+    }
+});
+
+// =======================================================
 // CREATE SUBMISSION
 // =======================================================
 router.post("/", authenticateToken, upload.array("images", 3), async (req, res) => {
@@ -594,10 +874,10 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
 
         const slotRequest = requestRows[0];
 
-        if (!["APPROVED", "COMPLETED"].includes(slotRequest.status)) {
+        if (slotRequest.status !== "COMPLETED") {
             return res.status(400).json({
                 ok: false,
-                error: "Submission is allowed only for approved or completed slots"
+                error: "Submission is allowed only after the slot is marked completed"
             });
         }
 
@@ -670,8 +950,11 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
         const submissionId = submissionResult.insertId;
 
         const filePaths = [];
+
         for (const file of files) {
+            const relativeFileUrl = `/uploads/submissions/${path.basename(file.path)}`;
             filePaths.push(file.path);
+
             await promisePool.query(`
                 INSERT INTO submission_files (
                     submission_id,
@@ -682,47 +965,55 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
                 VALUES (?, ?, ?, ?)
             `, [
                 submissionId,
-                `/uploads/submissions/${path.basename(file.path)}`,
-                file.mimetype,
-                file.size
+                relativeFileUrl,
+                file.mimetype || null,
+                file.size || null
             ]);
         }
 
-        let aiEvaluation = null;
-        try {
-            aiEvaluation = await evaluateImages(filePaths);
-            
-            await promisePool.query(`
-                INSERT INTO api_evaluations (
-                    submission_id,
-                    api_status,
-                    api_score,
-                    confidence,
-                    smooth_outline_status,
-                    flat_floor_status,
-                    depth_status,
-                    undercut_status,
-                    raw_response_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                submissionId,
-                aiEvaluation.api_status,
-                aiEvaluation.api_score,
-                aiEvaluation.confidence,
-                aiEvaluation.smooth_outline_status,
-                aiEvaluation.flat_floor_status,
-                aiEvaluation.depth_status,
-                aiEvaluation.undercut_status,
-                aiEvaluation.raw_response_json
-            ]);
-        } catch (aiError) {
-            console.error("AI Evaluation failed, storing FAILED record:", aiError);
-            await promisePool.query(`
-                INSERT INTO api_evaluations (
-                    submission_id, api_status, raw_response_json
-                ) VALUES (?, 'FAILED', ?)
-            `, [submissionId, JSON.stringify({ error: aiError.message || "Unknown Error" })]);
-        }
+let aiEvaluation = null;
+
+try {
+    const evaluated = await evaluateImages(filePaths);
+
+    await promisePool.query(`
+        INSERT INTO api_evaluations (
+            submission_id,
+            api_status,
+            api_score,
+            confidence,
+            smooth_outline_status,
+            flat_floor_status,
+            depth_status,
+            undercut_status
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+        submissionId,
+        evaluated.api_status,
+        evaluated.api_score,
+        evaluated.confidence,
+        mapAiStatusForDb(evaluated.smooth_outline_status),
+        mapAiStatusForDb(evaluated.flat_floor_status),
+        mapAiStatusForDb(evaluated.depth_status),
+        mapAiStatusForDb(evaluated.undercut_status)
+    ]);
+
+    aiEvaluation = evaluated;
+} catch (aiError) {
+    console.error("AI Evaluation failed:", aiError);
+    aiEvaluation = null;
+
+    await promisePool.query(`
+        INSERT INTO api_evaluations (
+            submission_id,
+            api_status
+        )
+        VALUES (?, 'FAILED')
+    `, [
+        submissionId
+    ]);
+}
 
         if (submissionType === "PRACTICE") {
             const passFail = (aiEvaluation && aiEvaluation.api_score >= 10) ? 'PASS' : 'FAIL';
@@ -745,6 +1036,39 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
                 finalFeedback,
                 passFail
             ]);
+
+            await createNotification({
+                recipientRole: "student",
+                recipientId: studentId,
+                title: "Practice result published",
+                message: "Your practice submission was evaluated by AI and the result is now available.",
+                notificationType: "result",
+                relatedEntityType: "submission",
+                relatedEntityId: submissionId
+            });
+        } else {
+            const [lecturerRows] = await promisePool.query(`
+                SELECT DISTINCT ml.lecturer_id
+                FROM exam_slot_requests esr
+                JOIN exams e
+                    ON esr.exam_id = e.exam_id
+                JOIN module_lecturers ml
+                    ON ml.module_id = e.module_id
+                   AND ml.is_active = TRUE
+                WHERE esr.request_id = ?
+            `, [requestId]);
+
+            for (const lecturer of lecturerRows) {
+                await createNotification({
+                    recipientRole: "lecturer",
+                    recipientId: lecturer.lecturer_id,
+                    title: "Exam submission ready for review",
+                    message: "A student exam submission has been AI evaluated and is ready for lecturer review.",
+                    notificationType: "evaluation",
+                    relatedEntityType: "submission",
+                    relatedEntityId: submissionId
+                });
+            }
         }
 
         return res.status(201).json({
@@ -903,6 +1227,25 @@ router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
             passFail,
             lecturerId
         ]);
+
+        const [submissionRows] = await promisePool.query(`
+            SELECT student_id
+            FROM submissions
+            WHERE submission_id = ?
+            LIMIT 1
+        `, [submissionId]);
+
+        if (submissionRows.length) {
+            await createNotification({
+                recipientRole: "student",
+                recipientId: submissionRows[0].student_id,
+                title: "Exam result published",
+                message: "Your lecturer has published the final result for your exam submission.",
+                notificationType: "result",
+                relatedEntityType: "submission",
+                relatedEntityId: submissionId
+            });
+        }
 
         return res.json({
             ok: true,

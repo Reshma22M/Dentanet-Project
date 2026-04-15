@@ -49,7 +49,7 @@
     }
 
     .sidebar-active {
-      @apply bg-white text-slate-900 font-semibold shadow-sm;
+      @apply bg-accent text-white font-semibold shadow-lg shadow-blue-900/20;
     }
 
     .page-card {
@@ -132,7 +132,7 @@
       </div>
     </header>
 
-    <aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-bg-sidebar border-r border-slate-800 px-6 py-8 flex-col">
+    <aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
       <div class="mb-10">
         <h2 class="text-lg font-bold text-white">LMS</h2>
         <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
@@ -149,7 +149,7 @@
           <span>Modules</span>
         </a>
 
-        <a class="sidebar-link sidebar-active pointer-events-none opacity-90" href="javascript:void(0)">
+        <a class="sidebar-link sidebar-active" href="javascript:void(0)">
           <span class="material-symbols-outlined">folder_open</span>
           <span>Module Details</span>
         </a>
@@ -157,6 +157,22 @@
         <a class="sidebar-link" href="admin-manage-users.html">
           <span class="material-symbols-outlined">group</span>
           <span>Manage Users</span>
+        </a>
+        <a class="sidebar-link" href="Admin-labslot-timetable.html">
+          <span class="material-symbols-outlined">event_note</span>
+          <span>Lab Timetable</span>
+        </a>
+        <a class="sidebar-link" href="master-schedule.html">
+          <span class="material-symbols-outlined">list_alt</span>
+          <span>Calendar</span>
+        </a>
+        <a class="sidebar-link" href="admin-api-monitor.html">
+          <span class="material-symbols-outlined">monitoring</span>
+          <span>API Monitor</span>
+        </a>
+        <a class="sidebar-link" href="admin-settings.html">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Settings</span>
         </a>
       </nav>
 
@@ -192,10 +208,6 @@
                   <span class="material-symbols-outlined text-[18px]">dashboard</span>
                   Overview
                 </button>
-                <button class="tab-btn tab-btn-inactive" data-tab="lecturers">
-                  <span class="material-symbols-outlined text-[18px]">person</span>
-                  Lecturers
-                </button>
                 <button class="tab-btn tab-btn-inactive" data-tab="students">
                   <span class="material-symbols-outlined text-[18px]">school</span>
                   Students
@@ -211,10 +223,6 @@
                 <button class="tab-btn tab-btn-inactive" data-tab="bookings">
                   <span class="material-symbols-outlined text-[18px]">calendar_view_week</span>
                   Bookings
-                </button>
-                <button class="tab-btn tab-btn-inactive" data-tab="evaluations">
-                  <span class="material-symbols-outlined text-[18px]">grading</span>
-                  Evaluations
                 </button>
               </section>
             </div>
@@ -249,42 +257,6 @@
             </div>
           </div>
         </section>
-
-<section id="tab-lecturers" class="tab-panel hidden">
-  <div class="page-card p-6">
-    <h2 class="section-title">Lecturers</h2>
-    <p class="muted mt-2">Assign and manage the lecturer responsible for this module.</p>
-
-    <div class="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/30">
-      <div class="flex flex-col md:flex-row md:items-end gap-4">
-        <div class="flex-1">
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Assigned Lecturer
-          </label>
-          <select id="assignedLecturerSelect" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm">
-            <option value="">Select lecturer</option>
-          </select>
-          <p id="assignedLecturerText" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            No lecturer assigned yet.
-          </p>
-        </div>
-
-        <div>
-          <button id="saveLecturerAssignmentBtn" type="button" class="px-5 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-accent transition-all">
-            Save Lecturer Assignment
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="lecturersListContainer" class="mt-6">
-      <div class="empty-box">
-        <p class="muted">Loading lecturers...</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 
         <section id="tab-students" class="tab-panel hidden">
           <div class="page-card p-6">
@@ -369,18 +341,7 @@
           </div>
         </section>
 
-        <section id="tab-evaluations" class="tab-panel hidden">
-          <div class="page-card p-6">
-            <h2 class="section-title">Evaluations</h2>
-            <p class="muted mt-2">Submission evaluations connected to this module will appear here.</p>
 
-            <div class="empty-box mt-6">
-              <span class="material-symbols-outlined text-4xl text-slate-400">grading</span>
-              <p class="mt-3 font-semibold text-slate-900 dark:text-white">Evaluation integration comes next</p>
-              <p class="muted mt-1">This will later show AI and lecturer review results for module submissions.</p>
-            </div>
-          </div>
-        </section>
 
       </main>
 
@@ -392,9 +353,10 @@
 
   <script>
     const DEFAULT_MODULE_IMAGE = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80";
-    const FILE_BASE_URL = "http://localhost:3001";
+    const FILE_BASE_URL = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+      ? API_BASE_URL.replace(/\/api$/, "")
+      : window.location.origin;
     let currentModuleId = null;
-    let allLecturers = [];
 
 function getModuleIdFromQuery() {
   const params = new URLSearchParams(window.location.search);
@@ -418,49 +380,6 @@ function getModuleIdFromQuery() {
       if (path.startsWith("/")) return `${FILE_BASE_URL}${path}`;
       return path;
     }
-
-      async function loadLecturers() {
-    try {
-      const result = await API.users.getAll();
-
-      if (!result.ok || !Array.isArray(result.users)) {
-        allLecturers = [];
-        populateAssignedLecturerSelect();
-        return;
-      }
-
-      allLecturers = result.users.filter(user =>
-        String(user.role || "").toLowerCase() === "lecturer"
-      );
-
-      populateAssignedLecturerSelect();
-    } catch (error) {
-      console.error("Load lecturers error:", error);
-      allLecturers = [];
-      populateAssignedLecturerSelect();
-    }
-  }
-
-  function populateAssignedLecturerSelect(selectedLecturerId = "") {
-    const select = document.getElementById("assignedLecturerSelect");
-    if (!select) return;
-
-    select.innerHTML = `<option value="">Select lecturer</option>`;
-
-    allLecturers.forEach(lecturer => {
-      const option = document.createElement("option");
-      option.value = lecturer.id || lecturer.lecturer_id;
-      option.textContent =
-        `${lecturer.firstName || lecturer.first_name || ""} ${lecturer.lastName || lecturer.last_name || ""}`.trim() +
-        ` (${lecturer.staffId || lecturer.staff_id || "No Staff ID"})`;
-
-      if (String(option.value) === String(selectedLecturerId || "")) {
-        option.selected = true;
-      }
-
-      select.appendChild(option);
-    });
-  }
 
     function setActiveMainTab(tabName) {
       document.querySelectorAll("[data-tab]").forEach(btn => {
@@ -529,15 +448,6 @@ async function loadModule() {
     const fullAdminName = `${module.admin_first_name || ""} ${module.admin_last_name || ""}`.trim() || "-";
     const isActive = module.is_active === true || module.is_active === 1 || module.is_active === "1";
 
-    populateAssignedLecturerSelect(module.assigned_lecturer_id || "");
-
-    const assignedLecturerText = document.getElementById("assignedLecturerText");
-    if (assignedLecturerText) {
-      assignedLecturerText.textContent = module.assigned_lecturer_id
-        ? `Currently assigned: ${(module.assigned_lecturer_first_name || "")} ${(module.assigned_lecturer_last_name || "")}`.trim() +
-          ` (${module.assigned_lecturer_staff_id || "No Staff ID"})`
-        : "No lecturer assigned yet.";
-    }
     document.getElementById("moduleTitle").textContent = module.module_name || "Module";
     document.getElementById("moduleCodeLine").textContent = module.module_code || "-";
     document.getElementById("moduleCodeLineTop").textContent = module.module_code || "-";
@@ -556,103 +466,16 @@ async function loadModule() {
   }
 }
 
-async function saveLecturerAssignment() {
-  if (!currentModuleId) return;
-
-  const button = document.getElementById("saveLecturerAssignmentBtn");
-  const select = document.getElementById("assignedLecturerSelect");
-
-  try {
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Saving...";
-    }
-
-    const moduleResult = await API.modules.getById(currentModuleId);
-    if (!moduleResult.ok || !moduleResult.module) {
-      alert(moduleResult.error || "Failed to load module before saving.");
-      return;
-    }
-
-    const module = moduleResult.module;
-
-    const payload = {
-      module_name: module.module_name,
-      module_code: module.module_code,
-      description: module.description,
-      module_image_url: module.module_image_url,
-      is_active: module.is_active,
-      assigned_lecturer_id: select.value || null
-    };
-
-    const result = await API.modules.update(currentModuleId, payload);
-
-    if (!result.ok) {
-      alert(result.error || "Failed to save lecturer assignment");
-      return;
-    }
-
-    await loadModule();
-    await loadMembers();
-    alert("Lecturer assignment updated successfully.");
-  } catch (error) {
-    console.error("Save lecturer assignment error:", error);
-    alert("Failed to save lecturer assignment.");
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = "Save Lecturer Assignment";
-    }
-  }
-}
-
     async function loadMembers() {
       if (!currentModuleId) return;
 
       try {
         const result = await API.modules.getMembers(currentModuleId);
-        renderLecturers(result.ok ? (result.lecturers || []) : []);
         renderStudents(result.ok ? (result.students || []) : []);
       } catch (error) {
         console.error("Load members error:", error);
-        renderLecturers([]);
         renderStudents([]);
       }
-    }
-
-    function renderLecturers(lecturers) {
-      const container = document.getElementById("lecturersListContainer");
-      if (!container) return;
-
-      if (!lecturers.length) {
-        container.innerHTML = `
-          <div class="empty-box">
-            <span class="material-symbols-outlined text-4xl text-slate-400">person</span>
-            <p class="mt-3 font-semibold text-slate-900 dark:text-white">No lecturers assigned</p>
-            <p class="muted mt-1">Lecturers enrolled into this module will appear here.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = `
-        <div class="space-y-4">
-          ${lecturers.map(l => `
-            <div class="list-card">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p class="font-bold text-slate-900 dark:text-white">${escapeHtml(l.first_name || "")} ${escapeHtml(l.last_name || "")}</p>
-                  <p class="muted mt-1">${escapeHtml(l.email || "-")}</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(l.staff_id || "-")}</p>
-                  <p class="muted mt-1">Staff ID</p>
-                </div>
-              </div>
-            </div>
-          `).join("")}
-        </div>
-      `;
     }
 
     function renderStudents(students) {
@@ -723,7 +546,7 @@ async function saveLecturerAssignment() {
             <div class="empty-box mt-6">
               <span class="material-symbols-outlined text-4xl text-slate-400">quiz</span>
               <p class="mt-3 font-semibold text-slate-900 dark:text-white">No exams found</p>
-              <p class="muted mt-1">Lecturers enrolled in this module can create exams here.</p>
+              <p class="muted mt-1">No scheduled exams in this module yet.</p>
             </div>
           `;
           return;
@@ -747,6 +570,15 @@ async function saveLecturerAssignment() {
                       <p class="muted">Max Attempts: ${escapeHtml(exam.max_attempts || "1")}</p>
                       <p class="muted">Passing Grade: ${escapeHtml(exam.passing_grade ?? "-")}</p>
                     </div>
+                  </div>
+                  <div class="md:text-right">
+                    <a
+                      href="Admin-labslot-timetable.html?exam_id=${encodeURIComponent(exam.exam_id)}"
+                      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-accent transition-all"
+                    >
+                      <span class="material-symbols-outlined text-[18px]">event_note</span>
+                      Lab Slot Allocation
+                    </a>
                   </div>
                 </div>
               </div>
@@ -855,8 +687,13 @@ async function saveLecturerAssignment() {
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
-      const user = await requireAuth();
+      const user = await requireAuth("admin");
       if (!user) return;
+
+      const footer = document.querySelector("footer");
+      if (footer) {
+        footer.textContent = "© 2026 DentaNet Admin Hub.";
+      }
 
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
@@ -868,7 +705,7 @@ async function saveLecturerAssignment() {
           const tab = btn.dataset.tab;
           setActiveMainTab(tab);
 
-          if (tab === "students" || tab === "lecturers") {
+          if (tab === "students") {
             loadMembers();
           }
 
@@ -910,11 +747,6 @@ async function saveLecturerAssignment() {
       setActiveMainTab("overview");
       setActiveMaterialTab("lecturer-materials");
 
-      await loadLecturers();
-      const saveLecturerAssignmentBtn = document.getElementById("saveLecturerAssignmentBtn");
-      if (saveLecturerAssignmentBtn) {
-        saveLecturerAssignmentBtn.addEventListener("click", saveLecturerAssignment);
-      }
       await loadModule();
       await loadMembers();
       await loadModuleExams();

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { promisePool } = require("../config/database");
 const { authenticateToken } = require("../middleware/auth");
+const { createNotification, notifyAdmins } = require("../services/notifications");
 
 /* -------------------------------------------------- */
 /* Helpers */
@@ -237,6 +238,7 @@ router.post("/", authenticateToken, async (req, res) => {
                 INNER JOIN exam_slot_requests esr
                     ON sr.request_id = esr.request_id
                 WHERE sr.student_user_id = ?
+                  AND sr.slot_type = 'EXAM'
                   AND esr.exam_id = ?
                   AND sr.status IN ('PENDING', 'APPROVED')
                 LIMIT 1
@@ -372,6 +374,30 @@ router.post("/", authenticateToken, async (req, res) => {
                 `,
                 [requestId, purpose || null]
             );
+
+            if (examId) {
+                const [examRows] = await connection.query(
+                    `
+                    SELECT exam_id
+                    FROM exams
+                    WHERE exam_id = ?
+                      AND is_active = TRUE
+                    LIMIT 1
+                    `,
+                    [Number(examId)]
+                );
+
+                if (examRows.length > 0) {
+                    await connection.query(
+                        `
+                        INSERT INTO exam_slot_requests
+                        (request_id, exam_id, slot_id)
+                        VALUES (?, ?, NULL)
+                        `,
+                        [requestId, Number(examId)]
+                    );
+                }
+            }
         }
 
         if (normalizedSlotType === "EXAM") {
@@ -386,6 +412,21 @@ router.post("/", authenticateToken, async (req, res) => {
         }
 
         await connection.commit();
+
+        const notificationTitle = normalizedSlotType === "EXAM"
+            ? "New exam slot request"
+            : "New practice slot request";
+        const notificationMessage = normalizedSlotType === "EXAM"
+            ? "A student requested an exam lab slot that needs admin approval."
+            : "A student requested a practice session that needs admin approval.";
+
+        await notifyAdmins({
+            title: notificationTitle,
+            message: notificationMessage,
+            notificationType: "slot_request",
+            relatedEntityType: "slot_request",
+            relatedEntityId: requestId
+        });
 
         return res.status(201).json({
             ok: true,
@@ -450,6 +491,7 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
             `
             SELECT
                 sr.request_id,
+                sr.student_user_id,
                 sr.status,
                 sr.slot_type,
                 esr.slot_id
@@ -470,6 +512,7 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         }
 
         const booking = bookingRows[0];
+        let studentNotification = null;
 
         await connection.beginTransaction();
 
@@ -540,6 +583,38 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         );
 
         await connection.commit();
+
+        if (normalizedStatus === "APPROVED") {
+            studentNotification = {
+                title: "Lab slot approved",
+                message: `Your ${String(booking.slot_type || "").toLowerCase()} slot request has been approved.`,
+                notificationType: "slot_approval"
+            };
+        } else if (normalizedStatus === "DENIED" || normalizedStatus === "CANCELLED") {
+            studentNotification = {
+                title: "Lab slot update",
+                message: `Your ${String(booking.slot_type || "").toLowerCase()} slot request was updated to ${normalizedStatus}.`,
+                notificationType: "slot_rejection"
+            };
+        } else if (normalizedStatus === "COMPLETED") {
+            studentNotification = {
+                title: "Submission portal unlocked",
+                message: `Your ${String(booking.slot_type || "").toLowerCase()} slot is marked completed. You can now submit your images.`,
+                notificationType: "submission"
+            };
+        }
+
+        if (studentNotification) {
+            await createNotification({
+                recipientRole: "student",
+                recipientId: booking.student_user_id,
+                title: studentNotification.title,
+                message: studentNotification.message,
+                notificationType: studentNotification.notificationType,
+                relatedEntityType: "slot_request",
+                relatedEntityId: requestId
+            });
+        }
 
         return res.json({
             ok: true,

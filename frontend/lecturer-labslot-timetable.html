@@ -232,6 +232,17 @@
 let latestScheduledExam = null;
 let latestSlots = [];
 let latestBookings = [];
+const LECTURER_PARAMS = new URLSearchParams(window.location.search);
+const LECTURER_MODULE_ID =
+  LECTURER_PARAMS.get("module_id") ||
+  sessionStorage.getItem("selectedLecturerModuleId") ||
+  sessionStorage.getItem("selectedModuleId") ||
+  "";
+
+if (LECTURER_MODULE_ID) {
+  sessionStorage.setItem("selectedLecturerModuleId", String(LECTURER_MODULE_ID));
+  sessionStorage.setItem("selectedModuleId", String(LECTURER_MODULE_ID));
+}
 
 function formatTime(timeStr) {
   if (!timeStr) return "";
@@ -247,6 +258,19 @@ function formatDate(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString();
+}
+
+function isExamExpired(exam) {
+  if (!exam || !exam.exam_date || !exam.end_time) return false;
+  const endDate = new Date(`${exam.exam_date}T${String(exam.end_time).slice(0, 5)}:00`);
+  return !Number.isNaN(endDate.getTime()) && endDate.getTime() < Date.now();
+}
+
+function getExamSortValue(exam) {
+  const datePart = exam?.exam_date || "1970-01-01";
+  const timePart = String(exam?.start_time || "00:00").slice(0, 5);
+  const parsed = new Date(`${datePart}T${timePart}:00`);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
 function escapeHtml(value) {
@@ -269,16 +293,21 @@ function buildOverviewCard(exam, slots) {
   }
 
   const totalCapacity = slots.reduce((sum, slot) => sum + Number(slot.max_machines || 0), 0);
+  const expired = isExamExpired(exam);
 
   overviewText.innerHTML = `
     Practical exam date: <span class="font-bold">${formatDate(exam.exam_date)}</span>
     • Available slots: <span class="font-bold">${slots.length}</span>
     • Total slot capacity: <span class="font-bold">${totalCapacity}</span>
   `;
+  overviewText.innerHTML += `
+    <br/>Status: <span class="font-bold ${expired ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}">${expired ? "Expired" : "Active"}</span>
+  `;
 }
 
 function renderSlotCards(slots, bookings) {
   const container = document.getElementById("slotCardsContainer");
+  const examExpired = isExamExpired(latestScheduledExam);
 
   if (!container) return;
 
@@ -303,7 +332,11 @@ function renderSlotCards(slots, bookings) {
     let badgeClass = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
     let barClass = "bg-green-500";
 
-    if (isFull) {
+    if (examExpired) {
+      badge = "Expired";
+      badgeClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      barClass = "bg-red-500";
+    } else if (isFull) {
       badge = "Full";
       badgeClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       barClass = "bg-red-500";
@@ -399,7 +432,7 @@ function renderMachineTable(bookings) {
 }
 
 async function loadExamAndSlots() {
-  const examsResult = await API.exams.getAll(null, "SCHEDULED");
+  const examsResult = await API.exams.getAll(LECTURER_MODULE_ID || null);
 
   if (!examsResult.ok) {
     document.getElementById("slotCardsContainer").innerHTML = `<p class="text-red-600">${examsResult.error || "Failed to load scheduled exams"}</p>`;
@@ -407,7 +440,8 @@ async function loadExamAndSlots() {
   }
 
   const exams = examsResult.exams || [];
-  latestScheduledExam = exams[0] || null;
+  const sortedExams = [...exams].sort((a, b) => getExamSortValue(b) - getExamSortValue(a));
+  latestScheduledExam = sortedExams.find(exam => !isExamExpired(exam)) || sortedExams[0] || null;
 
   if (!latestScheduledExam) {
     buildOverviewCard(null, []);
@@ -428,7 +462,9 @@ async function loadExamAndSlots() {
 }
 
 async function loadBookings() {
-  const result = await API.bookings.getAll();
+  const result = await API.bookings.getAll({
+    module_id: LECTURER_MODULE_ID || null
+  });
 
   if (!result.ok) {
     document.getElementById("bookingTableBody").innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-red-600">Failed to load bookings</td></tr>`;
@@ -441,7 +477,9 @@ async function loadBookings() {
   let relevantBookings = latestBookings;
 
   if (latestScheduledExam) {
-    relevantBookings = latestBookings.filter(b => String(b.exam_id) === String(latestScheduledExam.exam_id) || b.slot_type === "PRACTICE");
+    relevantBookings = latestBookings.filter(
+      b => String(b.exam_id) === String(latestScheduledExam.exam_id) || b.slot_type === "PRACTICE"
+    );
   }
 
   renderSlotCards(latestSlots, relevantBookings);

@@ -1,0 +1,24 @@
+# Node / frontend
+backend/node_modules/
+frontend/node_modules/
+DEd/frontend/node_modules/
+DEd/frontend/.next/
+DEd/frontend/.idea/
+
+# Python / DEd
+DEd/backend/venv/
+DEd/backend/win_venv/
+DEd/backend/__pycache__/
+DEd/backend/.idea/
+DEd/backend/model/
+*.pyc
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local backup archives
+*.tar.gz
+
+# Runtime uploads
+backend/uploads/

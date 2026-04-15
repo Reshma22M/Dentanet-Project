@@ -120,7 +120,7 @@
       <section id="submissionsPanel" class="tab-panel hidden bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">Submit Work</h2>
-          <a href="submission-hub.html" class="text-sm text-primary font-semibold hover:underline">View All Submissions →</a>
+          <a id="viewAllSubmissionsLink" href="submission-hub.html" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all">Open Submission Portal</a>
         </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select an exam below to submit your work for evaluation.</p>
         <div id="moduleSubmissionsContainer" class="space-y-4">
@@ -179,7 +179,7 @@
     function initBackendBaseUrl() {
       backendBaseUrl = typeof API_BASE_URL === "string"
         ? API_BASE_URL.replace(/\/api\/?$/, "")
-        : "http://localhost:3001";
+        : window.location.origin;
     }
 
     function escapeHtml(value) {
@@ -209,6 +209,19 @@
       const suffix = hour >= 12 ? "PM" : "AM";
       const formattedHour = hour % 12 || 12;
       return `${formattedHour}:${m} ${suffix}`;
+    }
+
+    function getExamEndDate(exam) {
+      if (!exam || !exam.exam_date) return null;
+      const timeValue = exam.end_time || exam.start_time || "23:59:59";
+      const parsed = new Date(`${String(exam.exam_date).slice(0, 10)}T${String(timeValue).slice(0, 8)}`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function hasExamPassed(exam) {
+      if (typeof exam?.exam_has_passed === "boolean") return exam.exam_has_passed;
+      const endDate = getExamEndDate(exam);
+      return !!endDate && new Date() > endDate;
     }
 
       function getModuleIdFromQuery() {
@@ -259,11 +272,13 @@
       const sidebarSubmission = document.getElementById("sidebarSubmissionLink");
       const sidebarMaterials = document.getElementById("sidebarMaterialsLink");
       const shareBtn = document.getElementById("shareStudyMaterialBtn");
+      const viewAllSubmissionsLink = document.getElementById("viewAllSubmissionsLink");
 
       if (sidebarBooking) sidebarBooking.href = bookingLink;
       if (sidebarSubmission) sidebarSubmission.href = submissionLink;
       if (sidebarMaterials) sidebarMaterials.href = materialsLink;
       if (shareBtn) shareBtn.href = materialsLink;
+      if (viewAllSubmissionsLink) viewAllSubmissionsLink.href = submissionLink;
     }
 
     function setupTabs() {
@@ -425,48 +440,167 @@
       `).join("");
     }
 
-    function renderSubmissions() {
-      const container = document.getElementById("moduleSubmissionsContainer");
-      if (!container) return;
+function renderSubmissions() {
+  const container = document.getElementById("moduleSubmissionsContainer");
+  if (!container) return;
 
-      if (!Array.isArray(moduleExams) || moduleExams.length === 0) {
-        container.innerHTML = renderEmptyCard("No exams available for this module yet. Check back after the lecturer schedules exams.");
-        return;
-      }
+  if (!Array.isArray(moduleExams) || moduleExams.length === 0) {
+    container.innerHTML = renderEmptyCard(
+      "No exams available for this module yet. Check back after the lecturer schedules exams."
+    );
+    return;
+  }
 
-      container.innerHTML = moduleExams.map(exam => {
-        const submitLink = `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}`;
-        const examDate = exam.exam_date ? formatDate(exam.exam_date) : "Date TBA";
-        const timeRange = (exam.start_time && exam.end_time) ? `${formatTime(exam.start_time)} – ${formatTime(exam.end_time)}` : "Time TBA";
+  const bookings = Array.isArray(moduleBookings) ? moduleBookings : [];
 
-        const statusColors = {
-          SCHEDULED: "bg-blue-100 text-blue-700",
-          OPEN: "bg-green-100 text-green-700",
-          CLOSED: "bg-gray-100 text-gray-500",
-          DRAFT: "bg-yellow-100 text-yellow-700"
-        };
-        const statusCls = statusColors[exam.status] || "bg-gray-100 text-gray-500";
+  container.innerHTML = moduleExams.map(exam => {
+    const examId = String(exam.exam_id || "");
+    const examDate = exam.exam_date ? formatDate(exam.exam_date) : "Date TBA";
+    const passed = hasExamPassed(exam);
+    const timeRange =
+      (exam.start_time && exam.end_time)
+        ? `${formatTime(exam.start_time)} – ${formatTime(exam.end_time)}`
+        : "Time TBA";
 
-        return `
-          <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="material-icons-round text-primary text-[18px]">fact_check</span>
-                  <h4 class="font-bold text-gray-900 dark:text-white text-base">${escapeHtml(exam.exam_name || "Exam")}</h4>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusCls}">${escapeHtml(exam.status || "DRAFT")}</span>
-                </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">${examDate} &nbsp;•&nbsp; ${timeRange}</p>
-                <p class="text-xs text-gray-400 mt-1">Max attempts: ${escapeHtml(String(exam.max_attempts || 1))} &nbsp;•&nbsp; Passing grade: ${exam.passing_grade != null ? escapeHtml(String(exam.passing_grade)) + "%" : "N/A"}</p>
-              </div>
-              <a href="${submitLink}" class="shrink-0 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center flex items-center gap-2">
-                <span class="material-icons-round text-[16px]">upload</span> Submit Work
-              </a>
-            </div>
-          </div>
-        `;
-      }).join("");
+    const bookingLink =
+      `lab-slot-booking.html?module_id=${encodeURIComponent(currentModuleId)}&exam_id=${encodeURIComponent(exam.exam_id)}`;
+
+    const submitLink =
+      `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}`;
+
+    const examBookings = bookings
+      .filter(booking =>
+        String(booking.exam_id || "") === examId &&
+        String(booking.slot_type || "").toUpperCase() === "EXAM" &&
+        String(booking.status || "").toUpperCase() !== "CANCELLED" &&
+        String(booking.status || "").toUpperCase() !== "DENIED"
+      )
+      .sort((a, b) => {
+        const aTime = new Date(`${a.booking_date || ""}T${a.start_time || "00:00:00"}`).getTime();
+        const bTime = new Date(`${b.booking_date || ""}T${b.start_time || "00:00:00"}`).getTime();
+        return bTime - aTime;
+      });
+
+    const activeBooking = examBookings[0] || null;
+    const bookingStatus = String(activeBooking?.status || "").toUpperCase();
+
+    const statusColors = {
+      SCHEDULED: "bg-blue-100 text-blue-700",
+      OPEN: "bg-green-100 text-green-700",
+      CLOSED: "bg-gray-100 text-gray-500",
+      DRAFT: "bg-yellow-100 text-yellow-700"
+    };
+    const statusCls = statusColors[exam.status] || "bg-gray-100 text-gray-500";
+
+    let actionHtml = "";
+    let helperText = "";
+
+    if (passed) {
+      actionHtml = `
+        <span class="shrink-0 px-5 py-2.5 bg-gray-200 text-gray-500 rounded-xl text-sm font-semibold text-center flex items-center gap-2 cursor-not-allowed">
+          <span class="material-icons-round text-[16px]">event_busy</span>
+          Exam Passed
+        </span>
+      `;
+      helperText = `<p class="text-xs text-red-500 mt-2 font-semibold">Exam date already passed. Cannot upload.</p>`;
+    } else if (!activeBooking) {
+      actionHtml = `
+        <a
+          href="${bookingLink}"
+          class="shrink-0 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center flex items-center gap-2"
+        >
+          <span class="material-icons-round text-[16px]">calendar_month</span>
+          Book Slot
+        </a>
+      `;
+      helperText = `<p class="text-xs text-gray-500 mt-2 font-semibold">You must book an exam slot before submission.</p>`;
+    } else if (bookingStatus === "PENDING") {
+      actionHtml = `
+        <span class="shrink-0 px-5 py-2.5 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-semibold text-center flex items-center gap-2 cursor-not-allowed">
+          <span class="material-icons-round text-[16px]">hourglass_top</span>
+          Awaiting Approval
+        </span>
+      `;
+      helperText = `<p class="text-xs text-yellow-700 mt-2 font-semibold">Your slot request is pending admin approval.</p>`;
+    } else if (bookingStatus === "APPROVED") {
+      actionHtml = `
+        <span class="shrink-0 px-5 py-2.5 bg-blue-100 text-blue-700 rounded-xl text-sm font-semibold text-center flex items-center gap-2 cursor-not-allowed">
+          <span class="material-icons-round text-[16px]">task_alt</span>
+          Waiting for Session Completion
+        </span>
+      `;
+      helperText = `<p class="text-xs text-blue-700 mt-2 font-semibold">Attend the session first. Submission unlocks after admin marks it completed.</p>`;
+    } else if (bookingStatus === "COMPLETED") {
+      actionHtml = `
+        <a
+          href="${submitLink}"
+          onclick="openExamSubmission('${encodeURIComponent(exam.exam_id)}', '${encodeURIComponent(currentModuleId)}')"
+          class="shrink-0 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center flex items-center gap-2"
+        >
+          <span class="material-icons-round text-[16px]">upload</span>
+          Submit Work
+        </a>
+      `;
+      helperText = `<p class="text-xs text-green-600 mt-2 font-semibold">Your slot is completed. You can now upload your images.</p>`;
+    } else {
+      actionHtml = `
+        <a
+          href="${bookingLink}"
+          class="shrink-0 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center flex items-center gap-2"
+        >
+          <span class="material-icons-round text-[16px]">calendar_month</span>
+          Book Slot
+        </a>
+      `;
+      helperText = `<p class="text-xs text-gray-500 mt-2 font-semibold">Book a valid slot to continue.</p>`;
     }
+
+    return `
+      <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="material-icons-round text-primary text-[18px]">fact_check</span>
+              <h4 class="font-bold text-gray-900 dark:text-white text-base">
+                ${escapeHtml(exam.exam_name || "Exam")}
+              </h4>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusCls}">
+                ${escapeHtml(exam.status || "DRAFT")}
+              </span>
+              ${passed ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Passed</span>' : ''}
+              ${bookingStatus ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Booking: ${escapeHtml(bookingStatus)}</span>` : ''}
+            </div>
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              ${examDate} &nbsp;•&nbsp; ${timeRange}
+            </p>
+
+            <p class="text-xs text-gray-400 mt-1">
+              Max attempts: ${escapeHtml(String(exam.max_attempts || 1))}
+              &nbsp;•&nbsp;
+              Passing grade: ${exam.passing_grade != null ? escapeHtml(String(exam.passing_grade)) + "%" : "N/A"}
+            </p>
+
+            ${activeBooking ? `
+              <p class="text-xs text-gray-500 mt-1">
+                Booked slot: ${formatDate(activeBooking.booking_date)} • ${formatTime(activeBooking.start_time)} - ${formatTime(activeBooking.end_time)}
+              </p>
+            ` : ""}
+
+            ${helperText}
+          </div>
+
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+window.openExamSubmission = function (examId, moduleId) {
+  sessionStorage.setItem("selectedSubmissionExamId", String(examId));
+  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  sessionStorage.setItem("selectedModuleId", String(moduleId));
+};
 
     function renderMaterials() {
       const lecturerContainer = document.getElementById("moduleMaterialsContainer");
@@ -528,7 +662,9 @@
 
       // 3. Load bookings
       try {
-        const bookingsResult = await API.bookings.getAll();
+        const bookingsResult = await API.bookings.getAll({
+          module_id: currentModuleId
+        });
         const allBookings = Array.isArray(bookingsResult.bookings) ? bookingsResult.bookings : [];
         const moduleExamIds = new Set(moduleExams.map(exam => String(exam.exam_id)));
         moduleBookings = allBookings.filter(booking => {
