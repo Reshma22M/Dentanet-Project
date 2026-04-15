@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/common.js"></script>
 
   <script>
     tailwind.config = {
@@ -506,7 +507,7 @@
       const maxMachines = document.getElementById(`slot-capacity-${examId}`).value;
 
       if (!slotDate || !startTime || !endTime || !maxMachines) {
-        alert("Please fill slot date, start time, end time, and machine capacity.");
+        showWarningNotification("Please fill slot date, start time, end time, and machine capacity.");
         return;
       }
 
@@ -519,11 +520,11 @@
       });
 
       if (!result.ok) {
-        alert(result.error || "Failed to create exam slot");
+        showErrorNotification(result.error || "Failed to create exam slot");
         return;
       }
 
-      alert("Exam slot created successfully.");
+      showSuccessNotification("Exam slot created successfully.");
       await loadScheduledExams();
     }
 
@@ -539,7 +540,7 @@
       const max_machines = document.getElementById(`edit-slot-capacity-${slotId}`).value;
 
       if (!slot_date || !start_time || !end_time || !max_machines) {
-        alert("Please fill all slot fields before saving.");
+        showWarningNotification("Please fill all slot fields before saving.");
         return;
       }
 
@@ -551,26 +552,33 @@
       });
 
       if (!result.ok) {
-        alert(result.error || "Failed to update slot");
+        showErrorNotification(result.error || "Failed to update slot");
         return;
       }
 
-      alert("Slot updated successfully.");
+      showSuccessNotification("Slot updated successfully.");
       await loadScheduledExams();
     }
 
     async function deleteExamSlot(slotId) {
-      const confirmed = confirm("Are you sure you want to remove this exam slot?");
+      const confirmed = (typeof showConfirmDialog === "function")
+        ? await showConfirmDialog({
+            title: "Remove Exam Slot",
+            message: "Are you sure you want to remove this exam slot?",
+            confirmText: "Remove",
+            confirmClass: "bg-red-600 hover:bg-red-700"
+          })
+        : confirm("Are you sure you want to remove this exam slot?");
       if (!confirmed) return;
 
       const result = await API.examSlots.delete(slotId);
 
       if (!result.ok) {
-        alert(result.error || "Failed to remove exam slot");
+        showErrorNotification(result.error || "Failed to remove exam slot");
         return;
       }
 
-      alert("Exam slot removed successfully.");
+      showSuccessNotification("Exam slot removed successfully.");
       await loadScheduledExams();
     }
 
@@ -837,7 +845,7 @@
       const last_maintenance_date = document.getElementById(`maintenance-date-${machineId}`).value;
 
       if (!machine_code || !lab_number) {
-        alert("Machine code and lab number are required.");
+        showWarningNotification("Machine code and lab number are required.");
         return;
       }
 
@@ -849,11 +857,11 @@
       });
 
       if (!result.ok) {
-        alert(result.error || "Failed to update machine");
+        showErrorNotification(result.error || "Failed to update machine");
         return;
       }
 
-      alert("Machine updated successfully.");
+      showSuccessNotification("Machine updated successfully.");
       await loadMachines();
     }
 
@@ -864,7 +872,7 @@
       const last_maintenance_date = document.getElementById("maintenanceDate").value;
 
       if (!machine_code || !lab_number) {
-        alert("Machine code and lab number required.");
+        showWarningNotification("Machine code and lab number are required.");
         return;
       }
 
@@ -876,11 +884,11 @@
       });
 
       if (!result.ok) {
-        alert(result.error || "Failed to add machine");
+        showErrorNotification(result.error || "Failed to add machine");
         return;
       }
 
-      alert("Machine added successfully.");
+      showSuccessNotification("Machine added successfully.");
 
       document.getElementById("machineCode").value = "";
       document.getElementById("labNumber").value = "";
@@ -894,18 +902,18 @@
       const machineId = document.getElementById(`machine-${requestId}`).value;
 
       if (!machineId) {
-        alert("Please enter a machine ID before approving.");
+        showWarningNotification("Please enter a machine ID before approving.");
         return;
       }
 
       const result = await API.bookings.updateStatus(requestId, "APPROVED", machineId);
 
       if (!result.ok) {
-        alert(result.error || "Failed to approve booking");
+        showErrorNotification(result.error || "Failed to approve booking");
         return;
       }
 
-      alert("Booking approved successfully");
+      showSuccessNotification("Booking approved successfully");
       await loadBookings();
     }
 
@@ -913,11 +921,11 @@
       const result = await API.bookings.updateStatus(requestId, "DENIED");
 
       if (!result.ok) {
-        alert(result.error || "Failed to deny booking");
+        showErrorNotification(result.error || "Failed to deny booking");
         return;
       }
 
-      alert("Booking denied successfully");
+      showSuccessNotification("Booking denied successfully");
       await loadBookings();
     }
 

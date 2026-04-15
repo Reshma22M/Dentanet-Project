@@ -254,10 +254,15 @@ CREATE TABLE exam_time_slots (
 CREATE TABLE practice_slot_requests (
   request_id INT PRIMARY KEY,
   purpose VARCHAR(255) NULL,
+  module_id INT NULL,
 
   CONSTRAINT fk_practice_slot_request
     FOREIGN KEY (request_id) REFERENCES slot_requests(request_id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+  CONSTRAINT fk_practice_module_id
+    FOREIGN KEY (module_id) REFERENCES modules(module_id)
+    ON DELETE SET NULL,
+  INDEX idx_practice_module_id (module_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE exam_slot_requests (

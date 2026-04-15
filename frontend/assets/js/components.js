@@ -113,12 +113,21 @@ class DentaNetComponents {
     }
 }
 
-function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = 'login.html';
-    }
+async function logout() {
+    const confirmed = (typeof showConfirmDialog === "function")
+        ? await showConfirmDialog({
+            title: "Log Out",
+            message: "Are you sure you want to logout?",
+            confirmText: "Log Out",
+            confirmClass: "bg-red-600 hover:bg-red-700"
+        })
+        : confirm('Are you sure you want to logout?');
+
+    if (!confirmed) return;
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
 }
 
 window.DentaNetComponents = DentaNetComponents;

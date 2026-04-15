@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <script src="assets/js/api.js"></script>
+<script src="assets/js/common.js"></script>
 <script src="assets/js/student-shell.js"></script>
 <script>
 tailwind.config = {
@@ -456,26 +457,33 @@ async function bookExamSlot(slot, examId) {
   });
 
   if (!result.ok) {
-    alert(result.error || "Failed to book exam slot");
+    showErrorNotification(result.error || "Failed to book exam slot");
     return;
   }
 
-  alert("Exam slot booked successfully.");
+  showSuccessNotification("Exam slot booked successfully.");
   await loadBookings();
 }
 
 async function cancelBooking(requestId) {
-  const confirmed = confirm("Are you sure you want to cancel this booking?");
+  const confirmed = (typeof showConfirmDialog === "function")
+    ? await showConfirmDialog({
+        title: "Cancel Booking",
+        message: "Are you sure you want to cancel this booking?",
+        confirmText: "Cancel Booking",
+        confirmClass: "bg-red-600 hover:bg-red-700"
+      })
+    : confirm("Are you sure you want to cancel this booking?");
   if (!confirmed) return;
 
   const result = await API.bookings.cancel(requestId);
 
   if (!result.ok) {
-    alert(result.error || "Failed to cancel booking");
+    showErrorNotification(result.error || "Failed to cancel booking");
     return;
   }
 
-  alert("Booking cancelled successfully.");
+  showSuccessNotification("Booking cancelled successfully.");
   await loadBookings();
 }
 
@@ -580,7 +588,7 @@ document.getElementById("practiceBookingForm").addEventListener("submit", async 
   const purpose = document.getElementById("practicePurpose").value.trim();
 
   if (!bookingDate || !timeSlot) {
-    alert("Please select date and time slot.");
+    showWarningNotification("Please select date and time slot.");
     return;
   }
 
@@ -592,15 +600,16 @@ document.getElementById("practiceBookingForm").addEventListener("submit", async 
     startTime,
     endTime,
     purpose,
-    examId: SELECTED_EXAM_ID || null
+    examId: SELECTED_EXAM_ID || null,
+    moduleId: CURRENT_MODULE_ID || null
   });
 
   if (!result.ok) {
-    alert(result.error || "Failed to book practice session");
+    showErrorNotification(result.error || "Failed to book practice session");
     return;
   }
 
-  alert("Practice session request submitted successfully.");
+  showSuccessNotification("Practice session request submitted successfully.");
   this.reset();
   await loadBookings();
 });

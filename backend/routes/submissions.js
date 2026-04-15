@@ -373,9 +373,9 @@ router.get("/student/module/:module_id", authenticateToken, async (req, res) => 
                 ON fr.submission_id = latest.submission_id
 
             WHERE sr.student_user_id = ?
-              AND e.module_id = ?
+              AND (e.module_id = ? OR psr.module_id = ?)
             ORDER BY sr.booking_date DESC, sr.start_time DESC
-        `, [studentId, moduleId]);
+        `, [studentId, moduleId, moduleId]);
 
         // Fetch module info
         const [moduleRows] = await promisePool.query(`

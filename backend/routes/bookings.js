@@ -66,10 +66,10 @@ router.get("/", authenticateToken, async (req, res) => {
                 esr.slot_id,
 
                 e.exam_name,
-                e.module_id,
+                COALESCE(e.module_id, prs.module_id) AS module_id,
 
-                m.module_code,
-                m.module_name,
+                COALESCE(m.module_code, pm.module_code) AS module_code,
+                COALESCE(m.module_name, pm.module_name) AS module_name,
 
                 s.first_name,
                 s.last_name,
@@ -96,6 +96,9 @@ router.get("/", authenticateToken, async (req, res) => {
             LEFT JOIN exams e
                 ON esr.exam_id = e.exam_id
 
+            LEFT JOIN modules pm
+                ON prs.module_id = pm.module_id
+
             LEFT JOIN modules m
                 ON e.module_id = m.module_id
 
@@ -119,8 +122,8 @@ router.get("/", authenticateToken, async (req, res) => {
         }
 
         if (module_id) {
-            query += ` AND e.module_id = ?`;
-            params.push(Number(module_id));
+            query += ` AND (e.module_id = ? OR prs.module_id = ?)`;
+            params.push(Number(module_id), Number(module_id));
         }
 
         if (exam_id) {
@@ -182,7 +185,8 @@ router.post("/", authenticateToken, async (req, res) => {
             endTime,
             purpose,
             examId,
-            slotId
+            slotId,
+            moduleId
         } = req.body;
 
         const studentId = req.user.id;
@@ -366,13 +370,32 @@ router.post("/", authenticateToken, async (req, res) => {
         const requestId = result.insertId;
 
         if (normalizedSlotType === "PRACTICE") {
+            let practiceModuleId = moduleId ? Number(moduleId) : null;
+
+            if (!practiceModuleId && examId) {
+                const [examModuleRows] = await connection.query(
+                    `
+                    SELECT module_id
+                    FROM exams
+                    WHERE exam_id = ?
+                      AND is_active = TRUE
+                    LIMIT 1
+                    `,
+                    [Number(examId)]
+                );
+
+                if (examModuleRows.length > 0) {
+                    practiceModuleId = Number(examModuleRows[0].module_id);
+                }
+            }
+
             await connection.query(
                 `
                 INSERT INTO practice_slot_requests
-                (request_id, purpose)
-                VALUES (?, ?)
+                (request_id, purpose, module_id)
+                VALUES (?, ?, ?)
                 `,
-                [requestId, purpose || null]
+                [requestId, purpose || null, practiceModuleId || null]
             );
 
             if (examId) {
