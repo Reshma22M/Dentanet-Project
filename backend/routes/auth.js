@@ -2,26 +2,15 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
 const { promisePool } = require("../config/database");
 const { validatePassword } = require("../middleware/validators");
+const { sendEmail, hasSmtpConfig } = require("../services/email");
 
 // -----------------------------
 // Helpers
 // -----------------------------
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: String(process.env.SMTP_SECURE || "false") === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
 async function sendOtpEmail(toEmail, otp) {
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  return sendEmail({
     to: toEmail,
     subject: "DentaNet Password Reset OTP",
     html: `
@@ -588,6 +577,13 @@ router.post("/forgot-password", async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    if (!hasSmtpConfig()) {
+      return res.status(503).json({
+        success: false,
+        error: "Email service is not configured. Please contact administrator.",
+      });
+    }
+
     const account = await findAccountByIdentifier(normalizedEmail);
 
     if (!account) {
@@ -613,7 +609,20 @@ router.post("/forgot-password", async (req, res) => {
       [role, user.id, otp, user.email]
     );
 
-    await sendOtpEmail(user.email, otp);
+    const mailResult = await sendOtpEmail(user.email, otp);
+    if (!mailResult.ok) {
+      await promisePool.query(
+        `DELETE FROM password_reset_tokens
+         WHERE email = ? AND otp_code = ? AND is_used = FALSE`,
+        [user.email, otp]
+      );
+
+      return res.status(503).json({
+        success: false,
+        error: "Failed to send password reset OTP",
+        details: mailResult.error || undefined,
+      });
+    }
 
     return res.json({
       success: true,

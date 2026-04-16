@@ -3,6 +3,7 @@ const router = express.Router();
 const { promisePool } = require("../config/database");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
 const { notifyAdmins } = require("../services/notifications");
+const { sendEmail, hasSmtpConfig } = require("../services/email");
 
 // --------------------------------------------------
 // Helpers
@@ -101,6 +102,15 @@ function mapExamVisibility(exam) {
     retention_expires_at: retentionCutoff ? retentionCutoff.toISOString() : null,
     retention_expired: !!retentionCutoff && now > retentionCutoff
   };
+}
+
+function formatTimeForMail(timeValue) {
+  if (!timeValue) return "-";
+  const [h, m] = String(timeValue).slice(0, 5).split(":");
+  const hour = Number(h || 0);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${m} ${suffix}`;
 }
 
 // --------------------------------------------------
@@ -337,6 +347,82 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
       relatedEntityType: "exam",
       relatedEntityId: result.insertId
     });
+
+    try {
+      const [enrolledStudents] = await promisePool.query(
+        `
+        SELECT s.student_id, s.email, s.first_name, s.last_name
+        FROM module_students ms
+        JOIN students s
+          ON s.student_id = ms.student_id
+        WHERE ms.module_id = ?
+          AND ms.is_active = TRUE
+          AND s.is_active = TRUE
+        `,
+        [numericModuleId]
+      );
+
+      if (enrolledStudents.length) {
+        await Promise.allSettled(
+          enrolledStudents.map((student) =>
+            promisePool.query(
+              `
+              INSERT INTO notifications
+              (
+                recipient_role,
+                recipient_id,
+                title,
+                message,
+                notification_type,
+                related_entity_type,
+                related_entity_id
+              )
+              VALUES ('student', ?, ?, ?, 'exam', 'exam', ?)
+              `,
+              [
+                student.student_id,
+                "Exam scheduled",
+                `A new exam "${finalExamName}" was scheduled for your module. Check LMS and book your lab slot when slots are available.`,
+                result.insertId
+              ]
+            )
+          )
+        );
+
+        if (hasSmtpConfig()) {
+          const examDateText = finalExamDate || "TBA";
+          const examTimeText = finalStartTime && finalEndTime
+            ? `${formatTimeForMail(finalStartTime)} - ${formatTimeForMail(finalEndTime)}`
+            : "TBA";
+
+          await Promise.allSettled(
+            enrolledStudents
+              .filter((student) => student.email)
+              .map((student) =>
+                sendEmail({
+                  to: student.email,
+                  subject: `DentaNet: New Exam Scheduled (${module.module_code})`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                      <h2>New Exam Scheduled</h2>
+                      <p>Hello ${student.first_name || "Student"},</p>
+                      <p>A new practical exam has been scheduled for your registered module.</p>
+                      <p><strong>Module:</strong> ${module.module_code} - ${module.module_name}</p>
+                      <p><strong>Exam:</strong> ${finalExamName}</p>
+                      <p><strong>Date:</strong> ${examDateText}</p>
+                      <p><strong>Time:</strong> ${examTimeText}</p>
+                      <p>Please log in to DentaNet LMS and book your lab slot when available.</p>
+                    </div>
+                  `,
+                  text: `A new exam "${finalExamName}" was scheduled for ${module.module_code} (${module.module_name}) on ${examDateText} at ${examTimeText}. Please log in to DentaNet LMS and book your lab slot when available.`
+                })
+              )
+          );
+        }
+      }
+    } catch (studentNotifyError) {
+      console.error("Failed to notify enrolled students for scheduled exam:", studentNotifyError);
+    }
 
     return res.status(201).json({
       ok: true,

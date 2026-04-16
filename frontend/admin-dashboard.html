@@ -1057,7 +1057,7 @@ async function loadAdminNotifications() {
                 : "bg-blue-500";
 
             return `
-                <a href="${actionLink}" class="group block rounded-xl border ${cardClass} px-4 py-3 hover:shadow-md transition-all">
+                <button type="button" data-notif-id="${n.notification_id}" data-action-link="${escapeAttribute(actionLink)}" class="admin-notification-item w-full text-left group block rounded-xl border ${cardClass} px-4 py-3 hover:shadow-md transition-all">
                     <div class="flex items-center justify-between gap-3">
                         <span class="flex items-center gap-3 min-w-0">
                             <span class="w-2.5 h-2.5 rounded-full ${dotClass}"></span>
@@ -1067,15 +1067,36 @@ async function loadAdminNotifications() {
                     </div>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${escapeHtml(n.message || "No additional details.")}</p>
                     <p class="mt-2 text-xs font-semibold text-primary">${escapeHtml(actionText)}</p>
-                </a>
+                </button>
             `;
         }).join("");
+
+        const cards = box.querySelectorAll(".admin-notification-item");
+        cards.forEach(card => {
+            card.addEventListener("click", async function () {
+                const notifId = this.getAttribute("data-notif-id");
+                const actionLink = this.getAttribute("data-action-link") || "admin-dashboard.html";
+                await handleAdminNotificationClick(notifId, actionLink);
+            });
+        });
     } catch (error) {
         console.error("Failed to load admin notifications:", error);
         const box = document.getElementById("adminNotificationsBox");
         if (box) {
             box.innerHTML = `<p class="text-rose-500">Failed to load notifications.</p>`;
         }
+    }
+}
+
+async function handleAdminNotificationClick(notificationId, actionLink) {
+    try {
+        if (notificationId) {
+            await API.notifications.markAsRead(notificationId);
+        }
+    } catch (error) {
+        console.error("Failed to mark admin notification as read:", error);
+    } finally {
+        window.location.href = actionLink || "admin-dashboard.html";
     }
 }
 </script>

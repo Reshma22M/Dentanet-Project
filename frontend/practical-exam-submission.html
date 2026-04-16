@@ -150,6 +150,17 @@
             </div>
           </div>
 
+          <label class="flex items-start gap-3 mb-6 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <input
+              id="declarationCheck"
+              type="checkbox"
+              class="mt-1 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+            />
+            <span class="text-sm text-slate-700 dark:text-slate-300">
+              I confirm this submission is my own work and follows academic integrity guidelines.
+            </span>
+          </label>
+
           <div class="flex items-center justify-end gap-4">
             <button
               id="clearBtn"
@@ -256,15 +267,17 @@ const API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('h
   : window.location.origin;
 
 const urlParams  = new URLSearchParams(window.location.search);
+const urlExamId = urlParams.get('exam_id') || '';
+const urlRequestId = urlParams.get('request_id') || '';
+
 const examId =
-  urlParams.get('exam_id') ||
+  urlExamId ||
   sessionStorage.getItem('selectedSubmissionExamId') ||
   '';
 
 const requestId =
-  urlParams.get('request_id') ||
-  sessionStorage.getItem('selectedSubmissionRequestId') ||
-  '';
+  urlRequestId ||
+  (!urlExamId ? (sessionStorage.getItem('selectedSubmissionRequestId') || '') : '');
 
 const moduleId =
   urlParams.get('module_id') ||
@@ -284,8 +297,11 @@ const moduleId =
 
 let submissionMode = null;
 
-if (examId) submissionMode = 'EXAM';
-if (requestId) submissionMode = 'PRACTICE';
+if (examId) {
+  submissionMode = 'EXAM';
+} else if (requestId) {
+  submissionMode = 'PRACTICE';
+}
 
 let selectedFiles = [];
 let pageData = null;
@@ -302,6 +318,7 @@ const selectedFilesDiv = document.getElementById('selectedFiles');
 const historyTableBody = document.getElementById('historyTableBody');
 const submitBtn = document.getElementById('submitBtn');
 const clearBtn = document.getElementById('clearBtn');
+const declarationCheck = document.getElementById('declarationCheck');
 
 function getToken() {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -310,8 +327,31 @@ function getToken() {
 function getSessionEndDate(dateValue, endTimeValue, fallbackTimeValue) {
   if (!dateValue) return null;
 
+  const isoMatch = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const ddMmYyyyMatch = String(dateValue).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  let yyyy;
+  let mm;
+  let dd;
+
+  if (isoMatch) {
+    yyyy = Number(isoMatch[1]);
+    mm = Number(isoMatch[2]);
+    dd = Number(isoMatch[3]);
+  } else if (ddMmYyyyMatch) {
+    yyyy = Number(ddMmYyyyMatch[3]);
+    mm = Number(ddMmYyyyMatch[2]);
+    dd = Number(ddMmYyyyMatch[1]);
+  } else {
+    const parsedDate = new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) return null;
+    yyyy = parsedDate.getFullYear();
+    mm = parsedDate.getMonth() + 1;
+    dd = parsedDate.getDate();
+  }
+
   const timeValue = endTimeValue || fallbackTimeValue || '23:59:59';
-  const parsed = new Date(`${dateValue}T${String(timeValue).slice(0, 8)}`);
+  const [hh, min, sec] = String(timeValue).slice(0, 8).split(":").map((v) => Number(v || 0));
+  const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -329,38 +369,110 @@ function hasDatePassedFromValues(dateValue, endTimeValue, fallbackTimeValue) {
   return !!endDate && new Date() > endDate;
 }
 
+function getExamSubmissionWindowState(data) {
+  if (!data) return { open: false, reason: "locked" };
+
+  const status = String(data.slot_status || "").toUpperCase();
+  if (!["APPROVED", "COMPLETED"].includes(status)) {
+    return { open: false, reason: status === "PENDING" ? "awaiting_approval" : "locked" };
+  }
+
+  const endDate = getSessionEndDate(
+    data.booking_date || data.slot_date,
+    data.end_time || data.exam_end_time,
+    data.start_time || data.exam_start_time
+  );
+  if (!endDate) return { open: false, reason: "locked" };
+
+  const now = new Date();
+  const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
+
+  if (now < endDate) return { open: false, reason: "before_end", endDate, windowEnd };
+  if (now > windowEnd) return { open: false, reason: "window_closed", endDate, windowEnd };
+
+  return { open: true, reason: "open", endDate, windowEnd };
+}
+
+function getPracticeSubmissionWindowState(data) {
+  if (!data) return { open: false, reason: "locked" };
+
+  const status = String(data.slot_status || "").toUpperCase();
+  if (!["APPROVED", "COMPLETED"].includes(status)) {
+    return { open: false, reason: status === "PENDING" ? "awaiting_approval" : "locked" };
+  }
+
+  const endDate = getSessionEndDate(data.booking_date, data.end_time, data.start_time);
+  if (!endDate) return { open: false, reason: "locked" };
+
+  const now = new Date();
+  const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
+
+  if (now < endDate) return { open: false, reason: "before_end", endDate, windowEnd };
+  if (now > windowEnd) return { open: false, reason: "window_closed", endDate, windowEnd };
+
+  return { open: true, reason: "open", endDate, windowEnd };
+}
+
+function getCurrentWindowState(data) {
+  if (!data) return { open: false, reason: "locked" };
+  return submissionMode === "EXAM"
+    ? getExamSubmissionWindowState(data)
+    : getPracticeSubmissionWindowState(data);
+}
+
 function isUploadAllowedForCurrentPage() {
   if (!pageData) return false;
-  return pageData.slot_status === 'COMPLETED';
+  return getCurrentWindowState(pageData).open;
+}
+
+function isExamAlreadySubmitted() {
+  if (submissionMode !== "EXAM") return false;
+  return Array.isArray(submissionHistory) && submissionHistory.length > 0;
 }
 
 function updateSubmissionAvailability() {
   if (!pageData) return;
 
   const isExamMode = submissionMode === 'EXAM';
-  const dateValue = isExamMode ? pageData.slot_date : pageData.booking_date;
-  const endTimeValue = isExamMode ? pageData.exam_end_time : pageData.end_time;
-  const fallbackTimeValue = isExamMode ? pageData.exam_start_time : pageData.start_time;
+  const dateValue = isExamMode ? (pageData.booking_date || pageData.slot_date) : pageData.booking_date;
+  const endTimeValue = isExamMode ? (pageData.end_time || pageData.exam_end_time) : pageData.end_time;
+  const fallbackTimeValue = isExamMode ? (pageData.start_time || pageData.exam_start_time) : pageData.start_time;
   const passed = hasDatePassedFromValues(dateValue, endTimeValue, fallbackTimeValue);
   const retentionExpired = isPastRetentionWindowFromValues(dateValue, endTimeValue, fallbackTimeValue);
   const uploadAllowed = isUploadAllowedForCurrentPage();
+  const windowState = getCurrentWindowState(pageData);
+  const examAlreadySubmitted = isExamAlreadySubmitted();
 
-  submitBtn.disabled = !uploadAllowed || retentionExpired;
-  imageInput.disabled = !uploadAllowed || retentionExpired;
-  clearBtn.disabled = retentionExpired;
+  submitBtn.disabled = !uploadAllowed || retentionExpired || examAlreadySubmitted;
+  imageInput.disabled = !uploadAllowed || retentionExpired || examAlreadySubmitted;
+  clearBtn.disabled = retentionExpired || examAlreadySubmitted;
 
   if (retentionExpired) {
     showAlert("This submission is older than 3 months and is no longer available.");
     return;
   }
 
-  if (!uploadAllowed && passed) {
-    showAlert("Exam date already passed. Cannot upload because the slot was not marked completed.");
+  if (examAlreadySubmitted) {
+    showAlert("Submission already completed for this exam. Portal is now closed for re-submission.");
     return;
   }
 
-  if (!uploadAllowed) {
-    showAlert("Upload is locked until the admin marks your slot as completed.");
+  if (!windowState.open) {
+    if (windowState.reason === "awaiting_approval") {
+      showAlert("Your booking is still pending approval. Submission will open after approval and slot end.");
+    } else if (windowState.reason === "before_end") {
+      showAlert("Submission opens once your booked slot ends.");
+    } else if (windowState.reason === "window_closed") {
+      showAlert("Submission window closed. You can submit only within 2 hours after slot end.");
+    } else {
+      showAlert("Submission is currently locked for this slot.");
+    }
+    return;
+  } else if (!uploadAllowed && passed) {
+    showAlert("Submission window is closed for this slot.");
+    return;
+  } else if (!uploadAllowed) {
+    showAlert("Upload is currently locked.");
   }
 }
 
@@ -386,10 +498,11 @@ async function resolveSubmissionContext() {
   const examSessions = Array.isArray(data.examSessions) ? data.examSessions : [];
   const practiceSessions = Array.isArray(data.practiceSessions) ? data.practiceSessions : [];
 
-  const eligibleExam = examSessions.find(item =>
-    item.slot_status === "COMPLETED" &&
-    !isPastRetentionWindowFromValues(item.slot_date, item.exam_end_time, item.exam_start_time)
-  );
+  const eligibleExam = examSessions.find(item => {
+    const windowState = getExamSubmissionWindowState(item);
+    return windowState.open &&
+      !isPastRetentionWindowFromValues(item.booking_date || item.slot_date, item.end_time || item.exam_end_time, item.start_time || item.exam_start_time);
+  });
 
   if (eligibleExam) {
     const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}`;
@@ -398,7 +511,7 @@ async function resolveSubmissionContext() {
   }
 
   const eligiblePractice = practiceSessions.find(item =>
-    item.slot_status === "COMPLETED" &&
+    getPracticeSubmissionWindowState(item).open &&
     !isPastRetentionWindowFromValues(item.booking_date, item.end_time, item.start_time)
   );
 
@@ -413,7 +526,7 @@ async function resolveSubmissionContext() {
     hubUrl += `?module_id=${encodeURIComponent(moduleId)}`;
   }
 
-  showAlert("No completed submission slot was found. Redirecting to submission hub.");
+  showAlert("No active submission window found. Redirecting to submission hub.");
   setTimeout(() => {
     window.location.replace(hubUrl);
   }, 1200);
@@ -444,7 +557,17 @@ function formatDate(dateValue) {
 
   if (!dateValue) return "-";
 
-  const date = new Date(dateValue);
+  const isoMatch = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const ddMmYyyyMatch = String(dateValue).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  let date = null;
+
+  if (isoMatch) {
+    date = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  } else if (ddMmYyyyMatch) {
+    date = new Date(Number(ddMmYyyyMatch[3]), Number(ddMmYyyyMatch[2]) - 1, Number(ddMmYyyyMatch[1]));
+  } else {
+    date = new Date(dateValue);
+  }
 
   return date.toLocaleDateString(
     "en-US",
@@ -465,6 +588,61 @@ function formatTime(timeValue) {
   const formattedHour = hour % 12 || 12;
 
   return `${formattedHour}:${m} ${suffix}`;
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "-";
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function getWindowStatusLabel(windowState) {
+  if (!windowState) return "Pending";
+  if (windowState.open && windowState.windowEnd) {
+    const remainingMs = Math.max(0, windowState.windowEnd.getTime() - Date.now());
+    const remainingMinutes = Math.floor(remainingMs / 60000);
+    const h = Math.floor(remainingMinutes / 60);
+    const m = remainingMinutes % 60;
+    return `Submission open - Due in ${h}h ${m}m`;
+  }
+  if (windowState.reason === "before_end" && windowState.endDate) {
+    return `Submissions open at ${formatDateTime(windowState.endDate)}`;
+  }
+  if (windowState.reason === "window_closed" && windowState.windowEnd) {
+    return `Submission closed at ${formatDateTime(windowState.windowEnd)}`;
+  }
+  if (windowState.reason === "awaiting_approval") {
+    return "Awaiting booking approval";
+  }
+  return "Locked";
+}
+
+function getLmsWindowStatusLabel(windowState) {
+  if (!windowState) return "Pending";
+  if (windowState.open && windowState.windowEnd) {
+    const remainingMs = Math.max(0, windowState.windowEnd.getTime() - Date.now());
+    const remainingMinutes = Math.floor(remainingMs / 60000);
+    const h = Math.floor(remainingMinutes / 60);
+    const m = remainingMinutes % 60;
+    return `Submission open - Due in ${h}h ${m}m`;
+  }
+  if (windowState.reason === "before_end" && windowState.endDate) {
+    return `Submissions open at ${formatDateTime(windowState.endDate)}`;
+  }
+  if (windowState.reason === "window_closed" && windowState.windowEnd) {
+    return `Submission closed at ${formatDateTime(windowState.windowEnd)}`;
+  }
+  if (windowState.reason === "awaiting_approval") {
+    return "Awaiting booking approval";
+  }
+  return "Locked";
 }
 
 /* ===========================
@@ -516,17 +694,17 @@ async function loadSubmissionPage() {
     if (!response.ok)
       throw new Error(data.error);
 
-      if (submissionMode === "EXAM" && pageData?.exam_id) {
-  sessionStorage.setItem("selectedSubmissionExamId", String(pageData.exam_id));
-}
-if (pageData?.request_id) {
-  sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
-}
-
     pageData =
       submissionMode === "EXAM"
       ? data.exam
       : data.practice;
+
+    if (submissionMode === "EXAM" && pageData?.exam_id) {
+      sessionStorage.setItem("selectedSubmissionExamId", String(pageData.exam_id));
+    }
+    if (pageData?.request_id) {
+      sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
+    }
 
     submissionHistory =
       data.history || [];
@@ -558,11 +736,11 @@ function renderPageData(){
       pageData.exam_name;
 
     examDateInput.value =
-      formatDate(pageData.slot_date);
+      formatDate(pageData.booking_date || pageData.slot_date);
 
     examTimeInput.value =
-      `${formatTime(pageData.exam_start_time)}
-       - ${formatTime(pageData.exam_end_time)}`;
+      `${formatTime(pageData.start_time || pageData.exam_start_time)}
+       - ${formatTime(pageData.end_time || pageData.exam_end_time)}`;
 
   }
 
@@ -614,7 +792,7 @@ function renderHistory() {
         "Pending";
 
       const submittedOn = item.submitted_at
-        ? formatDate(item.submitted_at)
+        ? formatDateTime(item.submitted_at)
         : "-";
 
       return `
@@ -659,10 +837,9 @@ function renderHistory() {
   if (statusLatest) {
     const latest = submissionHistory[0];
     statusLatest.textContent =
-      latest?.pass_fail ||
-      latest?.decision ||
-      latest?.api_status ||
-      "Pending";
+      latest?.submitted_at
+        ? `Submitted at ${formatDateTime(latest.submitted_at)}`
+        : getLmsWindowStatusLabel(getCurrentWindowState(pageData));
   }
 }
 
@@ -766,8 +943,18 @@ async function submitCurrentItem(){
 
   try{
 
+    if (isExamAlreadySubmitted()) {
+      showAlert("Submission already completed for this exam. Re-submission is not allowed.");
+      return;
+    }
+
     if (!isUploadAllowedForCurrentPage()) {
       updateSubmissionAvailability();
+      return;
+    }
+
+    if (!declarationCheck?.checked) {
+      showAlert("Please confirm the academic integrity declaration before submitting.");
       return;
     }
 
@@ -830,6 +1017,7 @@ async function submitCurrentItem(){
 
     selectedFiles=[];
     commentsInput.value="";
+    if (declarationCheck) declarationCheck.checked = false;
 
     renderSelectedFiles();
 
@@ -884,7 +1072,12 @@ async ()=>{
 
   if (!user) return;
 
-  loadSubmissionPage();
+  await loadSubmissionPage();
+  setInterval(() => {
+    if (!pageData) return;
+    updateSubmissionAvailability();
+    renderHistory();
+  }, 60000);
 
 });
 </script>

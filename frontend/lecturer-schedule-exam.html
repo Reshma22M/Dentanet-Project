@@ -193,25 +193,26 @@
 </button>
 
 </body>
+<script src="assets/js/common.js"></script>
 <script src="assets/js/api.js"></script>
 <script>
   function showAlert(message, type) {
-    const box = document.getElementById("alertBox");
-    box.textContent = message;
-    box.classList.remove("hidden",
-      "bg-red-50","text-red-700","border-red-200",
-      "bg-green-50","text-green-700","border-green-200");
-    if (type === "success") {
-      box.classList.add("bg-green-50","text-green-700","border-green-200");
-    } else {
-      box.classList.add("bg-red-50","text-red-700","border-red-200");
+    if (type === "success" && typeof showSuccessNotification === "function") {
+      showSuccessNotification(message);
+      return;
     }
-    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (type === "warning" && typeof showWarningNotification === "function") {
+      showWarningNotification(message);
+      return;
+    }
+    if (typeof showErrorNotification === "function") {
+      showErrorNotification(message);
+      return;
+    }
   }
 
   function hideAlert() {
-    const box = document.getElementById("alertBox");
-    if (box) box.classList.add("hidden");
+    return;
   }
 
   async function loadModules() {

@@ -222,6 +222,8 @@ const moduleId =
   '';
 
 const focusExamId = urlParams.get('exam_id');   // highlight a specific exam if coming from module details
+let currentPractices = [];
+let currentExams = [];
 
 // ── Helpers ─────────────────────────────────────────────
 function esc(v) {
@@ -231,7 +233,18 @@ function esc(v) {
 
 function fmtDate(d) {
   if (!d) return '—';
-  const dt = new Date(d);
+  const isoMatch = String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const ddMmYyyyMatch = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  let dt = null;
+
+  if (isoMatch) {
+    dt = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  } else if (ddMmYyyyMatch) {
+    dt = new Date(Number(ddMmYyyyMatch[3]), Number(ddMmYyyyMatch[2]) - 1, Number(ddMmYyyyMatch[1]));
+  } else {
+    dt = new Date(d);
+  }
+
   if (isNaN(dt.getTime())) return '—';
   return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
 }
@@ -243,13 +256,41 @@ function fmtTime(t) {
   return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
 }
 
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function getDateKey(value) {
+  if (!value) return "";
+  const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  const ddMmYyyyMatch = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (ddMmYyyyMatch) return `${ddMmYyyyMatch[3]}-${ddMmYyyyMatch[2]}-${ddMmYyyyMatch[1]}`;
+  const parsed = new Date(value);
+  if (isNaN(parsed.getTime())) return "";
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function getSessionEndDate(session) {
-  const dateValue = session.slot_date || session.booking_date;
+  const dateValue = getDateKey(session.slot_date || session.booking_date);
   const timeValue = session.exam_end_time || session.end_time || session.exam_start_time || session.start_time || '23:59:59';
   if (!dateValue) return null;
 
-  const iso = `${dateValue}T${String(timeValue).slice(0, 8)}`;
-  const parsed = new Date(iso);
+  const [yyyy, mm, dd] = dateValue.split("-").map(Number);
+  const [hh, min, sec] = String(timeValue).slice(0, 8).split(":").map((v) => Number(v || 0));
+  const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -265,6 +306,87 @@ function isPastRetentionWindow(session) {
 function hasSessionPassed(session) {
   const endDate = getSessionEndDate(session);
   return !!endDate && new Date() > endDate;
+}
+
+function getWindowTimingText(windowState, submittedAt) {
+  if (submittedAt) {
+    return `Submitted: ${fmtDateTime(submittedAt)}`;
+  }
+
+  if (!windowState?.endDate || !windowState?.windowEnd) return '';
+
+  if (windowState.open) {
+    const remainingMs = Math.max(0, windowState.windowEnd.getTime() - Date.now());
+    const remainingMinutes = Math.floor(remainingMs / 60000);
+    const hours = Math.floor(remainingMinutes / 60);
+    const minutes = remainingMinutes % 60;
+    return `Due in: ${hours}h ${minutes}m (closes at ${fmtTime(windowState.windowEnd.toTimeString())})`;
+  }
+
+  if (windowState.reason === 'before_end') {
+    return `Submissions open at ${fmtDateTime(windowState.endDate)} (after slot end)`;
+  }
+
+  if (windowState.reason === 'window_closed') {
+    return `Closed at ${fmtDateTime(windowState.windowEnd)}`;
+  }
+
+  return '';
+}
+
+function getSubmissionWindowState(session, type) {
+  const status = String(session?.slot_status || '').toUpperCase();
+  const endDate = getSessionEndDate({
+    slot_date: session?.booking_date || session?.slot_date,
+    end_time: session?.end_time,
+    exam_end_time: session?.end_time,
+    exam_start_time: session?.start_time
+  });
+
+  if (!endDate) {
+    return { open: false, reason: 'locked', label: 'Locked', note: 'Submission timing could not be determined.' };
+  }
+
+  if (!['APPROVED', 'COMPLETED'].includes(status)) {
+    if (status === 'PENDING') {
+      return { open: false, reason: 'awaiting_approval', endDate, label: 'Awaiting Approval', note: 'Your slot request is pending admin approval.' };
+    }
+    return { open: false, reason: 'locked', endDate, label: 'Locked', note: 'Booking must be approved before submission.' };
+  }
+
+  const now = new Date();
+  const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
+
+  if (now < endDate) {
+    return {
+      open: false,
+      reason: 'before_end',
+      endDate,
+      windowEnd,
+      label: type === 'EXAM' ? 'Exam in progress' : 'Session in progress',
+      note: 'Submissions open once your booked slot ends.'
+    };
+  }
+
+  if (now > windowEnd) {
+    return {
+      open: false,
+      reason: 'window_closed',
+      endDate,
+      windowEnd,
+      label: 'Window Closed',
+      note: 'Submission closed. The upload deadline was 2 hours after slot end.'
+    };
+  }
+
+  return {
+    open: true,
+    reason: 'open',
+    endDate,
+    windowEnd,
+    label: 'Submission open',
+    note: 'Submissions are accepted for 2 hours after slot end.'
+  };
 }
 
 function statusPill(status) {
@@ -335,7 +457,8 @@ function setupTabs() {
 // ── Submission card builders ─────────────────────────────
 
 function buildPracticeCard(session) {
-  const allowed = session.slot_status === 'COMPLETED';
+  const windowState = getSubmissionWindowState(session, 'PRACTICE');
+  const allowed = windowState.open;
   const hasSubmission = !!session.submission_id;
   const isPassed = hasSessionPassed(session) && !allowed;
 
@@ -364,7 +487,7 @@ function buildPracticeCard(session) {
       <div class="flex flex-wrap items-center gap-3 mt-2">
         ${hasSubmission
           ? `<span class="text-xs text-gray-500 dark:text-gray-400">
-               Attempt <strong>${esc(session.attempt_number)}</strong> submitted on ${fmtDate(session.submitted_at)}
+               Attempt <strong>${esc(session.attempt_number)}</strong> submitted on ${fmtDateTime(session.submitted_at)}
              </span>
              ${resultPill(session.pass_fail)}
              ${aiScore}`
@@ -381,28 +504,34 @@ function buildPracticeCard(session) {
              ${hasSubmission ? 'Resubmit' : 'Submit Now'}
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
-             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>Locked
+             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>${windowState.label}
            </span>`
       }
-      ${isPassed
-        ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>`
-        : ''
-      }
+      ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${windowState.note}</span>` : ''}
+      <span class="text-xs text-slate-500">${esc(getWindowTimingText(windowState, session.submitted_at))}</span>
+      ${isPassed ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>` : ''}
     </div>
   </article>
   `;
 }
 
 function buildExamCard(exam) {
-  const allowed = exam.slot_status === 'COMPLETED';
+  const examWindow = getSubmissionWindowState({
+    slot_status: exam.slot_status,
+    booking_date: exam.booking_date || exam.slot_date,
+    start_time: exam.start_time || exam.exam_start_time,
+    end_time: exam.end_time || exam.exam_end_time
+  }, 'EXAM');
+  const allowed = examWindow.open;
   const hasSubmission = !!exam.submission_id;
+  const isPublished = exam.published_grade != null;
+  const needsRetake = isPublished && String(exam.decision || '').toUpperCase() === 'RETAKE';
   const isHighlighted = focusExamId && String(exam.exam_id) === String(focusExamId);
-  const isPassed = hasSessionPassed(exam) && !allowed;
 
   // Submission link – carry module_id through
   const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
 
-  const gradeinfo = exam.published_grade != null
+  const gradeinfo = isPublished
     ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${exam.published_grade}%</span>`
     : '';
 
@@ -421,13 +550,13 @@ function buildExamCard(exam) {
       ${exam.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1 line-clamp-1">${esc(exam.description)}</p>` : ''}
 
       <p class="text-xs text-primary font-semibold">
-        ${fmtDate(exam.slot_date)} &nbsp;•&nbsp; ${fmtTime(exam.exam_start_time)} – ${fmtTime(exam.exam_end_time)}
+        ${fmtDate(exam.booking_date || exam.slot_date)} &nbsp;•&nbsp; ${fmtTime(exam.start_time || exam.exam_start_time)} – ${fmtTime(exam.end_time || exam.exam_end_time)}
       </p>
 
       <div class="flex flex-wrap items-center gap-3 mt-2">
         ${hasSubmission
           ? `<span class="text-xs text-gray-500 dark:text-gray-400">
-               Attempt <strong>${esc(exam.attempt_number)}</strong> submitted on ${fmtDate(exam.submitted_at)}
+               Attempt <strong>${esc(exam.attempt_number)}</strong> submitted on ${fmtDateTime(exam.submitted_at)}
              </span>
              ${resultPill(exam.pass_fail)}
              ${gradeinfo}`
@@ -437,7 +566,21 @@ function buildExamCard(exam) {
     </div>
 
     <div class="shrink-0 flex flex-col gap-2 items-end">
-      ${allowed
+      ${isPublished
+        ? `<div class="flex flex-col sm:flex-row gap-2">
+             <a href="grades-feedback.html${moduleId ? `?module_id=${encodeURIComponent(moduleId)}` : ''}"
+                class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-dark">
+                View Results
+             </a>
+             ${needsRetake
+               ? `<button type="button"
+                    onclick="window.requestRetakeFromHub('${encodeURIComponent(exam.submission_id)}','${encodeURIComponent(exam.exam_id)}')"
+                    class="inline-flex items-center justify-center rounded-xl bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200">
+                    Request Retake
+                  </button>`
+               : ""}
+           </div>`
+        : (allowed
         ? `<a href="${subLink}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
@@ -445,16 +588,39 @@ function buildExamCard(exam) {
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
              <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>
-             ${isPassed ? 'Date Passed' : exam.slot_status === 'PENDING' ? 'Awaiting Approval' : 'Locked'}
+             ${examWindow.label}
            </span>`
-      }
-      ${isPassed
-        ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>`
-        : ''
-      }
+      )}
+      ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${examWindow.note}</span>` : ''}
+      <span class="text-xs text-slate-500">${esc(getWindowTimingText(examWindow, exam.submitted_at))}</span>
     </div>
   </article>
   `;
+}
+
+window.requestRetakeFromHub = async function (submissionIdEncoded, examIdEncoded) {
+  try {
+    const submissionId = decodeURIComponent(String(submissionIdEncoded || ""));
+    const examId = decodeURIComponent(String(examIdEncoded || ""));
+    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+    if (!submissionId || !token) return;
+
+    const response = await fetch(`${API_BASE}/api/submissions/${encodeURIComponent(submissionId)}/retake-request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to submit retake request");
+    showAlert(data.message || "Retake request submitted.", "success");
+    if (moduleId && examId) {
+      window.location.href = `lab-slot-booking.html?module_id=${encodeURIComponent(moduleId)}&exam_id=${encodeURIComponent(examId)}`;
+    }
+  } catch (error) {
+    showAlert(error.message || "Failed to submit retake request");
+  }
 }
 
 function emptyState(icon, message) {
@@ -547,6 +713,8 @@ async function load() {
 
     const practices = Array.isArray(data.practiceSessions) ? data.practiceSessions.filter(session => !isPastRetentionWindow(session)) : [];
     const exams     = Array.isArray(data.examSessions)     ? data.examSessions.filter(exam => !isPastRetentionWindow(exam)) : [];
+    currentPractices = practices;
+    currentExams = exams;
 
     renderPractice(practices);
     renderExams(exams);
@@ -594,6 +762,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   setupTabs();
   await load();
+  setInterval(() => {
+    if (!currentPractices.length && !currentExams.length) return;
+    renderPractice(currentPractices);
+    renderExams(currentExams);
+  }, 60000);
 });
 </script>
 </body>

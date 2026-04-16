@@ -5,6 +5,7 @@ const fs = require("fs");
 const multer = require("multer");
 const { promisePool } = require("../config/database");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
+const { createNotification } = require("../services/notifications");
 
 // --------------------------------------------------
 // Upload folder setup
@@ -348,6 +349,36 @@ router.post(
       );
 
       const material = await getMaterialById(result.insertId);
+
+      try {
+        const [enrolledStudents] = await promisePool.query(
+          `
+          SELECT ms.student_id
+          FROM module_students ms
+          WHERE ms.module_id = ?
+            AND ms.is_active = TRUE
+          `,
+          [numericModuleId]
+        );
+
+        if (enrolledStudents.length) {
+          await Promise.all(
+            enrolledStudents.map((student) =>
+              createNotification({
+                recipientRole: "student",
+                recipientId: student.student_id,
+                title: "New study material",
+                message: `A new material "${String(title).trim()}" was uploaded for ${module.module_code || "your module"}.`,
+                notificationType: "material",
+                relatedEntityType: "material",
+                relatedEntityId: result.insertId
+              })
+            )
+          );
+        }
+      } catch (notifyErr) {
+        console.error("Failed to notify students about new material:", notifyErr);
+      }
 
       return res.status(201).json({
         ok: true,

@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<script src="assets/js/common.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/student-shell.js"></script>
 <script>
@@ -72,12 +73,14 @@
 
 <script>
 function showAlert(message, type = "error") {
-  const box = document.getElementById("alertBox");
-  box.classList.remove("hidden");
-  box.className = type === "success"
-    ? "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-green-100 text-green-700 border border-green-200"
-    : "mb-6 rounded-2xl px-4 py-3 text-sm font-medium bg-red-100 text-red-700 border border-red-200";
-  box.textContent = message;
+  if (type === "success" && typeof showSuccessNotification === "function") {
+    showSuccessNotification(message);
+    return;
+  }
+  if (typeof showErrorNotification === "function") {
+    showErrorNotification(message);
+    return;
+  }
 }
 
 function escapeHtml(value) {
@@ -100,7 +103,9 @@ function buildResultCard(item) {
   const grade = item.grade != null ? Number(item.grade).toFixed(2) : "-";
   const resultBadgeClass = item.passFail === "PASS"
     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-    : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400";
+    : (item.passFail === "RETAKE"
+      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+      : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400");
 
   return `
     <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
@@ -134,8 +139,10 @@ function buildResultCard(item) {
 
 async function loadResults() {
   try {
-    const token = localStorage.getItem("token");
-    const response = await fetch("http://localhost:3001/api/submissions/student/dashboard-data", {
+    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+    const apiBase = (typeof API_BASE_URL === "string" && API_BASE_URL) ? API_BASE_URL : "http://localhost:3002/api";
+
+    const response = await fetch(`${apiBase}/submissions/student/dashboard-data`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -166,8 +173,8 @@ async function loadResults() {
         kind: "Exam",
         grade: item.published_grade,
         feedback: item.final_feedback,
-        passFail: item.pass_fail,
-        publishedAt: item.submitted_at
+        passFail: String(item.decision || "").toUpperCase() === "RETAKE" ? "RETAKE" : item.pass_fail,
+        publishedAt: item.published_at || item.submitted_at
       }));
 
     const results = [...examResults, ...practiceResults].sort((a, b) => {

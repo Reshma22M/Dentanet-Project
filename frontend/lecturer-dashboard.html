@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
   <script src="assets/js/api.js"></script>
 
   <script>
@@ -91,6 +92,11 @@
         </div>
 
         <div class="flex items-center space-x-4">
+          <button id="lecturerNotifBtn" type="button" title="Notifications"
+            class="relative w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <span class="material-icons-round text-slate-500 dark:text-slate-300 text-[20px]">notifications</span>
+            <span id="lecturerNotifBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+          </button>
           <a href="lecturer-profile.html" class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 block">
             <img id="topProfileImage" alt="Lecturer Profile Small" src="public/images/lec.jpeg" class="w-full h-full object-cover"/>
           </a>
@@ -98,6 +104,18 @@
       </div>
     </div>
   </nav>
+
+  <div id="lecturerNotifPanel" class="fixed top-16 right-4 z-[65] hidden w-96 max-h-[65vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+      <h3 class="font-bold text-slate-900 dark:text-white text-sm">Notifications</h3>
+      <button id="lecturerNotifClose" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <span class="material-icons-round text-[18px]">close</span>
+      </button>
+    </div>
+    <div id="lecturerNotifList" class="p-4 space-y-2 overflow-y-auto max-h-[56vh]">
+      <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-6">No notifications yet</p>
+    </div>
+  </div>
 
   <div class="flex pt-16 min-h-screen">
 
@@ -163,6 +181,18 @@
         </section>
 
         <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recent Notifications</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Unread items are highlighted.</p>
+            </div>
+          </div>
+          <div id="lecturerNotificationsInline" class="p-6 space-y-2">
+            <p class="text-sm text-slate-500 dark:text-slate-400">Loading notifications...</p>
+          </div>
+        </section>
+
+        <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 dark:text-white">Modules</h2>
@@ -194,6 +224,8 @@
       ? API_BASE_URL.replace(/\/api$/, "")
       : window.location.origin;
     let lecturerModules = [];
+    let lecturerNotifications = [];
+    let currentLecturerId = null;
 
     function escapeHtml(value) {
       return String(value || "")
@@ -209,6 +241,105 @@
       if (String(value).startsWith("http://") || String(value).startsWith("https://")) return value;
       const normalized = String(value).startsWith("/") ? String(value) : `/${String(value)}`;
       return `${API_ORIGIN}${normalized}`;
+    }
+
+    function formatNotificationTime(value) {
+      if (!value) return "";
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return parsed.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function getNotificationActionLink(notification) {
+      const entity = String(notification.related_entity_type || "").toLowerCase();
+      if (entity === "submission") return "lecturer-eva-submissions1.html";
+      if (entity === "exam") return "lecturer-schedule-exam.html";
+      return "lecturer-dashboard.html";
+    }
+
+    function renderNotificationCards(notifications) {
+      const items = Array.isArray(notifications) ? notifications : [];
+      if (!items.length) {
+        return '<p class="text-sm text-slate-500 dark:text-slate-400">No notifications yet</p>';
+      }
+
+      return items.map(notification => {
+        const unread = !notification.is_read;
+        const wrapperClass = unread
+          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+          : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-80";
+
+        const escapedTitle = escapeHtml(notification.title || "Notification");
+        const escapedMessage = escapeHtml(notification.message || "");
+        const timeText = formatNotificationTime(notification.created_at);
+
+        return `
+          <button type="button" data-notif-id="${notification.notification_id}" class="lecturer-notif-item w-full text-left p-3 rounded-xl border ${wrapperClass} hover:shadow-sm transition-all">
+            <div class="flex items-start gap-2">
+              <span class="inline-block w-2 h-2 rounded-full ${unread ? "bg-primary" : "bg-slate-300 dark:bg-slate-600"} mt-1.5"></span>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapedTitle}</p>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${escapedMessage}</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${timeText}</p>
+              </div>
+            </div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function wireNotificationClicks(scopeElement, notifications) {
+      if (!scopeElement) return;
+      scopeElement.querySelectorAll(".lecturer-notif-item").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-notif-id");
+          if (!id) return;
+
+          try {
+            await API.notifications.markAsRead(id);
+            const clicked = (notifications || []).find(n => String(n.notification_id) === String(id));
+            const target = getNotificationActionLink(clicked || {});
+            await loadLecturerNotifications();
+            window.location.href = target;
+          } catch (error) {
+            showErrorNotification("Failed to update notification status.");
+          }
+        });
+      });
+    }
+
+    async function loadLecturerNotifications() {
+      if (!currentLecturerId) return;
+      const result = await API.notifications.getByUser(currentLecturerId);
+      if (!result || !result.ok) return;
+
+      lecturerNotifications = Array.isArray(result.notifications) ? result.notifications : [];
+      const top = lecturerNotifications.slice(0, 12);
+      const unreadCount = top.filter(n => !n.is_read).length;
+
+      const badgeEl = document.getElementById("lecturerNotifBadge");
+      if (badgeEl) {
+        if (unreadCount > 0) badgeEl.classList.remove("hidden");
+        else badgeEl.classList.add("hidden");
+      }
+
+      const panelList = document.getElementById("lecturerNotifList");
+      if (panelList) {
+        panelList.innerHTML = renderNotificationCards(top);
+        wireNotificationClicks(panelList, top);
+      }
+
+      const inlineList = document.getElementById("lecturerNotificationsInline");
+      if (inlineList) {
+        const inlineTop = lecturerNotifications.slice(0, 6);
+        inlineList.innerHTML = renderNotificationCards(inlineTop);
+        wireNotificationClicks(inlineList, inlineTop);
+      }
     }
 
     function renderLecturerModules(searchTerm = "") {
@@ -338,12 +469,13 @@
 
     document.addEventListener("DOMContentLoaded", async function () {
       if (typeof requireAuth !== "function") {
-        alert("api.js failed to load correctly.");
+        showErrorNotification("api.js failed to load correctly.");
         return;
       }
 
       const user = await requireAuth("lecturer");
       if (!user) return;
+      currentLecturerId = user.id;
 
       const fullName =
         user.fullName ||
@@ -380,7 +512,34 @@
         refreshBtn.addEventListener("click", loadLecturerModules);
       }
 
+      const notifBtn = document.getElementById("lecturerNotifBtn");
+      const notifPanel = document.getElementById("lecturerNotifPanel");
+      const notifClose = document.getElementById("lecturerNotifClose");
+
+      if (notifBtn && notifPanel) {
+        notifBtn.addEventListener("click", async function () {
+          notifPanel.classList.toggle("hidden");
+          if (!notifPanel.classList.contains("hidden")) {
+            await loadLecturerNotifications();
+          }
+        });
+      }
+
+      if (notifClose && notifPanel) {
+        notifClose.addEventListener("click", function () {
+          notifPanel.classList.add("hidden");
+        });
+      }
+
+      document.addEventListener("click", function (event) {
+        if (!notifPanel || notifPanel.classList.contains("hidden")) return;
+        if (notifPanel.contains(event.target) || (notifBtn && notifBtn.contains(event.target))) return;
+        notifPanel.classList.add("hidden");
+      });
+
       await loadLecturerModules();
+      await loadLecturerNotifications();
+      setInterval(loadLecturerNotifications, 30000);
     });
   </script>
 </body>

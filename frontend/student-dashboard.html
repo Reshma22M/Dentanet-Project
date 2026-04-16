@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/student-shell.js"></script>
   <script>
@@ -75,6 +76,16 @@
         </div>
         <div id="studentUpcomingPanel" class="space-y-4">
           <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">Loading updates...</div>
+        </div>
+      </section>
+
+      <section class="mt-8 bg-white dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-purple-50 dark:border-gray-800">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">Notifications</h3>
+          <span class="material-icons-round text-primary/40">notifications</span>
+        </div>
+        <div id="studentNotificationsPanel" class="space-y-2">
+          <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">Loading notifications...</div>
         </div>
       </section>
     </main>
@@ -219,15 +230,11 @@ function closeEnrollModal() {
 }
 
 function showEnrollAlert(msg, type) {
-  var box = document.getElementById('enrollAlertBox');
-  if (!box) return;
-
-  box.classList.remove('hidden');
-  box.className = type === 'success'
-    ? 'mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-green-100 text-green-700 border border-green-200'
-    : 'mb-4 rounded-xl px-4 py-2.5 text-sm font-medium bg-red-100 text-red-700 border border-red-200';
-
-  box.textContent = msg;
+  if (type === "success" && typeof showSuccessNotification === "function") {
+    showSuccessNotification(msg);
+  } else if (typeof showErrorNotification === "function") {
+    showErrorNotification(msg);
+  }
 }
 
 async function submitEnrollment() {
@@ -308,6 +315,83 @@ async function loadUpcoming() {
   }
 }
 
+function formatNotificationTime(value) {
+  if (!value) return "";
+  var parsed = new Date(value);
+  if (isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function getStudentNotificationActionLink(notification) {
+  var entity = String((notification && notification.related_entity_type) || "").toLowerCase();
+  if (entity === "exam") return "submission-hub.html";
+  if (entity === "slot_request") return "lab-slot-booking.html";
+  if (entity === "material") return "study-materials.html";
+  if (entity === "submission") return "grades-feedback.html";
+  return "student-dashboard.html";
+}
+
+async function loadStudentNotifications() {
+  var panel = document.getElementById("studentNotificationsPanel");
+  if (!panel) return;
+
+  try {
+    var result = await API.notifications.getByUser(currentVerifiedUser ? currentVerifiedUser.id : null);
+    if (!result || !result.ok) {
+      panel.innerHTML = '<div class="p-4 rounded-2xl bg-red-50 text-sm text-red-600">Failed to load notifications.</div>';
+      return;
+    }
+
+    var notifications = Array.isArray(result.notifications) ? result.notifications.slice(0, 8) : [];
+    if (!notifications.length) {
+      panel.innerHTML = '<div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500 dark:text-gray-400">No notifications yet.</div>';
+      return;
+    }
+
+    panel.innerHTML = notifications.map(function (n) {
+      var unread = !n.is_read;
+      var cardClass = unread
+        ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800"
+        : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-80";
+
+      return '<button type="button" class="student-notif-item w-full text-left p-3 rounded-xl border ' + cardClass + ' transition-all" data-notif-id="' + n.notification_id + '" data-target="' + getStudentNotificationActionLink(n) + '">' +
+        '<div class="flex items-start gap-2">' +
+          '<span class="inline-block w-2 h-2 rounded-full ' + (unread ? "bg-primary" : "bg-slate-300 dark:bg-slate-600") + ' mt-1.5"></span>' +
+          '<div class="min-w-0">' +
+            '<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">' + escapeHtml(n.title || "Notification") + '</p>' +
+            '<p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">' + escapeHtml(n.message || "") + '</p>' +
+            '<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">' + formatNotificationTime(n.created_at) + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</button>';
+    }).join("");
+
+    Array.prototype.forEach.call(panel.querySelectorAll(".student-notif-item"), function (btn) {
+      btn.addEventListener("click", async function () {
+        var notifId = btn.getAttribute("data-notif-id");
+        var target = btn.getAttribute("data-target") || "student-dashboard.html";
+
+        try {
+          if (notifId) {
+            await API.notifications.markAsRead(notifId);
+          }
+        } catch (e) {
+          // keep navigation flow
+        }
+
+        window.location.href = target;
+      });
+    });
+  } catch (error) {
+    panel.innerHTML = '<div class="p-4 rounded-2xl bg-red-50 text-sm text-red-600">Failed to load notifications.</div>';
+  }
+}
+
 async function loadAllData() {
   try {
     var token = localStorage.getItem('token');
@@ -345,7 +429,7 @@ async function loadAllData() {
 
 document.addEventListener('DOMContentLoaded', async function() {
   if (typeof requireAuth !== 'function') {
-    alert('api.js failed to load');
+    showErrorNotification("api.js failed to load correctly.");
     return;
   }
 
@@ -415,7 +499,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  await Promise.all([loadAllData(), loadUpcoming()]);
+  await Promise.all([loadAllData(), loadUpcoming(), loadStudentNotifications()]);
+  setInterval(loadStudentNotifications, 30000);
 });
 </script>
 </body>

@@ -226,7 +226,18 @@ function formatTime(timeStr) {
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
+  const isoMatch = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const ddMmYyyyMatch = String(dateStr).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  let d = null;
+
+  if (isoMatch) {
+    d = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  } else if (ddMmYyyyMatch) {
+    d = new Date(Number(ddMmYyyyMatch[3]), Number(ddMmYyyyMatch[2]) - 1, Number(ddMmYyyyMatch[1]));
+  } else {
+    d = new Date(dateStr);
+  }
+
   if (Number.isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString("en-US", {
     year: "numeric",
@@ -235,12 +246,35 @@ function formatDate(dateStr) {
   });
 }
 
+function getDateKey(value) {
+  if (!value) return "";
+  const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  const ddMmYyyyMatch = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (ddMmYyyyMatch) return `${ddMmYyyyMatch[3]}-${ddMmYyyyMatch[2]}-${ddMmYyyyMatch[1]}`;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function toLocalDateTime(dateValue, timeValue) {
+  const dateKey = getDateKey(dateValue);
+  if (!dateKey) return null;
+  const [yyyy, mm, dd] = dateKey.split("-").map(Number);
+  const [hh, min, sec] = String(timeValue || "00:00:00").slice(0, 8).split(":").map((v) => Number(v || 0));
+  const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function isExamExpired(exam) {
   if (!exam || !exam.exam_date || !exam.end_time) return false;
 
   try {
-    const endTime = String(exam.end_time).slice(0, 5);
-    const examEnd = new Date(`${exam.exam_date}T${endTime}:00`);
+    const examEnd = toLocalDateTime(exam.exam_date, exam.end_time);
+    if (!examEnd) return false;
     return examEnd.getTime() < Date.now();
   } catch (err) {
     console.error("Expiry check failed:", err);
@@ -252,8 +286,8 @@ function isSlotExpired(slot) {
   if (!slot || !slot.slot_date || !slot.end_time) return false;
 
   try {
-    const endTime = String(slot.end_time).slice(0, 5);
-    const slotEnd = new Date(`${slot.slot_date}T${endTime}:00`);
+    const slotEnd = toLocalDateTime(slot.slot_date, slot.end_time);
+    if (!slotEnd) return false;
     return slotEnd.getTime() < Date.now();
   } catch (err) {
     console.error("Slot expiry check failed:", err);
@@ -640,7 +674,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   document.getElementById("practiceDate").min = today;
 
   await loadBookings();

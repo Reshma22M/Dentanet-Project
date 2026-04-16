@@ -797,6 +797,40 @@ const API = {
         }
     },
 
+    submissions: {
+        getLecturerBatchPerformanceReport: async (filters = {}) => {
+            const params = new URLSearchParams();
+            Object.entries(filters || {}).forEach(([key, value]) => {
+                if (value !== null && value !== undefined && value !== "") {
+                    params.append(key, value);
+                }
+            });
+
+            const response = await fetch(
+                `${API_BASE_URL}/submissions/lecturer/reports/batch-performance${params.toString() ? `?${params.toString()}` : ""}`,
+                { headers: getAuthHeaders() }
+            );
+
+            return await parseResponse(response);
+        },
+
+        getLecturerAiAccuracyReport: async (filters = {}) => {
+            const params = new URLSearchParams();
+            Object.entries(filters || {}).forEach(([key, value]) => {
+                if (value !== null && value !== undefined && value !== "") {
+                    params.append(key, value);
+                }
+            });
+
+            const response = await fetch(
+                `${API_BASE_URL}/submissions/lecturer/reports/ai-accuracy${params.toString() ? `?${params.toString()}` : ""}`,
+                { headers: getAuthHeaders() }
+            );
+
+            return await parseResponse(response);
+        }
+    },
+
     admin: {
 
     updateProfile: async (id, data) => {

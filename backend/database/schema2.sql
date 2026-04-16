@@ -938,3 +938,29 @@ DROP COLUMN module_student_id;
 ALTER TABLE module_lecturers
 DROP COLUMN module_lecturer_id;
 
+USE dentanet_lms;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS
+bak_api_evaluations_20260415094416,
+bak_exam_slot_requests_20260415094416,
+bak_exam_time_slots_20260415094416,
+bak_exams_20260415094416,
+bak_final_results_20260415094416,
+bak_lecturer_reviews_20260415094416,
+bak_module_lecturers_20260415094416,
+bak_module_students_20260415094416,
+bak_modules_20260415094416,
+bak_notifications_20260415094416,
+bak_practice_slot_requests_20260415094416,
+bak_slot_allocations_20260415094416,
+bak_slot_requests_20260415094416,
+bak_student_study_materials_20260415094416,
+bak_study_materials_20260415094416,
+bak_submission_files_20260415094416,
+bak_submissions_20260415094416;
+
+SET FOREIGN_KEY_CHECKS = 1;
+DELETE FROM lecturers 
+WHERE lecturer_id IN (8, 10);

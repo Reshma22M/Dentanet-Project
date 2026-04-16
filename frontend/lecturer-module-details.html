@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
   <script src="assets/js/api.js"></script>
 
   <script>
@@ -851,7 +852,7 @@ function getModuleIdFromQuery() {
 
     document.addEventListener("DOMContentLoaded", async function () {
       if (typeof requireAuth !== "function") {
-        alert("api.js failed to load correctly.");
+        showErrorNotification("api.js failed to load correctly.");
         return;
       }
 

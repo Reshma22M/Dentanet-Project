@@ -43,6 +43,18 @@
     .sidebar-link-active {
       @apply text-white bg-primary rounded-xl shadow-lg;
     }
+    .ai-badge-ideal {
+      @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300;
+    }
+    .ai-badge-acceptable {
+      @apply bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300;
+    }
+    .ai-badge-needs {
+      @apply bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300;
+    }
+    .ai-badge-unacceptable {
+      @apply bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300;
+    }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
@@ -138,6 +150,7 @@
                   <h2 class="text-xl font-bold text-slate-900 dark:text-white">Submitted images</h2>
                   <span id="imageCount" class="text-sm font-semibold text-slate-500 dark:text-slate-300">0 files</span>
                 </div>
+                <p class="mb-4 text-xs text-slate-500 dark:text-slate-300">Click an image to zoom. Use +/- to inspect details.</p>
                 <div id="imageGrid" class="grid gap-4 sm:grid-cols-2"></div>
               </section>
 
@@ -172,10 +185,20 @@
                     <p id="evaluatedAtValue" class="mt-2 text-base font-bold">-</p>
                   </div>
                 </div>
+                <div class="mt-5 grid gap-4 md:grid-cols-2">
+                  <div class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">AI Evaluation Status</p>
+                    <p id="aiStatusValue" class="mt-2 text-base font-bold">-</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">AI Rubric Summary</p>
+                    <p id="aiRubricSummary" class="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">-</p>
+                  </div>
+                </div>
 
                 <div class="mt-5">
                   <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Raw DEd response</p>
-                  <pre id="rawResponse" class="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">No raw response stored.</pre>
+                  <pre id="rawResponse" class="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">Raw response is not stored in current database schema.</pre>
                 </div>
               </section>
 
@@ -260,12 +283,29 @@
     </main>
   </div>
 
+  <div id="imageModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-slate-950/85 p-4">
+    <div class="relative w-full max-w-6xl">
+      <button id="closeImageModalBtn" type="button" class="absolute right-0 top-0 -translate-y-12 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20">Close</button>
+      <div class="relative overflow-hidden rounded-2xl border border-white/20 bg-black">
+        <img id="modalImage" src="" alt="Zoomed submission image" class="mx-auto max-h-[80vh] w-auto max-w-full origin-center transition-transform duration-200" />
+      </div>
+      <div class="mt-3 flex items-center justify-between rounded-xl bg-white/10 px-4 py-2 text-xs text-white">
+        <span id="modalImageLabel">Image preview</span>
+        <div class="flex items-center gap-2">
+          <button id="zoomOutBtn" type="button" class="rounded bg-white/20 px-3 py-1 font-semibold hover:bg-white/30">-</button>
+          <button id="zoomResetBtn" type="button" class="rounded bg-white/20 px-3 py-1 font-semibold hover:bg-white/30">Reset</button>
+          <button id="zoomInBtn" type="button" class="rounded bg-white/20 px-3 py-1 font-semibold hover:bg-white/30">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
       ? API_BASE_URL.replace(/\/api$/, "")
       : window.location.origin;
     const params = new URLSearchParams(window.location.search);
-    const submissionId = params.get("submission_id");
+    let submissionId = params.get("submission_id");
     const moduleId = params.get("module_id");
 
     const loadingState = document.getElementById("loadingState");
@@ -274,8 +314,16 @@
     const reviewForm = document.getElementById("reviewForm");
     const saveReviewBtn = document.getElementById("saveReviewBtn");
     const publishBtn = document.getElementById("publishBtn");
+    const imageModal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    const modalImageLabel = document.getElementById("modalImageLabel");
+    const closeImageModalBtn = document.getElementById("closeImageModalBtn");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const zoomResetBtn = document.getElementById("zoomResetBtn");
 
     let submissionData = null;
+    let imageZoom = 1;
 
     function showMessage(message, type = "error") {
       messageBox.classList.remove("hidden");
@@ -306,12 +354,89 @@
       return `${datePart} | ${timePart}`;
     }
 
+    async function resolveSubmissionIdFromQueue() {
+      const response = await fetch(`${API_ORIGIN}/api/submissions/lecturer/exams`, {
+        headers: getAuthHeaders()
+      });
+      const data = await parseResponse(response);
+      if (!data.ok) {
+        throw new Error(data.error || "Failed to load submission queue");
+      }
+
+      const queue = Array.isArray(data.submissions) ? data.submissions : [];
+      const filtered = moduleId
+        ? queue.filter((item) => String(item.module_id) === String(moduleId))
+        : queue;
+
+      if (!filtered.length) {
+        return null;
+      }
+
+      const preferred =
+        filtered.find((item) => item.published_grade === null || item.published_grade === undefined) ||
+        filtered[0];
+
+      return preferred?.submission_id ? String(preferred.submission_id) : null;
+    }
+
     function getCurrentStatus(submission) {
       if (submission.published_grade !== null && submission.published_grade !== undefined) return "Published";
       if (submission.lecturer_grade !== null && submission.lecturer_grade !== undefined) return "Reviewed";
       if (submission.api_status === "FAILED") return "AI Failed";
       if (submission.api_status === "SUCCESS") return "Ready for Review";
       return "Pending";
+    }
+
+    function aiBadgeClass(label) {
+      const normalized = String(label || "").toLowerCase();
+      if (normalized === "ideal") return "ai-badge-ideal";
+      if (normalized === "acceptable") return "ai-badge-acceptable";
+      if (normalized.includes("needs")) return "ai-badge-needs";
+      if (normalized.includes("non-acceptable") || normalized.includes("non acceptable")) return "ai-badge-unacceptable";
+      if (normalized === "unacceptable") return "ai-badge-unacceptable";
+      return "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
+    }
+
+    function mapAiToPoints(label) {
+      const normalized = String(label || "").toLowerCase();
+      if (normalized === "ideal") return 5;
+      if (normalized === "acceptable") return 3;
+      if (normalized.includes("needs")) return 1;
+      if (normalized.includes("non-acceptable") || normalized.includes("non acceptable")) return -10;
+      if (normalized === "unacceptable") return -10;
+      return null;
+    }
+
+    function setAiCriterion(elementId, label) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      const points = mapAiToPoints(label);
+      const badgeClass = aiBadgeClass(label);
+      const pointText = points === null ? "" : ` (${points} pts)`;
+      element.innerHTML = `<span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${badgeClass}">${label || "-"}${pointText}</span>`;
+    }
+
+    function updateImageZoom() {
+      if (!modalImage) return;
+      modalImage.style.transform = `scale(${imageZoom})`;
+    }
+
+    function openImageModal(src, label) {
+      if (!imageModal || !modalImage) return;
+      imageZoom = 1;
+      modalImage.src = src;
+      modalImageLabel.textContent = label || "Image preview";
+      updateImageZoom();
+      imageModal.classList.remove("hidden");
+      imageModal.classList.add("flex");
+    }
+
+    function closeImageModal() {
+      if (!imageModal || !modalImage) return;
+      imageModal.classList.add("hidden");
+      imageModal.classList.remove("flex");
+      modalImage.src = "";
+      imageZoom = 1;
     }
 
     function renderImages(files) {
@@ -325,9 +450,10 @@
 
       imageGrid.innerHTML = files.map((file, index) => {
         const src = `${API_ORIGIN}${file.file_url}`;
+        const label = `Student image ${index + 1}`;
         return `
           <figure class="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
-            <img src="${src}" alt="Submission image ${index + 1}" class="h-72 w-full object-cover" />
+            <img src="${src}" alt="Submission image ${index + 1}" class="h-72 w-full cursor-zoom-in object-cover" onclick="window.openLecturerImageModal('${src}', '${label}')" />
             <figcaption class="flex items-center justify-between px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-300">
               <span>Image ${index + 1}</span>
               <a href="${src}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Open full size</a>
@@ -353,13 +479,25 @@
       document.getElementById("slotInfo").textContent = formatSlot(submission.slot_date, submission.exam_start_time, submission.exam_end_time);
       document.getElementById("submissionComments").textContent = submission.comments || "No comments provided.";
 
-      document.getElementById("smoothValue").textContent = submission.smooth_outline_status || "-";
-      document.getElementById("flatValue").textContent = submission.flat_floor_status || "-";
-      document.getElementById("depthValue").textContent = submission.depth_status || "-";
-      document.getElementById("undercutValue").textContent = submission.undercut_status || "-";
+      setAiCriterion("smoothValue", submission.smooth_outline_status);
+      setAiCriterion("flatValue", submission.flat_floor_status);
+      setAiCriterion("depthValue", submission.depth_status);
+      setAiCriterion("undercutValue", submission.undercut_status);
       document.getElementById("confidenceValue").textContent = submission.confidence !== null && submission.confidence !== undefined ? `${Number(submission.confidence).toFixed(2)}%` : "-";
       document.getElementById("evaluatedAtValue").textContent = formatDateTime(submission.evaluated_at);
-      document.getElementById("rawResponse").textContent = submission.raw_response_json ? JSON.stringify(submission.raw_response_json, null, 2) : "No raw response stored.";
+      document.getElementById("aiStatusValue").textContent = submission.api_status || "-";
+      const rubricStatuses = [
+        submission.smooth_outline_status,
+        submission.flat_floor_status,
+        submission.depth_status,
+        submission.undercut_status
+      ].filter(Boolean);
+      document.getElementById("aiRubricSummary").textContent = rubricStatuses.length
+        ? rubricStatuses.join(" • ")
+        : "AI rubric details unavailable";
+      document.getElementById("rawResponse").textContent = submission.raw_response_json
+        ? JSON.stringify(submission.raw_response_json, null, 2)
+        : "Raw response is not stored in current database schema. Criterion labels and score are shown above.";
 
       document.getElementById("publishedGrade").textContent = submission.published_grade !== null && submission.published_grade !== undefined ? Number(submission.published_grade).toFixed(2) : "Not published";
       document.getElementById("publishedDecision").textContent = submission.pass_fail || "-";
@@ -377,9 +515,31 @@
 
     async function loadSubmission() {
       if (!submissionId) {
-        loadingState.textContent = "No submission id was provided.";
-        showMessage("Open this page from the lecturer submission queue.");
-        return;
+        try {
+          const fallbackSubmissionId = await resolveSubmissionIdFromQueue();
+          if (fallbackSubmissionId) {
+            submissionId = fallbackSubmissionId;
+            const nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.set("submission_id", submissionId);
+            if (moduleId) nextUrl.searchParams.set("module_id", moduleId);
+            window.history.replaceState({}, "", nextUrl.toString());
+          } else {
+            loadingState.innerHTML = `
+              <div class="space-y-4">
+                <p class="text-base font-semibold text-slate-700 dark:text-slate-200">No submission selected yet.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-300">No exam submissions are currently available for review.</p>
+                <a href="lecturer-eva-submissions1.html" class="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-accent">
+                  Go to Submission Queue
+                </a>
+              </div>
+            `;
+            return;
+          }
+        } catch (error) {
+          loadingState.textContent = "Unable to load submission detail.";
+          showMessage(error.message || "Failed to load submission queue");
+          return;
+        }
       }
 
       try {
@@ -434,6 +594,7 @@
 
     async function publishResult() {
       if (!submissionId) return;
+      if (!window.confirm("Publish this final result to the student now?")) return;
 
       publishBtn.disabled = true;
       publishBtn.textContent = "Publishing...";
@@ -459,6 +620,30 @@
     reviewForm.addEventListener("submit", saveReview);
     publishBtn.addEventListener("click", publishResult);
     document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());
+    window.openLecturerImageModal = openImageModal;
+    closeImageModalBtn?.addEventListener("click", closeImageModal);
+    imageModal?.addEventListener("click", (event) => {
+      if (event.target === imageModal) closeImageModal();
+    });
+    zoomInBtn?.addEventListener("click", () => {
+      imageZoom = Math.min(4, imageZoom + 0.25);
+      updateImageZoom();
+    });
+    zoomOutBtn?.addEventListener("click", () => {
+      imageZoom = Math.max(0.5, imageZoom - 0.25);
+      updateImageZoom();
+    });
+    zoomResetBtn?.addEventListener("click", () => {
+      imageZoom = 1;
+      updateImageZoom();
+    });
+    modalImage?.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      imageZoom = event.deltaY < 0
+        ? Math.min(4, imageZoom + 0.1)
+        : Math.max(0.5, imageZoom - 0.1);
+      updateImageZoom();
+    }, { passive: false });
 
     document.addEventListener("DOMContentLoaded", async () => {
       const user = await requireAuth("lecturer");

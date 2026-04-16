@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { promisePool } = require("../config/database");
-const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const { sendEmail, hasSmtpConfig } = require("../services/email");
 
 const { authenticateToken } = require("../middleware/auth");
 const {
@@ -12,19 +12,6 @@ const {
   validateFullName,
   validateStudentRegistrationNumber,
 } = require("../middleware/validators");
-
-// -----------------------------
-// Mail transporter
-// -----------------------------
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587", 10),
-  secure: String(process.env.SMTP_SECURE || "false") === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 const pendingRegistrations = new Map();
 
@@ -109,8 +96,7 @@ async function sendAccountCreatedEmail({
   loginIdentifier,
   tempPassword,
 }) {
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || `"DentaNet LMS" <${process.env.SMTP_USER}>`,
+  return sendEmail({
     to: toEmail,
     subject: `Your DentaNet ${roleLabel} Account`,
     html: `
@@ -152,6 +138,12 @@ router.post("/send-otp", async (req, res) => {
     }
 
     const sanitizedEmail = ev.sanitized;
+    if (!hasSmtpConfig()) {
+      return res.status(503).json({
+        success: false,
+        error: "Email service is not configured. Please contact administrator.",
+      });
+    }
 
     const alreadyExists = await emailExistsAcrossAccounts(sanitizedEmail);
     if (alreadyExists) {
@@ -169,8 +161,7 @@ router.post("/send-otp", async (req, res) => {
       expiresAt,
     });
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || `"DentaNet LMS" <${process.env.SMTP_USER}>`,
+    const mailResult = await sendEmail({
       to: sanitizedEmail,
       subject: "DentaNet OTP Verification",
       html: `
@@ -184,6 +175,14 @@ router.post("/send-otp", async (req, res) => {
         </div>
       `,
     });
+    if (!mailResult.ok) {
+      pendingRegistrations.delete(sanitizedEmail);
+      return res.status(503).json({
+        success: false,
+        error: "Failed to send OTP email. Please try again later.",
+        details: mailResult.error || undefined,
+      });
+    }
 
     return res.json({
       success: true,

@@ -8,6 +8,8 @@ const {
   validateFullName,
   validateStudentRegistrationNumber,
 } = require("../middleware/validators");
+const { createNotification } = require("../services/notifications");
+const { sendEmail, hasSmtpConfig } = require("../services/email");
 
 // -----------------------------
 // Helpers
@@ -26,6 +28,18 @@ function isPrimaryAdmin(req) {
 function normalizeAccountType(accountType) {
   const value = String(accountType || "").trim().toLowerCase();
   return ["admin", "student", "lecturer"].includes(value) ? value : null;
+}
+
+function normalizeBoolInput(value, fallback) {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+
+  const text = String(value).trim().toLowerCase();
+  if (["true", "1", "yes", "on", "active"].includes(text)) return true;
+  if (["false", "0", "no", "off", "inactive"].includes(text)) return false;
+
+  return fallback;
 }
 
 async function resolveDepartmentId(departmentInput) {
@@ -286,11 +300,11 @@ async function handleUpdateUser(req, res, accountType, id) {
 
   if (accountType === "admin") {
     const updateIsActive =
-      adminMode && isActive !== undefined ? Boolean(isActive) : existingUser.is_active;
+      adminMode ? normalizeBoolInput(isActive, existingUser.is_active) : existingUser.is_active;
 
     const updateMustChangePassword =
       adminMode && mustChangePassword !== undefined
-        ? Boolean(mustChangePassword)
+        ? normalizeBoolInput(mustChangePassword, existingUser.must_change_password)
         : existingUser.must_change_password;
 
     if (adminMode && id === 1 && updateIsActive === false) {
@@ -318,7 +332,7 @@ async function handleUpdateUser(req, res, accountType, id) {
     let nextRegistrationNumber = existingUser.registration_number;
     let nextDepartmentId = existingUser.department_id;
     const updateIsActive =
-      adminMode && isActive !== undefined ? Boolean(isActive) : existingUser.is_active;
+      adminMode ? normalizeBoolInput(isActive, existingUser.is_active) : existingUser.is_active;
 
     const finalRegistrationNumber = registrationNumber ?? registration_number;
     if (finalRegistrationNumber !== undefined) {
@@ -374,15 +388,54 @@ async function handleUpdateUser(req, res, accountType, id) {
         id,
       ]
     );
+
+    const wasPreviouslyInactive = !(existingUser.is_active === true || existingUser.is_active === 1 || existingUser.is_active === "1");
+    const isNowActive = updateIsActive === true;
+
+    if (adminMode && wasPreviouslyInactive && isNowActive) {
+      try {
+        await createNotification({
+          recipientRole: "student",
+          recipientId: id,
+          title: "Account approved",
+          message: "Your account has been approved. You can now log in to DentaNet LMS.",
+          notificationType: "account",
+          relatedEntityType: "student",
+          relatedEntityId: id
+        });
+      } catch (notificationError) {
+        console.error("Failed to create student approval notification:", notificationError);
+      }
+
+      try {
+        if (hasSmtpConfig()) {
+          await sendEmail({
+            to: nextEmail,
+            subject: "DentaNet: Account Approved",
+            html: `
+              <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h2>Your DentaNet account is approved</h2>
+                <p>Hello ${nextFirstName || "Student"},</p>
+                <p>Your student registration has been approved by the administrator.</p>
+                <p>You can now log in to DentaNet LMS using your registered email and password.</p>
+              </div>
+            `,
+            text: `Hello ${nextFirstName || "Student"}, your DentaNet student account has been approved. You can now log in to the LMS.`
+          });
+        }
+      } catch (mailError) {
+        console.error("Failed to send student approval email:", mailError);
+      }
+    }
   } else if (accountType === "lecturer") {
     let nextStaffId = existingUser.staff_id;
     let nextDepartmentId = existingUser.department_id;
     const updateIsActive =
-      adminMode && isActive !== undefined ? Boolean(isActive) : existingUser.is_active;
+      adminMode ? normalizeBoolInput(isActive, existingUser.is_active) : existingUser.is_active;
 
     const updateMustChangePassword =
       adminMode && mustChangePassword !== undefined
-        ? Boolean(mustChangePassword)
+        ? normalizeBoolInput(mustChangePassword, existingUser.must_change_password)
         : existingUser.must_change_password;
 
     const finalStaffId = staffId ?? staff_id;

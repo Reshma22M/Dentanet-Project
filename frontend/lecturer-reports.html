@@ -1,362 +1,500 @@
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>DentaNet | Reports & Analytics</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#3B82F6",
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-<style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>DentaNet | Reports & Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#3B82F6",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
-<nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-<div class="px-4 sm:px-6 lg:px-8">
-<div class="flex justify-between items-center h-16">
-<div class="flex items-center gap-2">
-    <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
-</div>
-<div class="flex items-center space-x-4">
-<button class="relative p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
-<span class="material-icons-round">notifications</span>
-<span class="absolute top-2 right-2 flex h-2 w-2">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-</span>
-</button>
-<div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
-<img alt="Lecturer Profile" src="public/images/lec.jpeg"/>
-</div>
-</div>
-</div>
-</div>
-</nav>
+  <nav class="fixed top-0 z-[60] w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <img src="blue-logo.svg" alt="DentaNet Logo" class="h-32 w-auto" />
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20">
+            <img alt="Lecturer Profile" src="public/images/lec.jpeg"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
 
-<div class="flex pt-16 min-h-screen">
-<aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
-<div class="p-4 space-y-2 flex-1 overflow-y-auto">
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
-                Dashboard
-            </a>
-<a class="flex items-center gap-3 px-4 py-4 text-sm font-bold text-white bg-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all" href="lecturer-schedule-exam.html">
-<span class="material-symbols-outlined">event_available</span>
-                Schedule an Exam
-            </a>
-<div class="pt-4 pb-2 px-4">
-<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
-</div>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-eva-submissions1.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">assignment</span>
-                Student Submissions
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-labslot-timetable.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">calendar_view_week</span>
-                Lab Slot Timetable
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-upload-materials.html">
-<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
-                Upload Study Materials
-            </a>
-<a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl transition-all" href="lecturer-reports.html">
-<span class="material-symbols-outlined text-primary">monitoring</span>
-                Performance Report
-            </a>
-</div>
-<div class="p-4 border-t border-slate-100 dark:border-slate-800">
-<button onclick="window.location.href='login.html'" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
-<span class="material-symbols-outlined">logout</span>
-                Logout
-            </button>
-</div>
-</aside>
+  <div class="flex pt-16 min-h-screen">
+    <aside class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-50">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto">
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-dashboard.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
+          Dashboard
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-schedule-exam.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">event_available</span>
+          Schedule an Exam
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-eva-submissions1.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">assignment</span>
+          Student Submissions
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-labslot-timetable.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">calendar_view_week</span>
+          Lab Slot Timetable
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all group" href="lecturer-upload-materials.html">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
+          Upload Study Materials
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl transition-all" href="lecturer-reports.html">
+          <span class="material-symbols-outlined text-primary">monitoring</span>
+          Performance Report
+        </a>
+      </div>
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </aside>
 
-<main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
-<div class="max-w-7xl mx-auto">
-<!-- Page Header -->
-<div class="mb-8">
-<h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Reports & Analytics</h1>
-<p class="text-slate-600 dark:text-slate-400">Generate batch reports and analyze system evaluation accuracy</p>
-</div>
+    <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-8">
+          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Reports & Analytics</h1>
+          <p class="text-slate-600 dark:text-slate-400">Generate batch final-grade performance and AI vs lecturer accuracy reports.</p>
+        </div>
 
-<!-- Tab Navigation -->
-<div class="mb-8 border-b border-slate-200 dark:border-slate-700">
-<div class="flex gap-1">
-<button onclick="switchReportTab('batch')" id="batchTab" class="px-6 py-3 font-semibold text-primary border-b-2 border-primary">
-                    Batch Performance Report
-                </button>
-<button onclick="switchReportTab('api')" id="apiTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent">
-                    API Accuracy Report
-                </button>
-</div>
-</div>
+        <div class="mb-8 border-b border-slate-200 dark:border-slate-700">
+          <div class="flex gap-1">
+            <button id="batchTab" class="px-6 py-3 font-semibold text-primary border-b-2 border-primary" type="button">Batch Performance Report</button>
+            <button id="apiTab" class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent" type="button">AI Accuracy Report</button>
+          </div>
+        </div>
 
-<!-- Batch Performance Report Tab -->
-<div id="batchContent">
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 mb-8 shadow-sm">
-<div class="flex items-center gap-2 mb-6">
-<span class="material-icons-round text-primary">assessment</span>
-<h2 class="text-2xl font-bold dark:text-white">Student Performance Parameters</h2>
-</div>
+        <section id="batchContent">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
+            <h2 class="text-xl font-bold dark:text-white mb-4">Batch Performance Filters</h2>
+            <form id="batchReportForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Module</label>
+                <select id="batchModuleId" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+                  <option value="">All Assigned Modules</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Batch Year</label>
+                <input id="batchYear" type="number" min="2000" max="2099" placeholder="e.g. 2024" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Attempt Mode</label>
+                <select id="batchAttemptMode" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+                  <option value="last">Last Attempt</option>
+                  <option value="best">Best Attempt</option>
+                  <option value="first">First Attempt</option>
+                  <option value="all">All Attempts</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Start Date</label>
+                <input id="batchStartDate" type="date" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">End Date</label>
+                <input id="batchEndDate" type="date" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div class="flex items-end gap-3">
+                <button id="batchGenerateBtn" type="submit" class="px-6 py-2.5 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all">Generate</button>
+                <button id="batchExportCsvBtn" type="button" class="px-6 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 font-semibold rounded-lg transition-all">Export CSV</button>
+              </div>
+            </form>
+          </div>
 
-<form id="batchReportForm" class="space-y-6">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<!-- Batch/Year Selection -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Batch/Year</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required>
-<option value="">Select Batch</option>
-<option value="2024">Batch 2024 (3rd Year)</option>
-<option value="2023">Batch 2023 (4th Year)</option>
-<option value="2022">Batch 2022 (Final Year)</option>
-<option value="2021">Batch 2021 (Alumni)</option>
-</select>
-</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="batchSummaryCards"></div>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <h3 class="text-lg font-bold mb-4">Student Performance</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-left text-slate-500">
+                  <tr>
+                    <th class="py-2 pr-4">Student</th>
+                    <th class="py-2 pr-4">Reg No</th>
+                    <th class="py-2 pr-4">Batch</th>
+                    <th class="py-2 pr-4">Avg</th>
+                    <th class="py-2 pr-4">Best</th>
+                    <th class="py-2 pr-4">Pass</th>
+                    <th class="py-2 pr-4">Fail</th>
+                  </tr>
+                </thead>
+                <tbody id="batchResultsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-<!-- Course Selection -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Course</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required>
-<option value="all">All Courses</option>
-<option value="operative">Operative Dentistry</option>
-<option value="prosthodontics">Prosthodontics</option>
-<option value="orthodontics">Orthodontics</option>
-<option value="oral-pathology">Oral Pathology</option>
-</select>
-</div>
+        <section id="apiContent" class="hidden">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
+            <h2 class="text-xl font-bold dark:text-white mb-4">AI Accuracy Filters</h2>
+            <form id="apiReportForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Module</label>
+                <select id="apiModuleId" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+                  <option value="">All Assigned Modules</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Batch Year</label>
+                <input id="apiBatchYear" type="number" min="2000" max="2099" placeholder="e.g. 2024" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Attempt Mode</label>
+                <select id="apiAttemptMode" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+                  <option value="last">Last Attempt</option>
+                  <option value="best">Best Attempt</option>
+                  <option value="first">First Attempt</option>
+                  <option value="all">All Attempts</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Start Date</label>
+                <input id="apiStartDate" type="date" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">End Date</label>
+                <input id="apiEndDate" type="date" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Tolerance (grade points)</label>
+                <input id="apiTolerance" type="number" min="0" step="0.5" value="5" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700" />
+              </div>
+              <div class="flex items-end gap-3">
+                <button id="apiGenerateBtn" type="submit" class="px-6 py-2.5 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all">Generate</button>
+                <button id="apiExportCsvBtn" type="button" class="px-6 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 font-semibold rounded-lg transition-all">Export CSV</button>
+              </div>
+            </form>
+          </div>
 
-<!-- Date Range -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Start Date</label>
-<input type="date" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required/>
-</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="apiSummaryCards"></div>
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h3 class="text-lg font-bold mb-4">Criteria Quality (AI)</h3>
+              <div id="criteriaContainer" class="space-y-3"></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h3 class="text-lg font-bold mb-4">Top Variance Cases</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="text-left text-slate-500">
+                    <tr>
+                      <th class="py-2 pr-4">Student</th>
+                      <th class="py-2 pr-4">Exam</th>
+                      <th class="py-2 pr-4">AI</th>
+                      <th class="py-2 pr-4">Lecturer</th>
+                      <th class="py-2 pr-4">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody id="outliersTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">End Date</label>
-<input type="date" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors" required/>
-</div>
+  <script>
+    let lastBatchReport = null;
+    let lastAiReport = null;
 
-<!-- Exam Attempt -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Exam Attempt</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-<option value="best">Best Attempt</option>
-<option value="first">First Attempt Only</option>
-<option value="last">Last Attempt Only</option>
-<option value="all">All Attempts</option>
-</select>
-</div>
+    function switchReportTab(tab) {
+      const batchTab = document.getElementById("batchTab");
+      const apiTab = document.getElementById("apiTab");
+      const batchContent = document.getElementById("batchContent");
+      const apiContent = document.getElementById("apiContent");
 
-<!-- Report Format -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Export Format</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-<option value="pdf">PDF Document</option>
-<option value="excel">Excel Spreadsheet</option>
-<option value="csv">CSV File</option>
-</select>
-</div>
-</div>
-
-<div class="flex gap-4 pt-4">
-<button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-<span class="material-icons-round">analytics</span>
-                        Generate Batch Report
-                    </button>
-<button type="button" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                        Preview
-                    </button>
-</div>
-</form>
-</div>
-
-<!-- Report Preview Section -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Report Preview</h3>
-<div class="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-<span class="material-symbols-outlined text-slate-400 text-6xl mb-4">description</span>
-<p class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No Report Generated</p>
-<p class="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                        Select your parameters above and click "Generate Batch Report" to view student performance analytics
-                    </p>
-</div>
-</div>
-</div>
-
-<!-- API Accuracy Report Tab -->
-<div id="apiContent" class="hidden">
-<div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-8 mb-8">
-<div class="flex items-start gap-4">
-<div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">verified</span>
-</div>
-<div>
-<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">System Accuracy Analytics</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">
-                            Compare AI-generated evaluations against revised lecturer results to measure system precision and variance across key evaluation criteria.
-                        </p>
-<div class="flex flex-wrap gap-2 mb-4">
-<span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700">
-<span class="material-symbols-outlined text-xs align-middle mr-1">check_circle</span>
-                                Smooth Outline
-                            </span>
-<span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700">
-<span class="material-symbols-outlined text-xs align-middle mr-1">check_circle</span>
-                                Flat Floor
-                            </span>
-<span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700">
-<span class="material-symbols-outlined text-xs align-middle mr-1">check_circle</span>
-                                Depth Accuracy
-                            </span>
-<span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700">
-<span class="material-symbols-outlined text-xs align-middle mr-1">check_circle</span>
-                                Undercut Detection
-                            </span>
-</div>
-</div>
-</div>
-</div>
-
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 mb-8 shadow-sm">
-<div class="flex items-center gap-2 mb-6">
-<span class="material-icons-round text-primary">tune</span>
-<h3 class="text-xl font-bold dark:text-white">Analysis Parameters</h3>
-</div>
-
-<form id="apiReportForm" class="space-y-6">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<!-- Analysis Period -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Analysis Period</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-<option value="7">Last 7 Days</option>
-<option value="30">Last 30 Days</option>
-<option value="90">Last 3 Months</option>
-<option value="365">Last Year</option>
-<option value="custom">Custom Range</option>
-</select>
-</div>
-
-<!-- Evaluation Criteria -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Evaluation Criteria</label>
-<select class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors">
-<option value="all">All Criteria</option>
-<option value="outline">Smooth Outline Only</option>
-<option value="floor">Flat Floor Only</option>
-<option value="depth">Depth Only</option>
-<option value="undercut">Undercut Only</option>
-</select>
-</div>
-
-<!-- Minimum Samples -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Minimum Sample Size</label>
-<input type="number" value="50" min="10" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors"/>
-</div>
-
-<!-- Confidence Threshold -->
-<div>
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Confidence Threshold (%)</label>
-<input type="number" value="85" min="0" max="100" class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-colors"/>
-</div>
-</div>
-
-<div class="flex gap-4 pt-4">
-<button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-<span class="material-symbols-outlined">verified</span>
-                        Generate API Accuracy Report
-                    </button>
-<button type="button" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
-                        Export Data
-                    </button>
-</div>
-</form>
-</div>
-
-<!-- API Report Preview -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Accuracy Metrics</h3>
-<div class="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-<span class="material-symbols-outlined text-slate-400 text-6xl mb-4">query_stats</span>
-<p class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No Analysis Available</p>
-<p class="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                        Configure analysis parameters and generate the report to view AI evaluation accuracy metrics and variance statistics
-                    </p>
-</div>
-</div>
-</div>
-</div>
-</main>
-</div>
-
-<button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
-<span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
-</button>
-
-<script>
-// Tab switching functionality
-function switchReportTab(tab) {
-    const batchTab = document.getElementById('batchTab');
-    const apiTab = document.getElementById('apiTab');
-    const batchContent = document.getElementById('batchContent');
-    const apiContent = document.getElementById('apiContent');
-    
-    if (tab === 'batch') {
-        batchTab.classList.add('text-primary', 'border-primary');
-        batchTab.classList.remove('text-slate-500', 'dark:text-slate-400', 'border-transparent');
-        apiTab.classList.remove('text-primary', 'border-primary');
-        apiTab.classList.add('text-slate-500', 'dark:text-slate-400', 'border-transparent');
-        batchContent.classList.remove('hidden');
-        apiContent.classList.add('hidden');
-    } else {
-        apiTab.classList.add('text-primary', 'border-primary');
-        apiTab.classList.remove('text-slate-500', 'dark:text-slate-400', 'border-transparent');
-        batchTab.classList.remove('text-primary', 'border-primary');
-        batchTab.classList.add('text-slate-500', 'dark:text-slate-400', 'border-transparent');
-        apiContent.classList.remove('hidden');
-        batchContent.classList.add('hidden');
+      if (tab === "batch") {
+        batchTab.classList.add("text-primary", "border-primary");
+        batchTab.classList.remove("text-slate-500", "dark:text-slate-400", "border-transparent");
+        apiTab.classList.remove("text-primary", "border-primary");
+        apiTab.classList.add("text-slate-500", "dark:text-slate-400", "border-transparent");
+        batchContent.classList.remove("hidden");
+        apiContent.classList.add("hidden");
+      } else {
+        apiTab.classList.add("text-primary", "border-primary");
+        apiTab.classList.remove("text-slate-500", "dark:text-slate-400", "border-transparent");
+        batchTab.classList.remove("text-primary", "border-primary");
+        batchTab.classList.add("text-slate-500", "dark:text-slate-400", "border-transparent");
+        apiContent.classList.remove("hidden");
+        batchContent.classList.add("hidden");
+      }
     }
-}
 
-// Form submission handlers
-document.getElementById('batchReportForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert('Generating batch performance report... This will analyze student submissions and create a comprehensive performance summary.');
-});
+    function toNum(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
 
-document.getElementById('apiReportForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert('Generating API accuracy report... This will compare AI evaluations against lecturer revisions to measure system precision.');
-});
-</script>
+    function renderSummaryCards(containerId, pairs) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = pairs.map(([label, value]) => `
+        <article class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500">${label}</p>
+          <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">${value}</p>
+        </article>
+      `).join("");
+    }
 
+    function collectBatchFilters() {
+      return {
+        module_id: document.getElementById("batchModuleId").value,
+        batch_year: document.getElementById("batchYear").value,
+        start_date: document.getElementById("batchStartDate").value,
+        end_date: document.getElementById("batchEndDate").value,
+        attempt_mode: document.getElementById("batchAttemptMode").value
+      };
+    }
+
+    function collectAiFilters() {
+      return {
+        module_id: document.getElementById("apiModuleId").value,
+        batch_year: document.getElementById("apiBatchYear").value,
+        start_date: document.getElementById("apiStartDate").value,
+        end_date: document.getElementById("apiEndDate").value,
+        attempt_mode: document.getElementById("apiAttemptMode").value,
+        tolerance: document.getElementById("apiTolerance").value
+      };
+    }
+
+    function renderBatchReport(report) {
+      const summary = report?.summary || {};
+      renderSummaryCards("batchSummaryCards", [
+        ["Records", toNum(summary.total_records)],
+        ["Students", toNum(summary.total_students)],
+        ["Pass Rate", `${toNum(summary.pass_rate).toFixed(2)}%`],
+        ["Avg Grade", toNum(summary.average_grade).toFixed(2)]
+      ]);
+
+      const body = document.getElementById("batchResultsTableBody");
+      const rows = Array.isArray(report?.students) ? report.students : [];
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="7" class="py-4 text-slate-500">No records found for selected filters.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map((row) => `
+        <tr class="border-t border-slate-100 dark:border-slate-700">
+          <td class="py-2 pr-4 font-semibold">${row.student_name || "-"}</td>
+          <td class="py-2 pr-4">${row.registration_number || "-"}</td>
+          <td class="py-2 pr-4">${row.batch_year || "-"}</td>
+          <td class="py-2 pr-4">${toNum(row.average_grade).toFixed(2)}</td>
+          <td class="py-2 pr-4">${row.best_grade == null ? "-" : toNum(row.best_grade).toFixed(2)}</td>
+          <td class="py-2 pr-4">${toNum(row.pass_count)}</td>
+          <td class="py-2 pr-4">${toNum(row.fail_count)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAiReport(report) {
+      const summary = report?.summary || {};
+      renderSummaryCards("apiSummaryCards", [
+        ["Samples", toNum(summary.sample_count)],
+        ["MAE", toNum(summary.mae).toFixed(2)],
+        ["RMSE", toNum(summary.rmse).toFixed(2)],
+        ["Within Tol.", `${toNum(summary.within_tolerance_rate).toFixed(2)}%`]
+      ]);
+
+      const criteria = Array.isArray(report?.criteria) ? report.criteria : [];
+      const criteriaContainer = document.getElementById("criteriaContainer");
+      criteriaContainer.innerHTML = criteria.length
+        ? criteria.map((item) => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+            <div class="flex items-center justify-between">
+              <p class="font-semibold capitalize">${(item.key || "").replaceAll("_", " ")}</p>
+              <p class="text-sm text-slate-500">${toNum(item.acceptable_count)}/${toNum(item.total)}</p>
+            </div>
+            <p class="text-sm text-primary font-bold mt-1">${toNum(item.acceptable_rate).toFixed(2)}% acceptable</p>
+          </div>
+        `).join("")
+        : `<p class="text-slate-500 text-sm">No criteria data available.</p>`;
+
+      const outliers = Array.isArray(report?.outliers) ? report.outliers : [];
+      const outliersBody = document.getElementById("outliersTableBody");
+      outliersBody.innerHTML = outliers.length
+        ? outliers.map((row) => `
+          <tr class="border-t border-slate-100 dark:border-slate-700">
+            <td class="py-2 pr-4">${row.student_name || "-"}</td>
+            <td class="py-2 pr-4">${row.exam_name || "-"}</td>
+            <td class="py-2 pr-4">${toNum(row.api_score).toFixed(2)}</td>
+            <td class="py-2 pr-4">${toNum(row.lecturer_grade).toFixed(2)}</td>
+            <td class="py-2 pr-4 font-semibold">${toNum(row.score_diff).toFixed(2)}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="5" class="py-4 text-slate-500">No variance data available.</td></tr>`;
+    }
+
+    function exportCsv(filename, rows) {
+      if (!rows.length) {
+        showWarningNotification("No data available to export.");
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) => headers.map((key) => {
+          const val = row[key] == null ? "" : String(row[key]).replace(/"/g, '""');
+          return `"${val}"`;
+        }).join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function loadModulesIntoFilters() {
+      const result = await API.modules.getAll();
+      const modules = result.ok && Array.isArray(result.modules) ? result.modules : [];
+      const selects = [document.getElementById("batchModuleId"), document.getElementById("apiModuleId")];
+
+      selects.forEach((select) => {
+        select.innerHTML = `<option value="">All Assigned Modules</option>`;
+        modules.forEach((module) => {
+          const option = document.createElement("option");
+          option.value = module.module_id;
+          option.textContent = `${module.module_code} - ${module.module_name}`;
+          select.appendChild(option);
+        });
+      });
+    }
+
+    async function onBatchGenerate(event) {
+      event.preventDefault();
+      const filters = collectBatchFilters();
+      const btn = document.getElementById("batchGenerateBtn");
+      btn.disabled = true;
+      btn.textContent = "Generating...";
+
+      try {
+        const result = await API.submissions.getLecturerBatchPerformanceReport(filters);
+        if (!result.ok) {
+          showErrorNotification(result.error || "Failed to generate batch performance report.");
+          return;
+        }
+
+        lastBatchReport = result;
+        renderBatchReport(result);
+        showSuccessNotification("Batch performance report generated.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Generate";
+      }
+    }
+
+    async function onAiGenerate(event) {
+      event.preventDefault();
+      const filters = collectAiFilters();
+      const btn = document.getElementById("apiGenerateBtn");
+      btn.disabled = true;
+      btn.textContent = "Generating...";
+
+      try {
+        const result = await API.submissions.getLecturerAiAccuracyReport(filters);
+        if (!result.ok) {
+          showErrorNotification(result.error || "Failed to generate AI accuracy report.");
+          return;
+        }
+
+        lastAiReport = result;
+        renderAiReport(result);
+        showSuccessNotification("AI accuracy report generated.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Generate";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await requireAuth("lecturer");
+      if (!user) return;
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) logoutBtn.addEventListener("click", () => API.auth.logout());
+
+      document.getElementById("batchTab").addEventListener("click", () => switchReportTab("batch"));
+      document.getElementById("apiTab").addEventListener("click", () => switchReportTab("api"));
+      document.getElementById("batchReportForm").addEventListener("submit", onBatchGenerate);
+      document.getElementById("apiReportForm").addEventListener("submit", onAiGenerate);
+
+      document.getElementById("batchExportCsvBtn").addEventListener("click", () => {
+        const rows = (lastBatchReport?.students || []).map((s) => ({
+          student_name: s.student_name,
+          registration_number: s.registration_number,
+          batch_year: s.batch_year,
+          submissions: s.submissions,
+          average_grade: s.average_grade,
+          best_grade: s.best_grade,
+          latest_grade: s.latest_grade,
+          pass_count: s.pass_count,
+          fail_count: s.fail_count
+        }));
+        exportCsv("batch-performance-report.csv", rows);
+      });
+
+      document.getElementById("apiExportCsvBtn").addEventListener("click", () => {
+        const rows = (lastAiReport?.outliers || []).map((o) => ({
+          submission_id: o.submission_id,
+          student_name: o.student_name,
+          registration_number: o.registration_number,
+          exam_name: o.exam_name,
+          module_code: o.module_code,
+          api_score: o.api_score,
+          lecturer_grade: o.lecturer_grade,
+          score_diff: o.score_diff,
+          abs_diff: o.abs_diff
+        }));
+        exportCsv("ai-accuracy-report.csv", rows);
+      });
+
+      await loadModulesIntoFilters();
+      await onBatchGenerate(new Event("submit"));
+    });
+  </script>
 </body>
 </html>

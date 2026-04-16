@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <script src="assets/js/common.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/student-shell.js"></script>
 
@@ -194,6 +195,12 @@ function getModuleIdFromQuery() {
     }
 
     function showPageStatus(message, type = "error") {
+      if (type === "success" && typeof showSuccessNotification === "function") {
+        showSuccessNotification(message);
+      } else if (typeof showErrorNotification === "function") {
+        showErrorNotification(message);
+      }
+
       const box = document.getElementById("pageStatus");
       box.textContent = message;
       box.classList.remove(
@@ -487,6 +494,12 @@ function getModuleIdFromQuery() {
     }
 
     function showShareAlert(msg, type) {
+      if (type === "success" && typeof showSuccessNotification === "function") {
+        showSuccessNotification(msg);
+      } else if (typeof showErrorNotification === "function") {
+        showErrorNotification(msg);
+      }
+
       const box = document.getElementById("shareAlertBox");
       box.classList.remove("hidden");
       box.className = type === "success"

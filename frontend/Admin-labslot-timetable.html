@@ -256,14 +256,31 @@
         return `${yyyy}-${mm}-${dd}`;
       }
 
+      const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return "";
-      return date.toISOString().split("T")[0];
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
     }
 
     function formatDate(dateStr) {
       if (!dateStr) return "-";
-      const date = new Date(dateStr);
+      const isoMatch = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const ddMmYyyyMatch = String(dateStr).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      let date = null;
+
+      if (isoMatch) {
+        date = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+      } else if (ddMmYyyyMatch) {
+        date = new Date(Number(ddMmYyyyMatch[3]), Number(ddMmYyyyMatch[2]) - 1, Number(ddMmYyyyMatch[1]));
+      } else {
+        date = new Date(dateStr);
+      }
+
       if (Number.isNaN(date.getTime())) return dateStr;
       return date.toLocaleDateString();
     }
@@ -279,8 +296,12 @@
 
     function getDateOnlyKey(value) {
       if (!value) return "";
-      const normalized = String(value).slice(0, 10);
+      const normalized = String(value).trim();
       if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalized)) {
+        const [dd, mm, yyyy] = normalized.split("/");
+        return `${yyyy}-${mm}-${dd}`;
+      }
       const parsed = new Date(value);
       if (Number.isNaN(parsed.getTime())) return "";
       const yyyy = parsed.getFullYear();
@@ -301,7 +322,11 @@
       if (!exam || !exam.exam_date) return false;
       const examDay = getDateOnlyKey(exam.exam_date);
       if (!examDay) return false;
-      return examDay < todayKey();
+      const endTime = String(exam.end_time || "23:59:59").slice(0, 8);
+      const [hh, mm, ss] = endTime.split(":").map((v) => Number(v || 0));
+      const [yyyy, month, day] = examDay.split("-").map(Number);
+      const examEnd = new Date(yyyy, month - 1, day, hh, mm, ss || 0, 0);
+      return examEnd.getTime() < Date.now();
     }
 
     function toggleExamPanel(examId) {
@@ -436,9 +461,12 @@
     }
 
     function getExamSortValue(exam) {
-      const datePart = exam?.exam_date || "1970-01-01";
-      const timePart = String(exam?.start_time || "00:00").slice(0, 5);
-      const parsed = new Date(`${datePart}T${timePart}:00`);
+      const datePart = getDateOnlyKey(exam?.exam_date || "1970-01-01");
+      const timePart = String(exam?.start_time || "00:00:00").slice(0, 8);
+      if (!datePart) return 0;
+      const [yyyy, mm, dd] = datePart.split("-").map(Number);
+      const [hh, min, sec] = timePart.split(":").map((v) => Number(v || 0));
+      const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
       return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
     }
 

@@ -61,10 +61,105 @@
           <span class="material-icons-round text-[18px]">close</span>
         </button>
       </div>
-      <div id="shellNotifList" class="p-4 space-y-3 overflow-y-auto max-h-[50vh]">
+      <div id="shellNotifList" class="p-4 space-y-2 overflow-y-auto max-h-[50vh]">
         <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-6">No new notifications</p>
       </div>
     </div>`;
+  }
+
+  function decodeToken() {
+    try {
+      var token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      if (!token) return null;
+      var payload = JSON.parse(atob(token.split(".")[1]));
+      return payload || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function formatNotificationTime(value) {
+    if (!value) return "";
+    var parsed = new Date(value);
+    if (isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  function renderNotificationList(items) {
+    var listEl = document.getElementById("shellNotifList");
+    var badgeEl = document.getElementById("shellNotifBadge");
+    if (!listEl) return;
+
+    var notifications = Array.isArray(items) ? items : [];
+    var unreadCount = notifications.filter(function (n) { return !n.is_read; }).length;
+
+    if (badgeEl) {
+      if (unreadCount > 0) badgeEl.classList.remove("hidden");
+      else badgeEl.classList.add("hidden");
+    }
+
+    if (!notifications.length) {
+      listEl.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-6">No notifications yet</p>';
+      return;
+    }
+
+    listEl.innerHTML = notifications.map(function (notification) {
+      var unread = !notification.is_read;
+      var stateClass = unread
+        ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800"
+        : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-80";
+
+      var dot = unread
+        ? '<span class="inline-block w-2 h-2 rounded-full bg-primary mt-1.5"></span>'
+        : '<span class="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5"></span>';
+
+      return (
+        '<button type="button" data-notif-id="' + notification.notification_id + '" class="shell-notif-item w-full text-left p-3 rounded-xl border ' + stateClass + ' hover:shadow-sm transition-all">' +
+          '<div class="flex items-start gap-2">' +
+            dot +
+            '<div class="min-w-0">' +
+              '<p class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">' + String(notification.title || "Notification").replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</p>' +
+              '<p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">' + String(notification.message || "").replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</p>' +
+              '<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">' + formatNotificationTime(notification.created_at) + '</p>' +
+            '</div>' +
+          '</div>' +
+        '</button>'
+      );
+    }).join("");
+
+    Array.prototype.forEach.call(listEl.querySelectorAll(".shell-notif-item"), function (itemBtn) {
+      itemBtn.addEventListener("click", async function () {
+        var notifId = itemBtn.getAttribute("data-notif-id");
+        if (!notifId || typeof API === "undefined" || !API.notifications) return;
+
+        try {
+          await API.notifications.markAsRead(notifId);
+          await loadShellNotifications();
+        } catch (e) {
+          // keep UI usable even if mark-as-read fails
+        }
+      });
+    });
+  }
+
+  async function loadShellNotifications() {
+    if (typeof API === "undefined" || !API.notifications) return;
+
+    var payload = decodeToken();
+    if (!payload || !payload.id) return;
+
+    try {
+      var result = await API.notifications.getByUser(payload.id);
+      if (!result || !result.ok) return;
+      renderNotificationList(result.notifications || []);
+    } catch (e) {
+      // silent for shell-level utility
+    }
   }
 
   function getSidebarHTML(activePage) {
@@ -163,7 +258,12 @@
     var notifBtn = document.getElementById("shellNotifBtn");
     var notifPanel = document.getElementById("shellNotifPanel");
     if (notifBtn && notifPanel) {
-      notifBtn.addEventListener("click", function () { notifPanel.classList.toggle("hidden"); });
+      notifBtn.addEventListener("click", function () {
+        notifPanel.classList.toggle("hidden");
+        if (!notifPanel.classList.contains("hidden")) {
+          loadShellNotifications();
+        }
+      });
       var closeBtn = document.getElementById("shellNotifClose");
       if (closeBtn) closeBtn.addEventListener("click", function () { notifPanel.classList.add("hidden"); });
       document.addEventListener("click", function (e) {
@@ -189,5 +289,8 @@
         }
       }
     } catch (e) { /* silent */ }
+
+    loadShellNotifications();
+    setInterval(loadShellNotifications, 30000);
   });
 })();
