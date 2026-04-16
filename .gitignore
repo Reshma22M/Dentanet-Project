@@ -22,3 +22,9 @@ Thumbs.db
 
 # Runtime uploads
 backend/uploads/
+
+# Ignore the local environment file containing secrets
+.env
+
+# Do NOT ignore the example file (the ! keeps it tracked)
+!.env.example
