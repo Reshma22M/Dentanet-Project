@@ -224,35 +224,11 @@
         </section>
 
         <section class="card p-6">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Module Workspace</h2>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Manage module students, exams, bookings, lecturer materials, and student-shared study materials.
-              </p>
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-              <a id="scheduleExamBtn" href="lecturer-schedule-exam.html" class="btn-primary">
-                <span class="material-symbols-outlined text-[18px]">quiz</span>
-                Schedule Exam
-              </a>
-
-              <a id="uploadMaterialBtn" href="lecturer-upload-materials.html" class="btn-secondary">
-                <span class="material-symbols-outlined text-[18px]">upload_file</span>
-                Upload Material
-              </a>
-
-              <a id="labSlotsBtn" href="lecturer-labslot-timetable.html" class="btn-secondary">
-                <span class="material-symbols-outlined text-[18px]">calendar_view_week</span>
-                Lab Slots
-              </a>
-
-              <a id="submissionsBtn" href="lecturer-eva-submissions1.html" class="btn-secondary">
-                <span class="material-symbols-outlined text-[18px]">assignment</span>
-                Submissions
-              </a>
-            </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Module Workspace</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Manage module students, exams, bookings, lecturer materials, and student-shared study materials.
+            </p>
           </div>
 
           <div class="mt-6 flex flex-wrap gap-2">
@@ -438,17 +414,17 @@ function getModuleIdFromQuery() {
       const labSlotsHref = `lecturer-labslot-timetable.html?module_id=${encodeURIComponent(currentModuleId)}`;
       const submissionsHref = `lecturer-eva-submissions1.html?module_id=${encodeURIComponent(currentModuleId)}`;
 
-      document.getElementById("scheduleExamBtn").href = scheduleHref;
-      document.getElementById("uploadMaterialBtn").href = materialsHref;
-      document.getElementById("labSlotsBtn").href = labSlotsHref;
-      document.getElementById("submissionsBtn").href = submissionsHref;
-      document.getElementById("examsActionBtn").href = scheduleHref;
-      document.getElementById("materialsActionBtn").href = materialsHref;
-      document.getElementById("submissionsActionBtn").href = submissionsHref;
+      const setHref = (id, href) => {
+        const el = document.getElementById(id);
+        if (el) el.href = href;
+      };
 
-      document.getElementById("scheduleExamSidebarLink").href = scheduleHref;
-      document.getElementById("uploadMaterialsSidebarLink").href = materialsHref;
-      document.getElementById("labSlotSidebarLink").href = labSlotsHref;
+      setHref("examsActionBtn", scheduleHref);
+      setHref("materialsActionBtn", materialsHref);
+      setHref("submissionsActionBtn", submissionsHref);
+      setHref("scheduleExamSidebarLink", scheduleHref);
+      setHref("uploadMaterialsSidebarLink", materialsHref);
+      setHref("labSlotSidebarLink", labSlotsHref);
     }
 
     function updateStats() {

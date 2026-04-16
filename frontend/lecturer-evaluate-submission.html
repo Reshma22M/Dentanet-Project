@@ -155,7 +155,7 @@
               </section>
 
               <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">DEd AI evaluation</h2>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">AI Evaluation</h2>
                 <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <div class="rounded-2xl bg-slate-50 dark:bg-slate-900 px-4 py-4">
                     <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Smooth Outline</p>
@@ -196,10 +196,6 @@
                   </div>
                 </div>
 
-                <div class="mt-5">
-                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Raw DEd response</p>
-                  <pre id="rawResponse" class="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">Raw response is not stored in current database schema.</pre>
-                </div>
               </section>
 
               <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-soft">
@@ -397,23 +393,11 @@
       return "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
     }
 
-    function mapAiToPoints(label) {
-      const normalized = String(label || "").toLowerCase();
-      if (normalized === "ideal") return 5;
-      if (normalized === "acceptable") return 3;
-      if (normalized.includes("needs")) return 1;
-      if (normalized.includes("non-acceptable") || normalized.includes("non acceptable")) return -10;
-      if (normalized === "unacceptable") return -10;
-      return null;
-    }
-
     function setAiCriterion(elementId, label) {
       const element = document.getElementById(elementId);
       if (!element) return;
-      const points = mapAiToPoints(label);
       const badgeClass = aiBadgeClass(label);
-      const pointText = points === null ? "" : ` (${points} pts)`;
-      element.innerHTML = `<span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${badgeClass}">${label || "-"}${pointText}</span>`;
+      element.innerHTML = `<span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${badgeClass}">${label || "-"}</span>`;
     }
 
     function updateImageZoom() {
@@ -495,9 +479,6 @@
       document.getElementById("aiRubricSummary").textContent = rubricStatuses.length
         ? rubricStatuses.join(" • ")
         : "AI rubric details unavailable";
-      document.getElementById("rawResponse").textContent = submission.raw_response_json
-        ? JSON.stringify(submission.raw_response_json, null, 2)
-        : "Raw response is not stored in current database schema. Criterion labels and score are shown above.";
 
       document.getElementById("publishedGrade").textContent = submission.published_grade !== null && submission.published_grade !== undefined ? Number(submission.published_grade).toFixed(2) : "Not published";
       document.getElementById("publishedDecision").textContent = submission.pass_fail || "-";
