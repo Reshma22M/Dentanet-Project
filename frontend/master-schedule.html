@@ -31,9 +31,13 @@ tailwind.config = {
 @layer base {
   body { @apply font-sans; }
 }
-.sidebar-link { @apply flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors; }
-.sidebar-active { @apply bg-accent text-white font-semibold shadow-sm; }
+.sidebar-link { @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all; }
+.sidebar-active { @apply bg-white text-slate-900 font-semibold shadow-sm; }
 .panel { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm; }
+.calendar-cell { @apply min-h-[120px] border border-slate-200 dark:border-slate-700 rounded-xl p-2 bg-white dark:bg-slate-900/40 transition; }
+.calendar-cell-muted { @apply bg-slate-50 dark:bg-slate-900/20 text-slate-400; }
+.calendar-cell-today { @apply ring-2 ring-blue-400/60; }
+.calendar-cell-selected { @apply ring-2 ring-primary; }
 </style>
 </head>
 <body class="bg-bg-main dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-200">
@@ -52,19 +56,19 @@ tailwind.config = {
   </div>
 </header>
 
-<aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
+<aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-[#0F172A] border-r border-slate-800 px-6 py-8 flex-col z-40">
   <div>
     <div class="mb-8">
-      <h2 class="text-lg font-bold">LMS</h2>
-      <p class="text-xs opacity-70">University of Peradeniya</p>
+      <h2 class="text-lg font-bold text-white">LMS</h2>
+      <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
     </div>
     <nav class="space-y-2">
       <a class="sidebar-link" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a>
-      <a class="sidebar-link" href="Admin-labslot-timetable.html"><span class="material-symbols-outlined">event_note</span><span>Lab Timetable</span></a>
       <a class="sidebar-link" href="admin-manage-users.html"><span class="material-symbols-outlined">group</span><span>Manage Users</span></a>
+      <a class="sidebar-link" href="Admin-labslot-timetable.html"><span class="material-symbols-outlined">event_note</span><span>Lab Timetable</span></a>
       <a class="sidebar-link" href="admin-modules.html"><span class="material-symbols-outlined">menu_book</span><span>Modules</span></a>
+      <a class="sidebar-link" href="admin-profile.html"><span class="material-symbols-outlined">person</span><span>My Profile</span></a>
       <a class="sidebar-active sidebar-link" href="master-schedule.html"><span class="material-symbols-outlined">list_alt</span><span>Calendar</span></a>
-      <a class="sidebar-link" href="admin-api-monitor.html"><span class="material-symbols-outlined">monitoring</span><span>API Monitor</span></a>
       <a class="sidebar-link" href="admin-settings.html"><span class="material-symbols-outlined">settings</span><span>Settings</span></a>
     </nav>
   </div>
@@ -75,7 +79,7 @@ tailwind.config = {
     <div class="max-w-6xl mx-auto space-y-6">
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white">Master Calendar</h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">View upcoming exams and lab slots in one place.</p>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">Color-coded monthly view for key admin activities.</p>
       </div>
 
       <section class="panel p-5">
@@ -84,16 +88,48 @@ tailwind.config = {
             <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">Month</label>
             <input id="monthInput" type="month" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm"/>
           </div>
-          <button id="refreshCalendarBtn" class="px-5 py-2.5 rounded-xl bg-primary text-white hover:bg-accent text-sm font-semibold">
-            Refresh
-          </button>
+          <button id="prevMonthBtn" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm font-semibold">Previous</button>
+          <button id="nextMonthBtn" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm font-semibold">Next</button>
+          <button id="refreshCalendarBtn" class="px-5 py-2.5 rounded-xl bg-primary text-white hover:bg-accent text-sm font-semibold">Refresh</button>
         </div>
       </section>
 
       <section class="panel p-5">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Upcoming Exam Dates</h2>
-        <div id="calendarExamList" class="space-y-3 text-sm">
-          <p class="text-slate-500">Loading exam schedule...</p>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Monthly Activity Calendar</h2>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 px-3 py-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span>Exam</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-3 py-1"><span class="w-2 h-2 rounded-full bg-amber-600"></span>Booking</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>Approved</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 text-rose-700 px-3 py-1"><span class="w-2 h-2 rounded-full bg-rose-600"></span>Rejected</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-700 px-3 py-1"><span class="w-2 h-2 rounded-full bg-violet-600"></span>Notification</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5" id="calendarSummaryCards"></div>
+
+        <div class="grid grid-cols-7 gap-2 text-xs font-semibold text-slate-500 mb-2">
+          <div class="text-center">Sun</div><div class="text-center">Mon</div><div class="text-center">Tue</div><div class="text-center">Wed</div><div class="text-center">Thu</div><div class="text-center">Fri</div><div class="text-center">Sat</div>
+        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+          <p class="text-slate-500 col-span-7">Loading calendar...</p>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="panel p-5">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Selected Date Activities</h2>
+          <div id="selectedDayTitle" class="text-sm text-slate-500 mb-3">No date selected.</div>
+          <div id="selectedDayEvents" class="space-y-3 text-sm">
+            <p class="text-slate-500">Select a date to view details.</p>
+          </div>
+        </div>
+
+        <div class="panel p-5">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Upcoming (Brief)</h2>
+          <div id="calendarUpcomingList" class="space-y-3 text-sm">
+            <p class="text-slate-500">Loading upcoming activities...</p>
+          </div>
         </div>
       </section>
     </div>
@@ -114,52 +150,224 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function examDateKey(exam) {
-  const d = String(exam?.exam_date || "").slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
+function toDateKey(value) {
+  if (!value) return "";
+  const text = String(value).trim();
+  const iso = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (iso) return iso[1];
+  const d = new Date(text);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function todayKey() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return toDateKey(new Date().toISOString());
 }
 
-async function loadCalendar() {
-  const holder = document.getElementById("calendarExamList");
-  holder.innerHTML = `<p class="text-slate-500">Loading exam schedule...</p>`;
+function monthKey(dateObj) {
+  return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+}
 
-  const result = await API.exams.getAll();
-  if (!result.ok) {
-    holder.innerHTML = `<p class="text-rose-600">${escapeHtml(result.error || "Failed to load exams.")}</p>`;
+function getBadge(type) {
+  const t = String(type || "").toLowerCase();
+  if (t === "exam") return "bg-blue-100 text-blue-700";
+  if (t.includes("approval") || t === "approved") return "bg-emerald-100 text-emerald-700";
+  if (t.includes("rejection") || t === "denied" || t === "cancelled") return "bg-rose-100 text-rose-700";
+  if (t.includes("slot") || t.includes("booking")) return "bg-amber-100 text-amber-700";
+  return "bg-violet-100 text-violet-700";
+}
+
+let currentMonth = null;
+let selectedDate = null;
+let allEvents = [];
+let currentAdmin = null;
+
+function renderSummaryCards(monthEvents) {
+  const counts = {
+    total: monthEvents.length,
+    exam: monthEvents.filter(e => e.type === "exam").length,
+    booking: monthEvents.filter(e => String(e.type).includes("slot") || String(e.type).includes("booking")).length,
+    approval: monthEvents.filter(e => String(e.type).includes("approval") || String(e.type).includes("approved")).length,
+    notice: monthEvents.filter(e => e.type !== "exam").length
+  };
+
+  document.getElementById("calendarSummaryCards").innerHTML = `
+    <article class="rounded-xl border border-slate-200 dark:border-slate-700 p-3"><p class="text-xs text-slate-500">Total</p><p class="text-xl font-extrabold">${counts.total}</p></article>
+    <article class="rounded-xl border border-blue-200 bg-blue-50/50 p-3"><p class="text-xs text-blue-600">Exams</p><p class="text-xl font-extrabold text-blue-700">${counts.exam}</p></article>
+    <article class="rounded-xl border border-amber-200 bg-amber-50/50 p-3"><p class="text-xs text-amber-600">Bookings</p><p class="text-xl font-extrabold text-amber-700">${counts.booking}</p></article>
+    <article class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3"><p class="text-xs text-emerald-600">Approvals</p><p class="text-xl font-extrabold text-emerald-700">${counts.approval}</p></article>
+    <article class="rounded-xl border border-violet-200 bg-violet-50/50 p-3"><p class="text-xs text-violet-600">Notifications</p><p class="text-xl font-extrabold text-violet-700">${counts.notice}</p></article>
+  `;
+}
+
+function renderSelectedDay() {
+  const title = document.getElementById("selectedDayTitle");
+  const box = document.getElementById("selectedDayEvents");
+  if (!selectedDate) {
+    title.textContent = "No date selected.";
+    box.innerHTML = `<p class="text-slate-500">Select a date to view details.</p>`;
     return;
   }
 
-  const exams = Array.isArray(result.exams) ? result.exams : [];
-  const today = todayKey();
-  const upcoming = exams
-    .filter(exam => examDateKey(exam) >= today)
-    .sort((a, b) => `${a.exam_date} ${a.start_time}`.localeCompare(`${b.exam_date} ${b.start_time}`));
+  const dayEvents = allEvents
+    .filter(e => e.date === selectedDate)
+    .sort((a, b) => String(a.time || "").localeCompare(String(b.time || "")));
 
-  if (!upcoming.length) {
-    holder.innerHTML = `<p class="text-slate-500">No upcoming exams found.</p>`;
+  title.textContent = selectedDate;
+  if (!dayEvents.length) {
+    box.innerHTML = `<p class="text-slate-500">No activities on this date.</p>`;
     return;
   }
 
-  holder.innerHTML = upcoming.map(exam => `
-    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3">
-      <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(exam.exam_name || "Exam")}</p>
-      <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(exam.module_code || "")} ${escapeHtml(exam.module_name || "")}</p>
-      <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(String(exam.exam_date || "").slice(0, 10))} • ${escapeHtml(String(exam.start_time || "").slice(0, 5))} - ${escapeHtml(String(exam.end_time || "").slice(0, 5))}</p>
+  box.innerHTML = dayEvents.map(e => `
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-3">
+      <div class="flex items-center justify-between gap-2">
+        <p class="font-semibold text-slate-900 dark:text-white">${escapeHtml(e.title)}</p>
+        <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold ${getBadge(e.type)}">${escapeHtml(e.label || e.type || "Activity")}</span>
+      </div>
+      <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(e.subtitle || "-")}</p>
+      <p class="text-xs text-slate-400 mt-1">${escapeHtml(e.time || "")}</p>
     </div>
   `).join("");
+}
+
+function renderUpcomingBrief() {
+  const nowKey = todayKey();
+  const list = allEvents
+    .filter(e => e.date >= nowKey)
+    .sort((a, b) => `${a.date} ${a.time || ""}`.localeCompare(`${b.date} ${b.time || ""}`))
+    .slice(0, 10);
+
+  const holder = document.getElementById("calendarUpcomingList");
+  if (!list.length) {
+    holder.innerHTML = `<p class="text-slate-500">No upcoming activities.</p>`;
+    return;
+  }
+
+  holder.innerHTML = list.map(e => `
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3">
+      <div class="flex items-center justify-between gap-2">
+        <p class="font-semibold">${escapeHtml(e.title)}</p>
+        <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold ${getBadge(e.type)}">${escapeHtml(e.label || e.type || "Activity")}</span>
+      </div>
+      <p class="text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(e.date)}${e.time ? ` • ${escapeHtml(e.time)}` : ""}</p>
+    </div>
+  `).join("");
+}
+
+function renderCalendarGrid() {
+  const grid = document.getElementById("calendarGrid");
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const first = new Date(year, month, 1);
+  const startOffset = first.getDay();
+  const start = new Date(year, month, 1 - startOffset);
+  const today = todayKey();
+  const thisMonth = monthKey(currentMonth);
+
+  const monthEvents = allEvents.filter(e => e.date.startsWith(thisMonth));
+  renderSummaryCards(monthEvents);
+
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    const key = toDateKey(day.toISOString());
+    const dayEvents = allEvents.filter(e => e.date === key);
+    const inMonth = day.getMonth() === month;
+    const isToday = key === today;
+    const isSelected = key === selectedDate;
+
+    cells.push(`
+      <button type="button" data-date="${key}" class="calendar-day-btn calendar-cell text-left ${inMonth ? "" : "calendar-cell-muted"} ${isToday ? "calendar-cell-today" : ""} ${isSelected ? "calendar-cell-selected" : ""}">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold">${day.getDate()}</span>
+          ${dayEvents.length ? `<span class="text-[10px] font-semibold text-slate-500">${dayEvents.length}</span>` : ""}
+        </div>
+        <div class="mt-2 space-y-1">
+          ${dayEvents.slice(0, 3).map(e => `<div class="rounded-md px-1.5 py-0.5 text-[10px] truncate ${getBadge(e.type)}">${escapeHtml(e.title)}</div>`).join("")}
+          ${dayEvents.length > 3 ? `<div class="text-[10px] text-slate-400">+${dayEvents.length - 3} more</div>` : ""}
+        </div>
+      </button>
+    `);
+  }
+
+  grid.innerHTML = cells.join("");
+  grid.querySelectorAll(".calendar-day-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedDate = btn.getAttribute("data-date");
+      renderSelectedDay();
+      renderCalendarGrid();
+    });
+  });
+}
+
+async function loadCalendarData() {
+  const [examResult, bookingResult, notificationResult] = await Promise.all([
+    API.exams.getAll(),
+    API.bookings.getAll(),
+    API.notifications.getByUser(currentAdmin?.id)
+  ]);
+
+  const events = [];
+
+  if (examResult.ok && Array.isArray(examResult.exams)) {
+    examResult.exams.forEach((exam) => {
+      const date = toDateKey(exam.exam_date);
+      if (!date) return;
+      events.push({
+        date,
+        type: "exam",
+        label: "Exam",
+        title: exam.exam_name || "Exam",
+        subtitle: `${exam.module_code || ""} ${exam.module_name || ""}`.trim(),
+        time: `${String(exam.start_time || "").slice(0, 5)} - ${String(exam.end_time || "").slice(0, 5)}`
+      });
+    });
+  }
+
+  if (bookingResult.ok && Array.isArray(bookingResult.bookings)) {
+    bookingResult.bookings.forEach((booking) => {
+      const date = toDateKey(booking.booking_date);
+      if (!date) return;
+      const status = String(booking.status || "").toUpperCase();
+      const slotType = String(booking.slot_type || "").toUpperCase();
+      events.push({
+        date,
+        type: status === "APPROVED" ? "slot_approval" : (status === "DENIED" || status === "CANCELLED" ? "slot_rejection" : "slot_request"),
+        label: status || "BOOKING",
+        title: `${slotType || "Slot"} booking`,
+        subtitle: `${booking.first_name || ""} ${booking.last_name || ""} • ${booking.module_code || ""}`.trim(),
+        time: `${String(booking.start_time || "").slice(0, 5)} - ${String(booking.end_time || "").slice(0, 5)}`
+      });
+    });
+  }
+
+  if (notificationResult.ok && Array.isArray(notificationResult.notifications)) {
+    notificationResult.notifications.forEach((n) => {
+      const date = toDateKey(n.created_at);
+      if (!date) return;
+      events.push({
+        date,
+        type: n.notification_type || "notification",
+        label: "Notification",
+        title: n.title || "Admin update",
+        subtitle: n.message || "",
+        time: String(n.created_at || "").replace("T", " ").slice(11, 16)
+      });
+    });
+  }
+
+  allEvents = events;
+  renderCalendarGrid();
+  renderSelectedDay();
+  renderUpcomingBrief();
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
   const admin = await requireAuth("admin");
   if (!admin) return;
+  currentAdmin = admin;
 
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
@@ -169,13 +377,38 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   const monthInput = document.getElementById("monthInput");
+  const now = new Date();
+  currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  selectedDate = todayKey();
+
   if (monthInput) {
-    const now = new Date();
-    monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    monthInput.value = monthKey(currentMonth);
+    monthInput.addEventListener("change", () => {
+      const [y, m] = String(monthInput.value || "").split("-").map(Number);
+      if (!y || !m) return;
+      currentMonth = new Date(y, m - 1, 1);
+      selectedDate = `${y}-${String(m).padStart(2, "0")}-01`;
+      renderCalendarGrid();
+      renderSelectedDay();
+    });
   }
 
-  document.getElementById("refreshCalendarBtn")?.addEventListener("click", loadCalendar);
-  await loadCalendar();
+  document.getElementById("prevMonthBtn")?.addEventListener("click", () => {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    monthInput.value = monthKey(currentMonth);
+    renderCalendarGrid();
+    renderSelectedDay();
+  });
+
+  document.getElementById("nextMonthBtn")?.addEventListener("click", () => {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    monthInput.value = monthKey(currentMonth);
+    renderCalendarGrid();
+    renderSelectedDay();
+  });
+
+  document.getElementById("refreshCalendarBtn")?.addEventListener("click", loadCalendarData);
+  await loadCalendarData();
 });
 </script>
 </body>

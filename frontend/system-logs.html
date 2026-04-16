@@ -14,13 +14,13 @@
         <span class="material-symbols-outlined">group</span>
         <span>Manage Users</span>
     </a>
+    <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-profile.html">
+        <span class="material-symbols-outlined">person</span>
+        <span>My Profile</span>
+    </a>
     <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="#">
         <span class="material-symbols-outlined">event_note</span>
         <span>Lab Timetable</span>
-    </a>
-    <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
-        <span class="material-symbols-outlined">monitoring</span>
-        <span>API Monitor</span>
     </a>
     <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="#">
         <span class="material-symbols-outlined">list_alt</span>
@@ -54,7 +54,7 @@
                 <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-dashboard.html">Home</a>
                 <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="master-schedule.html">Master Schedule</a>
                 <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="system-logs.html">System Logs</a>
-                <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-api-monitor.html">API Monitor</a>
+                <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-profile.html">My Profile</a>
                 <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors" href="admin-manage-users.html">User Access</a>
                 <button id="logoutBtn" class="bg-primary hover:bg-accent text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-md shadow-indigo-200 dark:shadow-none">Log Out</button>
             </div>
@@ -77,13 +77,13 @@
                 <span class="material-symbols-outlined">group</span>
                 <span>Manage Users</span>
             </a>
+            <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-profile.html">
+                <span class="material-symbols-outlined">person</span>
+                <span>My Profile</span>
+            </a>
             <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-labslot-timetable.html">
                 <span class="material-symbols-outlined">event_note</span>
                 <span>Lab Timetable</span>
-            </a>
-            <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
-                <span class="material-symbols-outlined">monitoring</span>
-                <span>API Monitor</span>
             </a>
             <a class="sidebar-active flex items-center gap-3 p-3 rounded-lg font-semibold shadow-sm" href="system-logs.html">
                 <span class="material-symbols-outlined">list_alt</span>
@@ -296,10 +296,6 @@ document.getElementById('logoutBtn').onclick = function() {
 document.getElementById('usersBtn').onclick = function(e) {
     e.preventDefault();
     navTo('admin-manage-users.html');
-};
-document.getElementById('apiBtn').onclick = function(e) {
-    e.preventDefault();
-    navTo('admin-api-monitor.html');
 };
 document.getElementById('dashboardBtn').onclick = function(e) {
     e.preventDefault();

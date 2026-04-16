@@ -41,13 +41,11 @@ tailwind.config = {
 body {
     font-family: 'Inter', sans-serif;
 }
-.sidebar-active {
-    background-color: #3b82f6;
-    color: #ffffff;
+.sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all;
 }
-.dark .sidebar-active {
-    background-color: #3b82f6;
-    color: white;
+.sidebar-active {
+    @apply bg-white text-slate-900 font-semibold shadow-sm;
 }
 .dark ::-webkit-scrollbar {
     width: 8px;
@@ -83,43 +81,43 @@ body {
 </header>
 
 <div class="pt-16 lg:pl-72 min-h-screen flex flex-col">
-<aside class="w-72 bg-[#172554] p-6 rounded-2xl text-white flex flex-col justify-between shadow-xl border fixed top-20 bottom-6 left-6 hidden lg:flex z-40">
+<aside class="hidden lg:flex fixed top-16 left-0 bottom-0 w-72 bg-[#0F172A] border-r border-slate-800 px-6 py-8 flex-col z-40">
     <div class="mb-8">
-        <h2 class="text-lg font-bold">LMS</h2>
-        <p class="text-xs opacity-70">University of Peradeniya</p>
+        <h2 class="text-lg font-bold text-white">LMS</h2>
+        <p class="text-xs text-slate-400 mt-1">University of Peradeniya</p>
     </div>
     <nav class="space-y-2">
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-dashboard.html">
+        <a class="sidebar-link" href="admin-dashboard.html">
             <span class="material-symbols-outlined">dashboard</span>
             <span>Dashboard</span>
         </a>
-        <a class="sidebar-active flex items-center gap-3 p-3 rounded-lg font-semibold shadow-sm" href="admin-manage-users.html">
+        <a class="sidebar-link sidebar-active" href="admin-manage-users.html">
             <span class="material-symbols-outlined">group</span>
             <span>Manage Users</span>
         </a>
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="Admin-labslot-timetable.html">
+        <a class="sidebar-link" href="Admin-labslot-timetable.html">
             <span class="material-symbols-outlined">event_note</span>
             <span>Lab Timetable</span>
         </a>
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-modules.html">
+        <a class="sidebar-link" href="admin-modules.html">
             <span class="material-symbols-outlined">menu_book</span>
             <span>Modules</span>
         </a>
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="master-schedule.html">
+        <a class="sidebar-link" href="admin-profile.html">
+            <span class="material-symbols-outlined">person</span>
+            <span>My Profile</span>
+        </a>
+        <a class="sidebar-link" href="master-schedule.html">
             <span class="material-symbols-outlined">event_note</span>
             <span>Calendar</span>
         </a>
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-api-monitor.html">
-            <span class="material-symbols-outlined">monitoring</span>
-            <span>API Monitor</span>
-        </a>
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="admin-settings.html">
+        <a class="sidebar-link" href="admin-settings.html">
             <span class="material-symbols-outlined">settings</span>
             <span>Settings</span>
         </a>
     </nav>
     <div class="pt-6 border-t border-white/10">
-        <a class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors" href="#">
+        <a class="sidebar-link" href="#">
             <span class="material-symbols-outlined">help</span>
             <span>Help and Support</span>
         </a>
