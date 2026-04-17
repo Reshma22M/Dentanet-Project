@@ -113,6 +113,17 @@ function formatTimeForMail(timeValue) {
   return `${displayHour}:${m} ${suffix}`;
 }
 
+function formatDateForMail(dateValue) {
+  if (!dateValue) return "TBA";
+  const parsed = new Date(`${String(dateValue).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return String(dateValue);
+  return parsed.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+
 // --------------------------------------------------
 // GET all exams
 // Optional query params:
@@ -390,7 +401,7 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
         );
 
         if (hasSmtpConfig()) {
-          const examDateText = finalExamDate || "TBA";
+          const examDateText = formatDateForMail(finalExamDate);
           const examTimeText = finalStartTime && finalEndTime
             ? `${formatTimeForMail(finalStartTime)} - ${formatTimeForMail(finalEndTime)}`
             : "TBA";
@@ -410,11 +421,12 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
                       <p><strong>Module:</strong> ${module.module_code} - ${module.module_name}</p>
                       <p><strong>Exam:</strong> ${finalExamName}</p>
                       <p><strong>Date:</strong> ${examDateText}</p>
-                      <p><strong>Time:</strong> ${examTimeText}</p>
+                      <p><strong>Time Window:</strong> ${examTimeText}</p>
+                      <p>Please complete your practical exam within this scheduled time window.</p>
                       <p>Please log in to DentaNet LMS and book your lab slot when available.</p>
                     </div>
                   `,
-                  text: `A new exam "${finalExamName}" was scheduled for ${module.module_code} (${module.module_name}) on ${examDateText} at ${examTimeText}. Please log in to DentaNet LMS and book your lab slot when available.`
+                  text: `A new exam "${finalExamName}" was scheduled for ${module.module_code} (${module.module_name}) on ${examDateText}. Time window: ${examTimeText}. Please complete your practical exam within this scheduled window and log in to DentaNet LMS to book your lab slot when available.`
                 })
               )
           );

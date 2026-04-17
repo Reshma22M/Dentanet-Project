@@ -165,6 +165,7 @@ body { font-family: 'Inter', sans-serif; }
 <script>
 let SELECTED_EXAM_ID = null;
 let EXAMS_CACHE = [];
+let EXAM_SLOTS_CACHE = new Map();
 const PAGE_PARAMS = new URLSearchParams(window.location.search);
 const CURRENT_MODULE_ID =
   PAGE_PARAMS.get("module_id") ||
@@ -312,12 +313,14 @@ function getSelectedExamId() {
 }
 
 async function loadScheduledExamsList() {
-  const examsResult = await API.exams.getAll(CURRENT_MODULE_ID || null, "SCHEDULED");
+  const examsResult = await API.exams.getAll(CURRENT_MODULE_ID || null);
   if (!examsResult.ok) return [];
 
   return (examsResult.exams || []).filter(exam => {
     const inScope = !CURRENT_MODULE_ID || String(exam.module_id) === String(CURRENT_MODULE_ID);
-    return inScope && !isExamExpired(exam);
+    const examStatus = String(exam.status || "").toUpperCase();
+    const isBookableStatus = examStatus === "SCHEDULED" || examStatus === "OPEN";
+    return inScope && isBookableStatus && !isExamExpired(exam);
   });
 }
 
@@ -331,16 +334,46 @@ async function loadSelectedExam(examBookings) {
   const container = document.getElementById("selectedExamContainer");
   container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">Loading selected exam...</p>`;
 
+  const explicitExamId = PAGE_PARAMS.get("exam_id");
   SELECTED_EXAM_ID = getSelectedExamId();
   EXAMS_CACHE = await loadScheduledExamsList();
+  EXAM_SLOTS_CACHE = new Map();
+
+  await Promise.all(
+    EXAMS_CACHE.map(async (exam) => {
+      const slotRes = await API.examSlots.getByExamId(exam.exam_id);
+      const slots = slotRes.ok
+        ? (slotRes.slots || []).filter(slot => String(slot.exam_id) === String(exam.exam_id))
+        : [];
+      EXAM_SLOTS_CACHE.set(String(exam.exam_id), slots);
+    })
+  );
 
   const stillValid = EXAMS_CACHE.some(exam => String(exam.exam_id) === String(SELECTED_EXAM_ID));
   if (SELECTED_EXAM_ID && !stillValid) {
     SELECTED_EXAM_ID = null;
   }
 
+  if (!explicitExamId && SELECTED_EXAM_ID) {
+    const selectedSlots = EXAM_SLOTS_CACHE.get(String(SELECTED_EXAM_ID)) || [];
+    if (!selectedSlots.length) {
+      const firstExamWithSlots = EXAMS_CACHE.find((exam) => {
+        const slots = EXAM_SLOTS_CACHE.get(String(exam.exam_id)) || [];
+        return slots.length > 0;
+      });
+      if (firstExamWithSlots) {
+        SELECTED_EXAM_ID = Number(firstExamWithSlots.exam_id);
+        localStorage.setItem(getExamStorageKey(), String(SELECTED_EXAM_ID));
+      }
+    }
+  }
+
   if (!SELECTED_EXAM_ID) {
-    const upcoming = EXAMS_CACHE[0];
+    const examWithSlots = EXAMS_CACHE.find((exam) => {
+      const slots = EXAM_SLOTS_CACHE.get(String(exam.exam_id)) || [];
+      return slots.length > 0;
+    });
+    const upcoming = examWithSlots || EXAMS_CACHE[0];
     SELECTED_EXAM_ID = upcoming ? Number(upcoming.exam_id) : null;
     if (SELECTED_EXAM_ID) {
       localStorage.setItem(getExamStorageKey(), String(SELECTED_EXAM_ID));
@@ -371,14 +404,7 @@ async function loadSelectedExam(examBookings) {
     return;
   }
 
-  const slotRes = await API.examSlots.getByExamId(SELECTED_EXAM_ID);
-
-  let slots = [];
-  if (slotRes.ok) {
-    slots = (slotRes.slots || []).filter(
-      slot => String(slot.exam_id) === String(SELECTED_EXAM_ID)
-    );
-  }
+  const slots = EXAM_SLOTS_CACHE.get(String(SELECTED_EXAM_ID)) || [];
 
   container.innerHTML = renderSelectedExamCard(exam, slots, examBookings);
 }
@@ -679,6 +705,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("practiceDate").min = today;
 
   await loadBookings();
+  setInterval(() => {
+    loadBookings().catch(() => {});
+  }, 30000);
 });
 </script>
 </body>
