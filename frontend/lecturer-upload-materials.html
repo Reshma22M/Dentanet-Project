@@ -414,6 +414,51 @@
       return "#";
     }
 
+    function getYouTubeVideoId(urlValue) {
+      const raw = String(urlValue || "").trim();
+      if (!raw) return "";
+      try {
+        const parsed = new URL(raw);
+        const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+        if (host === "youtu.be") {
+          return parsed.pathname.replace(/^\/+/, "").split("/")[0] || "";
+        }
+        if (host.endsWith("youtube.com")) {
+          if (parsed.pathname === "/watch") return parsed.searchParams.get("v") || "";
+          if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) {
+            const chunks = parsed.pathname.split("/").filter(Boolean);
+            return chunks.length >= 2 ? chunks[1] : "";
+          }
+        }
+      } catch (error) {
+        const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/i);
+        return match ? match[1] : "";
+      }
+      return "";
+    }
+
+    function getMaterialThumbnailUrl(material) {
+      if (!material) return "";
+      if (material.thumbnail_url) {
+        return String(material.thumbnail_url).startsWith("http")
+          ? material.thumbnail_url
+          : `${backendBaseUrl}${material.thumbnail_url}`;
+      }
+
+      const fileUrl = String(material.file_url || "");
+      if (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(fileUrl)) {
+        return `${backendBaseUrl}${fileUrl}`;
+      }
+
+      const type = String(material.material_type_name || "").toLowerCase();
+      if (type === "youtube") {
+        const id = getYouTubeVideoId(material.external_url);
+        if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      }
+
+      return "";
+    }
+
     function getMaterialTypeIdByName(name) {
       return materialTypeMap[String(name || "").toLowerCase()] || null;
     }
@@ -510,12 +555,24 @@
         list.innerHTML = materials.map(material => {
           const link = buildMaterialUrl(material);
           const typeVisual = getTypeVisual(material.material_type_name);
+          const thumbnail = getMaterialThumbnailUrl(material);
+          const preview = thumbnail
+            ? `
+              <img
+                src="${escapeHtml(thumbnail)}"
+                alt="${escapeHtml(material.title || "Material preview")}"
+                class="h-full w-full object-cover"
+                loading="lazy"
+                onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('justify-center'); this.parentElement.innerHTML='<span class=&quot;material-symbols-outlined text-primary/30 text-2xl&quot;>${typeVisual.icon}</span>';"
+              />
+            `
+            : `<span class="material-symbols-outlined text-primary/30 text-2xl">${typeVisual.icon}</span>`;
 
           return `
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
               <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-lg flex items-center justify-center ${typeVisual.classes}">
-                  <span class="material-symbols-outlined">${typeVisual.icon}</span>
+                <div class="w-16 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-600">
+                  ${preview}
                 </div>
 
                 <div>

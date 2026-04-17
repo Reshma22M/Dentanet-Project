@@ -346,6 +346,51 @@
       return "#";
     }
 
+    function getYouTubeVideoId(urlValue) {
+      const raw = String(urlValue || "").trim();
+      if (!raw) return "";
+      try {
+        const parsed = new URL(raw);
+        const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+        if (host === "youtu.be") {
+          return parsed.pathname.replace(/^\/+/, "").split("/")[0] || "";
+        }
+        if (host.endsWith("youtube.com")) {
+          if (parsed.pathname === "/watch") return parsed.searchParams.get("v") || "";
+          if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) {
+            const chunks = parsed.pathname.split("/").filter(Boolean);
+            return chunks.length >= 2 ? chunks[1] : "";
+          }
+        }
+      } catch (error) {
+        const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/i);
+        return match ? match[1] : "";
+      }
+      return "";
+    }
+
+    function getMaterialThumbnailUrl(material) {
+      if (!material) return "";
+      if (material.thumbnail_url) {
+        return String(material.thumbnail_url).startsWith("http")
+          ? material.thumbnail_url
+          : `${backendBaseUrl}${material.thumbnail_url}`;
+      }
+
+      const fileUrl = String(material.file_url || "");
+      if (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(fileUrl)) {
+        return `${backendBaseUrl}${fileUrl}`;
+      }
+
+      const type = String(material.material_type_name || "").toLowerCase();
+      if (type === "youtube") {
+        const id = getYouTubeVideoId(material.external_url);
+        if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      }
+
+      return "";
+    }
+
     function getMaterialIcon(material) {
       const type = String(material.material_type_name || "").toLowerCase();
       if (type === "youtube") return "smart_display";
@@ -471,22 +516,37 @@
     function createMaterialCard(material, isStudentShare = false) {
       const icon = getMaterialIcon(material);
       const link = getMaterialUrl(material);
+      const thumbnail = getMaterialThumbnailUrl(material);
+      const previewSection = thumbnail
+        ? `
+          <img
+            src="${escapeHtml(thumbnail)}"
+            alt="${escapeHtml(material.title || "Material preview")}"
+            class="h-full w-full object-cover"
+            loading="lazy"
+            onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('justify-center'); this.parentElement.innerHTML='<span class=&quot;material-symbols-outlined text-primary/30 text-7xl&quot;>${icon}</span>';"
+          />
+        `
+        : `<span class="material-symbols-outlined text-primary/30 text-2xl">${icon}</span>`;
 
       return `
         <article class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
-          <div class="p-5">
-            <div class="flex items-start justify-between gap-3 mb-3">
-              <div class="flex items-start gap-3">
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 min-w-0">
+                <div class="w-20 h-14 rounded-lg overflow-hidden bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                  ${previewSection}
+                </div>
                 <span class="material-symbols-outlined text-primary">${icon}</span>
-                <div>
-                  <h3 class="text-base font-bold text-gray-900 dark:text-white leading-snug">
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-gray-900 dark:text-white leading-snug truncate">
                     ${escapeHtml(material.title || "Untitled Material")}
                   </h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     ${escapeHtml(material.material_type_name || "Unknown type")}
                   </p>
                   ${isStudentShare ? `
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim() || "Student")}
                     </p>
                   ` : ""}
@@ -494,7 +554,7 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 mt-3 border-t border-slate-200 dark:border-slate-700">
               <span>${formatDate(material.created_at) || "Available now"}</span>
               <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="text-primary font-semibold hover:underline">
                 Open

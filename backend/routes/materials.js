@@ -75,6 +75,68 @@ function isLinkBasedType(typeName) {
   return ["youtube", "external link"].includes(typeName);
 }
 
+function getYouTubeVideoId(urlValue) {
+  const raw = String(urlValue || "").trim();
+  if (!raw) return null;
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.replace(/^\/+/, "").split("/")[0];
+      return id || null;
+    }
+
+    if (host.endsWith("youtube.com")) {
+      if (parsed.pathname === "/watch") {
+        return parsed.searchParams.get("v");
+      }
+
+      if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) {
+        const chunks = parsed.pathname.split("/").filter(Boolean);
+        return chunks.length >= 2 ? chunks[1] : null;
+      }
+    }
+  } catch (error) {
+    const fallback = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/i);
+    return fallback ? fallback[1] : null;
+  }
+
+  return null;
+}
+
+function isImageFileUrl(fileUrl) {
+  const text = String(fileUrl || "").toLowerCase().split("?")[0];
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(text);
+}
+
+function buildMaterialThumbnail(material) {
+  if (!material) return null;
+
+  if (material.thumbnail_url) return material.thumbnail_url;
+
+  const typeName = normalizeTypeName(material.material_type_name);
+  if (typeName === "youtube") {
+    const videoId = getYouTubeVideoId(material.external_url);
+    if (videoId) return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  }
+
+  if (isImageFileUrl(material.file_url)) {
+    return material.file_url;
+  }
+
+  return null;
+}
+
+function attachMaterialThumbnail(material) {
+  if (!material) return material;
+  return {
+    ...material,
+    thumbnail_url: buildMaterialThumbnail(material)
+  };
+}
+
 async function getMaterialTypeById(materialTypeId) {
   const [rows] = await promisePool.query(
     `
@@ -86,7 +148,7 @@ async function getMaterialTypeById(materialTypeId) {
     [materialTypeId]
   );
 
-  return rows[0] || null;
+  return rows[0] ? attachMaterialThumbnail(rows[0]) : null;
 }
 
 async function getModuleById(moduleId) {
@@ -198,7 +260,7 @@ router.get("/", authenticateToken, async (req, res) => {
 
     return res.json({
       ok: true,
-      materials: rows,
+      materials: rows.map(attachMaterialThumbnail),
     });
   } catch (error) {
     console.error("Get materials error:", error);

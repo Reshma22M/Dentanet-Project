@@ -368,6 +368,50 @@
       return `${API_ORIGIN}${normalized}`;
     }
 
+    function getYouTubeVideoId(urlValue) {
+      const raw = String(urlValue || "").trim();
+      if (!raw) return "";
+      try {
+        const parsed = new URL(raw);
+        const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+        if (host === "youtu.be") {
+          return parsed.pathname.replace(/^\/+/, "").split("/")[0] || "";
+        }
+        if (host.endsWith("youtube.com")) {
+          if (parsed.pathname === "/watch") return parsed.searchParams.get("v") || "";
+          if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) {
+            const chunks = parsed.pathname.split("/").filter(Boolean);
+            return chunks.length >= 2 ? chunks[1] : "";
+          }
+        }
+      } catch (error) {
+        const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/i);
+        return match ? match[1] : "";
+      }
+      return "";
+    }
+
+    function getMaterialThumbnailUrl(material) {
+      if (!material) return "";
+      if (material.thumbnail_url) {
+        return String(material.thumbnail_url).startsWith("http")
+          ? material.thumbnail_url
+          : buildFileUrl(material.thumbnail_url);
+      }
+
+      const fileUrl = String(material.file_url || "");
+      if (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(fileUrl)) {
+        return buildFileUrl(fileUrl);
+      }
+
+      const type = String(material.material_type_name || "").toLowerCase();
+      if (type === "youtube") {
+        const id = getYouTubeVideoId(material.external_url);
+        if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      }
+      return "";
+    }
+
 function getModuleIdFromQuery() {
   const params = new URLSearchParams(window.location.search);
   return (
@@ -621,11 +665,19 @@ function getModuleIdFromQuery() {
         <div class="space-y-4">
           ${moduleMaterials.map(material => `
             <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
+              <div class="flex items-start gap-4">
+                <div class="w-20 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                  ${getMaterialThumbnailUrl(material)
+                    ? `<img src="${escapeHtml(getMaterialThumbnailUrl(material))}" alt="${escapeHtml(material.title || "Material preview")}" class="h-full w-full object-cover" loading="lazy" />`
+                    : `<span class="material-symbols-outlined text-primary/30">menu_book</span>`
+                  }
+                </div>
+                <div>
                 <h4 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Material")}</h4>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   ${escapeHtml(material.material_type_name || "Material")}
                 </p>
+                </div>
               </div>
 
               <div class="flex flex-wrap gap-2">
@@ -713,12 +765,20 @@ function getModuleIdFromQuery() {
         <div class="space-y-4">
           ${moduleStudyMaterials.map(material => `
             <div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h4 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Study Material")}</h4>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  ${escapeHtml(material.material_type_name || "Study Material")}
-                  ${material.first_name || material.last_name ? ` • Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim())}` : ""}
-                </p>
+              <div class="flex items-start gap-4">
+                <div class="w-20 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                  ${getMaterialThumbnailUrl(material)
+                    ? `<img src="${escapeHtml(getMaterialThumbnailUrl(material))}" alt="${escapeHtml(material.title || "Study material preview")}" class="h-full w-full object-cover" loading="lazy" />`
+                    : `<span class="material-symbols-outlined text-primary/30">menu_book</span>`
+                  }
+                </div>
+                <div>
+                  <h4 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Study Material")}</h4>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    ${escapeHtml(material.material_type_name || "Study Material")}
+                    ${material.first_name || material.last_name ? ` • Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim())}` : ""}
+                  </p>
+                </div>
               </div>
 
               <div class="flex flex-wrap gap-2">
