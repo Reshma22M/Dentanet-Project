@@ -1,4 +1,30 @@
-const API_BASE_URL = "http://localhost:3002/api";
+const API_BASE_URL = (() => {
+    const override =
+        (typeof window !== "undefined" && window.__DENTANET_API_BASE_URL__) ||
+        localStorage.getItem("DENTANET_API_BASE_URL") ||
+        "";
+
+    if (override && /^https?:\/\//i.test(override)) {
+        return override.replace(/\/$/, "");
+    }
+
+    if (typeof window !== "undefined" && window.location?.protocol?.startsWith("http")) {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+
+        // Common local setup: frontend on 3000/8080 and backend on 3002.
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
+            if (port === "3002") return `${window.location.origin}/api`;
+            return `${protocol}//${hostname}:3002/api`;
+        }
+
+        // Hosted/same-domain reverse proxy setup.
+        return `${window.location.origin}/api`;
+    }
+
+    return "http://localhost:3002/api";
+})();
 
 // -----------------------------
 // Helpers
@@ -961,10 +987,9 @@ window.location.href =
 }
 catch (err) {
 
-console.error(
-"Session check failed:",
-err
-);
+if (typeof showWarningNotification === "function") {
+showWarningNotification("Unable to verify session right now. Please check your connection.");
+}
 
 }
 

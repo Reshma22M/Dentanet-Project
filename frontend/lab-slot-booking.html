@@ -106,6 +106,8 @@ body { font-family: 'Inter', sans-serif; }
           </div>
         </div>
 
+        <div id="practiceRestrictionMsg" class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg text-sm text-amber-800 dark:text-amber-300"></div>
+
         <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6 mb-6">
           <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Book Practice Session</h2>
           <form class="space-y-4" id="practiceBookingForm">
@@ -166,6 +168,7 @@ body { font-family: 'Inter', sans-serif; }
 let SELECTED_EXAM_ID = null;
 let EXAMS_CACHE = [];
 let EXAM_SLOTS_CACHE = new Map();
+let PRACTICE_ANCHOR_EXAM = null;
 const PAGE_PARAMS = new URLSearchParams(window.location.search);
 const CURRENT_MODULE_ID =
   PAGE_PARAMS.get("module_id") ||
@@ -268,6 +271,73 @@ function toLocalDateTime(dateValue, timeValue) {
   const [hh, min, sec] = String(timeValue || "00:00:00").slice(0, 8).split(":").map((v) => Number(v || 0));
   const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getDayBefore(dateValue) {
+  const dateKey = getDateKey(dateValue);
+  if (!dateKey) return "";
+  const [yyyy, mm, dd] = dateKey.split("-").map(Number);
+  const base = new Date(yyyy, mm - 1, dd, 0, 0, 0, 0);
+  if (Number.isNaN(base.getTime())) return "";
+  base.setDate(base.getDate() - 1);
+  const y = base.getFullYear();
+  const m = String(base.getMonth() + 1).padStart(2, "0");
+  const d = String(base.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getPracticeAnchorExam() {
+  if (!Array.isArray(EXAMS_CACHE) || !EXAMS_CACHE.length) return null;
+
+  const now = Date.now();
+  const futureExams = EXAMS_CACHE
+    .map((exam) => {
+      const examStart = toLocalDateTime(exam.exam_date, exam.start_time || "23:59:59");
+      return {
+        exam,
+        examStart
+      };
+    })
+    .filter((item) => item.examStart && item.examStart.getTime() > now)
+    .sort((a, b) => a.examStart.getTime() - b.examStart.getTime());
+
+  if (!futureExams.length) return null;
+
+  const selected = futureExams.find(item => String(item.exam.exam_id) === String(SELECTED_EXAM_ID));
+  return (selected || futureExams[0]).exam;
+}
+
+function refreshPracticeRestriction() {
+  const messageEl = document.getElementById("practiceRestrictionMsg");
+  const dateInput = document.getElementById("practiceDate");
+  const submitButton = document.querySelector("#practiceBookingForm button[type='submit']");
+
+  PRACTICE_ANCHOR_EXAM = getPracticeAnchorExam();
+
+  if (!PRACTICE_ANCHOR_EXAM) {
+    if (messageEl) {
+      messageEl.innerHTML = `<strong>Practice booking unavailable:</strong> Practice sessions can be booked only before an upcoming module exam.`;
+    }
+    if (submitButton) submitButton.disabled = true;
+    if (dateInput) dateInput.max = "";
+    return;
+  }
+
+  const examDateLabel = formatDate(PRACTICE_ANCHOR_EXAM.exam_date);
+  const examTimeLabel = `${formatTime(PRACTICE_ANCHOR_EXAM.start_time)} - ${formatTime(PRACTICE_ANCHOR_EXAM.end_time)}`;
+  const maxPracticeDate = getDayBefore(PRACTICE_ANCHOR_EXAM.exam_date);
+
+  if (messageEl) {
+    messageEl.innerHTML = `<strong>Practice rule:</strong> Practice booking and practice submission must be completed before the exam date (${escapeHtml(examDateLabel)}, ${escapeHtml(examTimeLabel)}).`;
+  }
+
+  if (submitButton) submitButton.disabled = false;
+  if (dateInput) {
+    dateInput.max = maxPracticeDate || "";
+    if (dateInput.value && maxPracticeDate && dateInput.value > maxPracticeDate) {
+      dateInput.value = "";
+    }
+  }
 }
 
 function isExamExpired(exam) {
@@ -382,6 +452,7 @@ async function loadSelectedExam(examBookings) {
 
   if (!SELECTED_EXAM_ID) {
     container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No upcoming exam available right now.</p>`;
+    refreshPracticeRestriction();
     return;
   }
 
@@ -389,6 +460,7 @@ async function loadSelectedExam(examBookings) {
 
   if (!examResult.ok || !examResult.exam) {
     container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">Selected exam was not found.</p>`;
+    refreshPracticeRestriction();
     return;
   }
 
@@ -396,17 +468,20 @@ async function loadSelectedExam(examBookings) {
 
   if (CURRENT_MODULE_ID && String(exam.module_id) !== String(CURRENT_MODULE_ID)) {
     container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">No scheduled exam found for this module.</p>`;
+    refreshPracticeRestriction();
     return;
   }
 
   if (isExamExpired(exam)) {
     container.innerHTML = `<p class="text-slate-500 dark:text-slate-400">The selected exam has already expired.</p>`;
+    refreshPracticeRestriction();
     return;
   }
 
   const slots = EXAM_SLOTS_CACHE.get(String(SELECTED_EXAM_ID)) || [];
 
   container.innerHTML = renderSelectedExamCard(exam, slots, examBookings);
+  refreshPracticeRestriction();
 }
 
 function renderSelectedExamCard(exam, slots, examBookings) {
@@ -652,6 +727,18 @@ document.getElementById("practiceBookingForm").addEventListener("submit", async 
     return;
   }
 
+  if (!PRACTICE_ANCHOR_EXAM) {
+    showWarningNotification("Practice sessions can only be booked before an upcoming exam.");
+    return;
+  }
+
+  const examDateKey = getDateKey(PRACTICE_ANCHOR_EXAM.exam_date);
+  const bookingDateKey = getDateKey(bookingDate);
+  if (examDateKey && bookingDateKey && bookingDateKey >= examDateKey) {
+    showWarningNotification("Practice sessions must be booked before the exam date.");
+    return;
+  }
+
   const [startTime, endTime] = timeSlot.split("|");
 
   const result = await API.bookings.create({
@@ -660,7 +747,7 @@ document.getElementById("practiceBookingForm").addEventListener("submit", async 
     startTime,
     endTime,
     purpose,
-    examId: SELECTED_EXAM_ID || null,
+    examId: PRACTICE_ANCHOR_EXAM?.exam_id || SELECTED_EXAM_ID || null,
     moduleId: CURRENT_MODULE_ID || null
   });
 

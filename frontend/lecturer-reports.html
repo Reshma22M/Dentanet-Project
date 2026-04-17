@@ -36,6 +36,18 @@
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
+    .report-panel {
+      @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm;
+    }
+    .metric-card {
+      @apply rounded-2xl border p-4 shadow-sm;
+      background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.08));
+      border-color: rgba(148, 163, 184, 0.28);
+    }
+    .dark .metric-card {
+      background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(16,185,129,0.16));
+      border-color: rgba(100, 116, 139, 0.42);
+    }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300">
@@ -92,7 +104,8 @@
 
     <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10">
       <div class="max-w-7xl mx-auto">
-        <div class="mb-8">
+        <div class="mb-8 report-panel p-6 md:p-7">
+          <p class="text-xs font-bold tracking-[0.22em] uppercase text-primary mb-2">Lecturer Analytics</p>
           <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Reports & Analytics</h1>
           <p class="text-slate-600 dark:text-slate-400">Generate final-result performance reports and AI vs lecturer accuracy insights.</p>
         </div>
@@ -105,7 +118,7 @@
         </div>
 
         <section id="batchContent">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
+          <div class="report-panel p-6 mb-6">
             <h2 class="text-xl font-bold dark:text-white mb-4">Batch Performance Filters</h2>
             <form id="batchReportForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <div>
@@ -145,20 +158,20 @@
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="batchSummaryCards"></div>
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <div class="report-panel p-6">
               <h3 class="text-lg font-bold mb-4">Top Students (Average Grade)</h3>
               <div class="h-72">
                 <canvas id="studentPerformanceChart"></canvas>
               </div>
             </div>
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <div class="report-panel p-6">
               <h3 class="text-lg font-bold mb-4">Module Performance (Average Grade)</h3>
               <div class="h-72">
                 <canvas id="modulePerformanceChart"></canvas>
               </div>
             </div>
           </div>
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+          <div class="report-panel p-6">
             <h3 class="text-lg font-bold mb-4">Student Performance</h3>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
@@ -180,7 +193,7 @@
         </section>
 
         <section id="apiContent" class="hidden">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
+          <div class="report-panel p-6 mb-6">
             <h2 class="text-xl font-bold dark:text-white mb-4">AI Accuracy Filters</h2>
             <form id="apiReportForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <div>
@@ -224,11 +237,11 @@
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="apiSummaryCards"></div>
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <div class="report-panel p-6">
               <h3 class="text-lg font-bold mb-4">Criteria Quality (AI)</h3>
               <div id="criteriaContainer" class="space-y-3"></div>
             </div>
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <div class="report-panel p-6">
               <h3 class="text-lg font-bold mb-4">Top Variance Cases</h3>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -287,10 +300,13 @@
 
     function renderSummaryCards(containerId, pairs) {
       const container = document.getElementById(containerId);
-      container.innerHTML = pairs.map(([label, value]) => `
-        <article class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <p class="text-xs uppercase tracking-wider text-slate-500">${label}</p>
-          <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">${value}</p>
+      container.innerHTML = pairs.map(([label, value], index) => `
+        <article class="metric-card">
+          <div class="flex items-start justify-between gap-3">
+            <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">${label}</p>
+            <span class="material-symbols-outlined text-primary/80 text-[18px]">${["insights", "group", "verified", "monitoring"][index % 4]}</span>
+          </div>
+          <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">${value}</p>
         </article>
       `).join("");
     }
@@ -382,7 +398,8 @@
             label: "Average Grade",
             data: studentData,
             borderWidth: 1,
-            backgroundColor: "rgba(59,130,246,0.65)",
+            borderRadius: 8,
+            backgroundColor: "rgba(59,130,246,0.72)",
             borderColor: "rgba(37,99,235,1)"
           }]
         },
@@ -390,10 +407,25 @@
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { beginAtZero: true, suggestedMax: 100 }
+            x: {
+              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              suggestedMax: 100,
+              ticks: { color: "#64748b" },
+              grid: { color: "rgba(148,163,184,0.22)" }
+            }
           },
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#0f172a",
+              titleColor: "#fff",
+              bodyColor: "#e2e8f0",
+              padding: 10
+            }
           }
         }
       });
@@ -408,7 +440,9 @@
             borderWidth: 2,
             fill: true,
             tension: 0.25,
-            backgroundColor: "rgba(16,185,129,0.2)",
+            pointRadius: 4,
+            pointBackgroundColor: "rgba(5,150,105,1)",
+            backgroundColor: "rgba(16,185,129,0.18)",
             borderColor: "rgba(5,150,105,1)"
           }]
         },
@@ -416,10 +450,25 @@
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { beginAtZero: true, suggestedMax: 100 }
+            x: {
+              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              suggestedMax: 100,
+              ticks: { color: "#64748b" },
+              grid: { color: "rgba(148,163,184,0.22)" }
+            }
           },
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#0f172a",
+              titleColor: "#fff",
+              bodyColor: "#e2e8f0",
+              padding: 10
+            }
           }
         }
       });
@@ -438,10 +487,13 @@
       const criteriaContainer = document.getElementById("criteriaContainer");
       criteriaContainer.innerHTML = criteria.length
         ? criteria.map((item) => `
-          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/70 dark:bg-slate-900/30">
             <div class="flex items-center justify-between">
               <p class="font-semibold capitalize">${(item.key || "").replaceAll("_", " ")}</p>
               <p class="text-sm text-slate-500">${toNum(item.acceptable_count)}/${toNum(item.total)}</p>
+            </div>
+            <div class="mt-2 h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" style="width:${Math.max(0, Math.min(100, toNum(item.acceptable_rate)))}%"></div>
             </div>
             <p class="text-sm text-primary font-bold mt-1">${toNum(item.acceptable_rate).toFixed(2)}% acceptable</p>
           </div>

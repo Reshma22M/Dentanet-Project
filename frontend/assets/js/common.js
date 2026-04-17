@@ -97,7 +97,11 @@ function ensureConfirmModal() {
                 <div class="p-6">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EFEBFF] text-[#6D5CB3] dark:bg-[#6D5CB3]/20 dark:text-[#c4b5fd]">
-                            <span class="material-symbols-outlined">help</span>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-5 w-5">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
+                                <path d="M9.6 9.2a2.4 2.4 0 1 1 3.7 2c-.9.6-1.3 1-1.3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                                <path d="M12 17h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path>
+                            </svg>
                         </div>
                         <div class="flex-1">
                             <h3 id="dentanet-confirm-title" class="text-lg font-bold text-slate-800 dark:text-white">Confirm Action</h3>
@@ -182,6 +186,17 @@ function showConfirmDialog({
     });
 }
 
+function getToastIconSvg(type = "info") {
+    const iconMap = {
+        success: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-5 w-5"><path d="M20 7L10 17l-6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        error: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-5 w-5"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v5m0 3h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`,
+        warning: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-5 w-5"><path d="M12 3L2.5 19.5h19L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+        info: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-5 w-5"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5m0-8h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`
+    };
+
+    return iconMap[type] || iconMap.info;
+}
+
 function showNotification(type = "info", message = "", duration = 3500) {
     const container = ensureToastContainer();
 
@@ -224,14 +239,16 @@ function showNotification(type = "info", message = "", duration = 3500) {
     toast.innerHTML = `
         <div class="flex items-start gap-3 p-4">
             <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFEBFF] text-[#6D5CB3] dark:bg-[#6D5CB3]/20 dark:text-[#c4b5fd]">
-                <span class="material-symbols-outlined text-[20px]">${selected.icon}</span>
+                ${getToastIconSvg(type)}
             </div>
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${selected.title}</p>
                 <p class="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300 break-words">${escapeHtml(message)}</p>
             </div>
             <button type="button" class="toast-close rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200">
-                <span class="material-symbols-outlined text-[18px]">close</span>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-[18px] w-[18px]">
+                    <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
             </button>
         </div>
         <div class="h-1 w-full bg-slate-100 dark:bg-slate-800">

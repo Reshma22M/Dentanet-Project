@@ -115,10 +115,6 @@ function toSafeNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toPassFailLabel(value) {
-    return String(value || "").toUpperCase() === "PASS" ? "PASS" : "FAIL";
-}
-
 let retakeStudentColumnCache = null;
 async function getRetakeStudentColumn() {
     if (retakeStudentColumnCache) return retakeStudentColumnCache;
@@ -1482,9 +1478,18 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
             }
 
             const [practiceLinkRows] = await promisePool.query(`
-                SELECT request_id
-                FROM practice_slot_requests
-                WHERE request_id = ?
+                SELECT
+                    psr.request_id,
+                    psr.module_id,
+                    esr.exam_id,
+                    DATE_FORMAT(e.exam_date, '%Y-%m-%d') AS exam_date,
+                    TIME_FORMAT(e.start_time, '%H:%i') AS exam_start_time
+                FROM practice_slot_requests psr
+                LEFT JOIN exam_slot_requests esr
+                  ON esr.request_id = psr.request_id
+                LEFT JOIN exams e
+                  ON e.exam_id = esr.exam_id
+                WHERE psr.request_id = ?
                 LIMIT 1
             `, [requestId]);
 
@@ -1493,6 +1498,22 @@ router.post("/", authenticateToken, upload.array("images", 3), async (req, res) 
                     ok: false,
                     error: "The selected slot is not linked to a practice session"
                 });
+            }
+
+            const practiceLink = practiceLinkRows[0];
+            if (practiceLink.exam_date) {
+                const examStart = toLocalDateTime(
+                    practiceLink.exam_date,
+                    practiceLink.exam_start_time,
+                    "23:59:59"
+                );
+
+                if (examStart && new Date().getTime() >= examStart.getTime()) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Practice submission is closed because the exam period has started. Practice work must be submitted before exam date/time."
+                    });
+                }
             }
         }
 
@@ -1850,7 +1871,6 @@ router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
                 const moduleText = submission.module_code
                     ? `${submission.module_code} - ${submission.module_name || ""}`.trim()
                     : "your module";
-                const passFailLabel = normalizedDecision === "RETAKE" ? "RETAKE REQUIRED" : toPassFailLabel(passFail);
 
                 const mailResult = await sendEmail({
                     to: submission.student_email,
@@ -1864,17 +1884,16 @@ router.post("/:submission_id/publish", authenticateToken, async (req, res) => {
                             <p>Your lecturer has released the final result for your exam submission.</p>
                             <p><strong>Module:</strong> ${moduleText}</p>
                             <p><strong>Exam:</strong> ${examName}</p>
-                            <p><strong>Status:</strong> ${passFailLabel}</p>
                             ${normalizedDecision === "RETAKE"
                                 ? "<p><strong>Action:</strong> Please log in to DentaNet LMS and request your retake exam slot.</p>"
                                 : ""
                             }
-                            <p>Please log in to DentaNet LMS to view your full grade and feedback.</p>
+                            <p>Please log in to DentaNet LMS to view your released result and detailed feedback.</p>
                         </div>
                     `,
                     text: normalizedDecision === "RETAKE"
-                        ? `Your exam result is released for ${examName} (${moduleText}). Status: RETAKE REQUIRED. Please log in to DentaNet LMS and request a retake exam slot, then view your full feedback.`
-                        : `Your exam result is released for ${examName} (${moduleText}). Status: ${passFailLabel}. Please log in to DentaNet LMS to view the full grade and feedback.`
+                        ? `Your exam result is released for ${examName} (${moduleText}). Please log in to DentaNet LMS and request a retake exam slot, then view your full feedback.`
+                        : `Your exam result is released for ${examName} (${moduleText}). Please log in to DentaNet LMS to view your result and detailed feedback.`
                 });
 
                 if (!mailResult.ok) {

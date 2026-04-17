@@ -140,7 +140,11 @@ function buildResultCard(item) {
 async function loadResults() {
   try {
     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    const apiBase = (typeof API_BASE_URL === "string" && API_BASE_URL) ? API_BASE_URL : "http://localhost:3002/api";
+    const apiBase = (typeof API_BASE_URL === "string" && API_BASE_URL)
+      ? API_BASE_URL
+      : (window.location.protocol.startsWith("http")
+          ? `${window.location.origin}/api`
+          : "http://localhost:3002/api");
 
     const response = await fetch(`${apiBase}/submissions/student/dashboard-data`, {
       headers: {

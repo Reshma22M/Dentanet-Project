@@ -224,6 +224,128 @@ router.post("/", authenticateToken, async (req, res) => {
             });
         }
 
+        let practiceModuleId = null;
+        let practiceExamId = null;
+
+        if (normalizedSlotType === "PRACTICE") {
+            practiceModuleId = moduleId ? Number(moduleId) : null;
+
+            if (!practiceModuleId && examId) {
+                const [examModuleRows] = await connection.query(
+                    `
+                    SELECT module_id
+                    FROM exams
+                    WHERE exam_id = ?
+                      AND is_active = TRUE
+                    LIMIT 1
+                    `,
+                    [Number(examId)]
+                );
+
+                if (examModuleRows.length > 0) {
+                    practiceModuleId = Number(examModuleRows[0].module_id);
+                }
+            }
+
+            if (!practiceModuleId) {
+                return res.status(400).json({
+                    ok: false,
+                    error: "Practice booking requires a module context. Open the page from your module."
+                });
+            }
+
+            if (examId) {
+                const [explicitExamRows] = await connection.query(
+                    `
+                    SELECT
+                        exam_id,
+                        DATE_FORMAT(exam_date, '%Y-%m-%d') AS exam_date,
+                        TIME_FORMAT(start_time, '%H:%i') AS start_time,
+                        is_active,
+                        status
+                    FROM exams
+                    WHERE exam_id = ?
+                      AND module_id = ?
+                    LIMIT 1
+                    `,
+                    [Number(examId), practiceModuleId]
+                );
+
+                if (!explicitExamRows.length) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Selected exam for practice booking was not found in this module"
+                    });
+                }
+
+                const explicitExam = explicitExamRows[0];
+                const examStatus = String(explicitExam.status || "").toUpperCase();
+                if (!explicitExam.is_active || !["SCHEDULED", "OPEN"].includes(examStatus)) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Practice booking is only allowed before an active upcoming exam"
+                    });
+                }
+
+                const explicitExamStart = buildDateTime(explicitExam.exam_date, explicitExam.start_time || "23:59");
+                if (!explicitExamStart || explicitExamStart.getTime() <= Date.now()) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "This exam has already started or passed. Practice slots must be completed before exam date/time."
+                    });
+                }
+
+                if (normalizedBookingDate >= String(explicitExam.exam_date)) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Practice sessions must be booked before the exam date."
+                    });
+                }
+
+                practiceExamId = Number(explicitExam.exam_id);
+            } else {
+                const [upcomingExamRows] = await connection.query(
+                    `
+                    SELECT
+                        exam_id,
+                        exam_name,
+                        DATE_FORMAT(exam_date, '%Y-%m-%d') AS exam_date,
+                        TIME_FORMAT(start_time, '%H:%i') AS start_time
+                    FROM exams
+                    WHERE module_id = ?
+                      AND is_active = TRUE
+                      AND status IN ('SCHEDULED', 'OPEN')
+                      AND exam_date IS NOT NULL
+                    ORDER BY exam_date ASC, start_time ASC, exam_id ASC
+                    `,
+                    [practiceModuleId]
+                );
+
+                const now = Date.now();
+                const nextExam = upcomingExamRows.find((row) => {
+                    const examStart = buildDateTime(row.exam_date, row.start_time || "23:59");
+                    return examStart && examStart.getTime() > now;
+                });
+
+                if (!nextExam) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Practice sessions are available only before an upcoming exam. No upcoming exam found for this module."
+                    });
+                }
+
+                const nextExamStart = buildDateTime(nextExam.exam_date, nextExam.start_time || "23:59");
+                if (nextExamStart && normalizedBookingDate >= String(nextExam.exam_date)) {
+                    return res.status(400).json({
+                        ok: false,
+                        error: "Practice sessions must be booked before the upcoming exam date."
+                    });
+                }
+
+                practiceExamId = Number(nextExam.exam_id);
+            }
+        }
+
         await connection.beginTransaction();
 
         if (normalizedSlotType === "EXAM") {
@@ -370,25 +492,6 @@ router.post("/", authenticateToken, async (req, res) => {
         const requestId = result.insertId;
 
         if (normalizedSlotType === "PRACTICE") {
-            let practiceModuleId = moduleId ? Number(moduleId) : null;
-
-            if (!practiceModuleId && examId) {
-                const [examModuleRows] = await connection.query(
-                    `
-                    SELECT module_id
-                    FROM exams
-                    WHERE exam_id = ?
-                      AND is_active = TRUE
-                    LIMIT 1
-                    `,
-                    [Number(examId)]
-                );
-
-                if (examModuleRows.length > 0) {
-                    practiceModuleId = Number(examModuleRows[0].module_id);
-                }
-            }
-
             await connection.query(
                 `
                 INSERT INTO practice_slot_requests
@@ -398,28 +501,15 @@ router.post("/", authenticateToken, async (req, res) => {
                 [requestId, purpose || null, practiceModuleId || null]
             );
 
-            if (examId) {
-                const [examRows] = await connection.query(
+            if (practiceExamId) {
+                await connection.query(
                     `
-                    SELECT exam_id
-                    FROM exams
-                    WHERE exam_id = ?
-                      AND is_active = TRUE
-                    LIMIT 1
+                    INSERT INTO exam_slot_requests
+                    (request_id, exam_id, slot_id)
+                    VALUES (?, ?, NULL)
                     `,
-                    [Number(examId)]
+                    [requestId, Number(practiceExamId)]
                 );
-
-                if (examRows.length > 0) {
-                    await connection.query(
-                        `
-                        INSERT INTO exam_slot_requests
-                        (request_id, exam_id, slot_id)
-                        VALUES (?, ?, NULL)
-                        `,
-                        [requestId, Number(examId)]
-                    );
-                }
             }
         }
 

@@ -113,6 +113,11 @@
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">My Bookings</h2>
         </div>
 
+        <div class="flex flex-wrap gap-3 mb-6">
+          <button id="bookingExamTab" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold tab-active">Exam Slots</button>
+          <button id="bookingPracticeTab" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold tab-inactive">Practice Slots</button>
+        </div>
+
         <div id="moduleBookingsContainer" class="space-y-4">
           <div class="text-sm text-gray-500 dark:text-gray-400">Loading bookings...</div>
         </div>
@@ -123,7 +128,11 @@
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">Submit Work</h2>
           <a id="viewAllSubmissionsLink" href="submission-hub.html" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all">Open Submission Portal</a>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select an exam below to submit your work for evaluation.</p>
+        <div class="flex flex-wrap gap-3 mb-4">
+          <button id="submissionExamTab" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold tab-active">Exam Submissions</button>
+          <button id="submissionPracticeTab" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold tab-inactive">Practice Submissions</button>
+        </div>
+        <p id="submissionPanelHint" class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select an exam below to submit your work for evaluation.</p>
         <div id="moduleSubmissionsContainer" class="space-y-4">
           <div class="text-sm text-gray-500 dark:text-gray-400">Loading exams...</div>
         </div>
@@ -175,7 +184,10 @@
     let moduleBookings = [];
     let moduleMaterials = [];
     let moduleStudyMaterials = [];
-    let moduleSubmissionSummary = [];
+    let moduleExamSubmissionSummary = [];
+    let modulePracticeSubmissionSummary = [];
+    let activeBookingType = "EXAM";
+    let activeSubmissionType = "EXAM";
     let backendBaseUrl = "";
 
     function initBackendBaseUrl() {
@@ -306,13 +318,13 @@
         const remainingMinutes = Math.floor(remainingMs / 60000);
         const hours = Math.floor(remainingMinutes / 60);
         const minutes = remainingMinutes % 60;
-        return `Due in: ${hours}h ${minutes}m`;
+        return `Submission closes in: ${hours}h ${minutes}m`;
       }
       if (windowState.reason === "before_end" && windowState.endDate) {
-        return `Opens at: ${formatDateTime(windowState.endDate)}`;
+        return `Submission opens at: ${formatDateTime(windowState.endDate)}`;
       }
       if (windowState.reason === "window_closed" && windowState.windowEnd) {
-        return `Closed at: ${formatDateTime(windowState.windowEnd)}`;
+        return `Submission closed at: ${formatDateTime(windowState.windowEnd)}`;
       }
       return "";
     }
@@ -402,6 +414,50 @@
           if (targetPanel) targetPanel.classList.remove("hidden");
         });
       });
+    }
+
+    function setTabButtonState(activeButton, inactiveButton) {
+      if (activeButton) {
+        activeButton.classList.remove("tab-inactive");
+        activeButton.classList.add("tab-active");
+      }
+      if (inactiveButton) {
+        inactiveButton.classList.remove("tab-active");
+        inactiveButton.classList.add("tab-inactive");
+      }
+    }
+
+    function setupModuleSubTabs() {
+      const bookingExamTab = document.getElementById("bookingExamTab");
+      const bookingPracticeTab = document.getElementById("bookingPracticeTab");
+      const submissionExamTab = document.getElementById("submissionExamTab");
+      const submissionPracticeTab = document.getElementById("submissionPracticeTab");
+
+      if (bookingExamTab && bookingPracticeTab) {
+        bookingExamTab.addEventListener("click", () => {
+          activeBookingType = "EXAM";
+          setTabButtonState(bookingExamTab, bookingPracticeTab);
+          renderBookings();
+        });
+        bookingPracticeTab.addEventListener("click", () => {
+          activeBookingType = "PRACTICE";
+          setTabButtonState(bookingPracticeTab, bookingExamTab);
+          renderBookings();
+        });
+      }
+
+      if (submissionExamTab && submissionPracticeTab) {
+        submissionExamTab.addEventListener("click", () => {
+          activeSubmissionType = "EXAM";
+          setTabButtonState(submissionExamTab, submissionPracticeTab);
+          renderSubmissions();
+        });
+        submissionPracticeTab.addEventListener("click", () => {
+          activeSubmissionType = "PRACTICE";
+          setTabButtonState(submissionPracticeTab, submissionExamTab);
+          renderSubmissions();
+        });
+      }
     }
 
     function renderEmptyCard(message) {
@@ -506,18 +562,30 @@
 
     function renderBookings() {
       const container = document.getElementById("moduleBookingsContainer");
+      const allBookings = Array.isArray(moduleBookings) ? moduleBookings : [];
+      const filteredBookings = allBookings.filter((booking) =>
+        String(booking.slot_type || "").toUpperCase() === activeBookingType
+      );
 
-      if (!Array.isArray(moduleBookings) || moduleBookings.length === 0) {
-        container.innerHTML = renderEmptyCard("No bookings found for this module.");
+      if (filteredBookings.length === 0) {
+        container.innerHTML = renderEmptyCard(
+          activeBookingType === "EXAM"
+            ? "No exam slot bookings found for this module."
+            : "No practice session bookings found for this module."
+        );
         return;
       }
 
-      container.innerHTML = moduleBookings.map(booking => `
+      container.innerHTML = filteredBookings.map(booking => `
         <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
           <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
               <h4 class="font-bold text-gray-900 dark:text-white text-base">
-                ${escapeHtml(booking.exam_name || booking.purpose || "Booking")}
+                ${escapeHtml(
+                  activeBookingType === "EXAM"
+                    ? (booking.exam_name || "Exam Slot Booking")
+                    : (booking.purpose || "Practice Session Booking")
+                )}
               </h4>
 
               <p class="text-xs text-primary font-semibold mt-2">
@@ -539,9 +607,161 @@
       `).join("");
     }
 
+function renderPracticeSubmissionsPanel(container) {
+  const practiceSummary = Array.isArray(modulePracticeSubmissionSummary) ? modulePracticeSubmissionSummary : [];
+
+  if (!practiceSummary.length) {
+    container.innerHTML = renderEmptyCard("No practice submissions found for this module.");
+    return;
+  }
+
+  container.innerHTML = practiceSummary.map((item) => {
+    const requestId = item.request_id ? String(item.request_id) : "";
+    const submitLink = requestId
+      ? `practical-exam-submission.html?request_id=${encodeURIComponent(requestId)}&module_id=${encodeURIComponent(currentModuleId)}`
+      : "#";
+    const hasSubmission = !!item.submission_id;
+    const published = item.final_grade != null || item.api_score != null;
+    const statusText = item.pass_fail || item.api_status || "Pending";
+    const windowState = getBookingSubmissionWindowState({
+      status: item.slot_status,
+      booking_date: item.booking_date,
+      start_time: item.start_time,
+      end_time: item.end_time
+    });
+    const timingText = getWindowDetailText(windowState, item.submitted_at);
+    const submissionOpen = !hasSubmission && windowState.open;
+    const submissionClosed = !hasSubmission && windowState.reason === "window_closed";
+    const beforeSessionEnd = !hasSubmission && windowState.reason === "before_end";
+    const awaitingApproval = !hasSubmission && windowState.reason === "awaiting_approval";
+    const lockReason = !hasSubmission && !submissionOpen && !submissionClosed && !beforeSessionEnd && !awaitingApproval;
+
+    let stateBadge = "";
+    if (hasSubmission) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Submitted</span>`;
+    } else if (submissionOpen) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Submission Open</span>`;
+    } else if (submissionClosed) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Submission Closed</span>`;
+    } else if (beforeSessionEnd) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Opens After Session</span>`;
+    } else if (awaitingApproval) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Awaiting Approval</span>`;
+    } else if (lockReason) {
+      stateBadge = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-600">Locked</span>`;
+    }
+
+    let actionHtml = "";
+    if (hasSubmission) {
+      actionHtml = requestId
+        ? `<a
+            href="${submitLink}"
+            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+          >
+            View Submission
+          </a>`
+        : `<span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed">
+            Session Link Unavailable
+          </span>`;
+    } else if (submissionOpen) {
+      actionHtml = requestId
+        ? `<a
+            href="${submitLink}"
+            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+          >
+            Submit Practice
+          </a>`
+        : `<span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed">
+            Session Link Unavailable
+          </span>`;
+    } else if (submissionClosed) {
+      actionHtml = `<span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed">Submission Closed</span>`;
+    } else if (beforeSessionEnd) {
+      actionHtml = `<span class="px-4 py-2 rounded-xl bg-blue-100 text-blue-700 text-sm font-semibold cursor-not-allowed">Opens After Session</span>`;
+    } else if (awaitingApproval) {
+      actionHtml = `<span class="px-4 py-2 rounded-xl bg-amber-100 text-amber-700 text-sm font-semibold cursor-not-allowed">Awaiting Approval</span>`;
+    } else {
+      actionHtml = `<span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed">Locked</span>`;
+    }
+
+    return `
+      <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-slate-200 dark:border-slate-700">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="material-icons-round text-primary text-[18px]">science</span>
+              <h4 class="font-bold text-gray-900 dark:text-white text-base">
+                ${escapeHtml(item.purpose || "Practice Session")}
+              </h4>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                ${escapeHtml(String(item.slot_status || "PENDING"))}
+              </span>
+              ${stateBadge}
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              ${formatDate(item.booking_date)} • ${formatTime(item.start_time)} - ${formatTime(item.end_time)}
+            </p>
+            <p class="text-xs text-gray-500 mt-2">
+              ${hasSubmission
+                ? `Submitted${item.submitted_at ? ` on ${formatDateTime(item.submitted_at)}` : ""} • Result: ${escapeHtml(String(statusText))}`
+                : "No submission yet"}
+            </p>
+            ${published ? `<p class="text-xs text-primary mt-1 font-semibold">Practice AI evaluation published.</p>` : ""}
+            ${timingText ? `<p class="text-xs text-slate-500 mt-1">${escapeHtml(timingText)}</p>` : ""}
+          </div>
+
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 function renderSubmissions() {
   const container = document.getElementById("moduleSubmissionsContainer");
+  const hint = document.getElementById("submissionPanelHint");
+  const viewAllSubmissionsLink = document.getElementById("viewAllSubmissionsLink");
   if (!container) return;
+
+  if (activeSubmissionType === "PRACTICE") {
+    if (hint) {
+      hint.textContent = "Practice sessions are auto-evaluated by AI. Complete and submit them before your exam date.";
+    }
+    if (viewAllSubmissionsLink) {
+      const hasOpenPracticeWindow = (Array.isArray(modulePracticeSubmissionSummary) ? modulePracticeSubmissionSummary : [])
+        .some((item) => {
+          if (item.submission_id) return false;
+          const state = getBookingSubmissionWindowState({
+            status: item.slot_status,
+            booking_date: item.booking_date,
+            start_time: item.start_time,
+            end_time: item.end_time
+          });
+          return !!state.open && !!item.request_id;
+        });
+
+      if (hasOpenPracticeWindow) {
+        viewAllSubmissionsLink.textContent = "Open Submission Portal";
+        viewAllSubmissionsLink.classList.remove("pointer-events-none", "opacity-60", "bg-slate-400");
+        viewAllSubmissionsLink.classList.add("bg-primary", "hover:bg-primary-dark");
+      } else {
+        viewAllSubmissionsLink.textContent = "No Open Submission Window";
+        viewAllSubmissionsLink.classList.remove("hover:bg-primary-dark", "bg-primary");
+        viewAllSubmissionsLink.classList.add("pointer-events-none", "opacity-60", "bg-slate-400");
+      }
+    }
+    renderPracticeSubmissionsPanel(container);
+    return;
+  }
+
+  if (hint) {
+    hint.textContent = "Select an exam below to submit your work for evaluation.";
+  }
+  if (viewAllSubmissionsLink) {
+    viewAllSubmissionsLink.textContent = "Open Submission Portal";
+    viewAllSubmissionsLink.classList.remove("pointer-events-none", "opacity-60", "bg-slate-400");
+    viewAllSubmissionsLink.classList.add("bg-primary", "hover:bg-primary-dark");
+  }
 
   if (!Array.isArray(moduleExams) || moduleExams.length === 0) {
     container.innerHTML = renderEmptyCard(
@@ -551,7 +771,7 @@ function renderSubmissions() {
   }
 
   const bookings = Array.isArray(moduleBookings) ? moduleBookings : [];
-  const submissionSummary = Array.isArray(moduleSubmissionSummary) ? moduleSubmissionSummary : [];
+  const submissionSummary = Array.isArray(moduleExamSubmissionSummary) ? moduleExamSubmissionSummary : [];
 
   container.innerHTML = moduleExams.map(exam => {
     const examId = String(exam.exam_id || "");
@@ -840,10 +1060,8 @@ window.requestRetake = async function (submissionIdEncoded, examIdEncoded) {
           module_id: currentModuleId
         });
         const allBookings = Array.isArray(bookingsResult.bookings) ? bookingsResult.bookings : [];
-        const moduleExamIds = new Set(moduleExams.map(exam => String(exam.exam_id)));
         moduleBookings = allBookings.filter(booking => {
-          const bookingExamId = String(booking.exam_id || "");
-          return moduleExamIds.has(bookingExamId);
+          return String(booking.module_id || "") === String(currentModuleId);
         });
       } catch (e) {
         console.warn("Bookings load failed:", e);
@@ -881,10 +1099,12 @@ window.requestRetake = async function (submissionIdEncoded, examIdEncoded) {
           }
         });
         const subData = await subRes.json();
-        moduleSubmissionSummary = Array.isArray(subData.examSessions) ? subData.examSessions : [];
+        moduleExamSubmissionSummary = Array.isArray(subData.examSessions) ? subData.examSessions : [];
+        modulePracticeSubmissionSummary = Array.isArray(subData.practiceSessions) ? subData.practiceSessions : [];
       } catch (e) {
         console.warn("Submission summary load failed:", e);
-        moduleSubmissionSummary = [];
+        moduleExamSubmissionSummary = [];
+        modulePracticeSubmissionSummary = [];
       }
 
       // Render everything
@@ -897,6 +1117,7 @@ window.requestRetake = async function (submissionIdEncoded, examIdEncoded) {
     document.addEventListener("DOMContentLoaded", async function () {
       initBackendBaseUrl();
       setupTabs();
+      setupModuleSubTabs();
 
       if (typeof requireAuth !== "function") {
         showErrorNotification("api.js failed to load correctly.");

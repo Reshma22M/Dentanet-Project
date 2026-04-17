@@ -271,13 +271,12 @@ const urlExamId = urlParams.get('exam_id') || '';
 const urlRequestId = urlParams.get('request_id') || '';
 
 const examId =
-  urlExamId ||
-  sessionStorage.getItem('selectedSubmissionExamId') ||
+  (urlRequestId ? '' : (urlExamId || sessionStorage.getItem('selectedSubmissionExamId'))) ||
   '';
 
 const requestId =
   urlRequestId ||
-  (!urlExamId ? (sessionStorage.getItem('selectedSubmissionRequestId') || '') : '');
+  (!urlExamId && !examId ? (sessionStorage.getItem('selectedSubmissionRequestId') || '') : '');
 
 const moduleId =
   urlParams.get('module_id') ||
@@ -301,7 +300,11 @@ if (examId) {
   submissionMode = 'EXAM';
 } else if (requestId) {
   submissionMode = 'PRACTICE';
+  sessionStorage.removeItem("selectedSubmissionExamId");
 }
+
+const hasValidExamId = examId && examId !== "undefined" && examId !== "null";
+const hasValidRequestId = requestId && requestId !== "undefined" && requestId !== "null";
 
 let selectedFiles = [];
 let pageData = null;
@@ -316,9 +319,38 @@ const commentsInput = document.getElementById('caseDescription');
 const imageInput = document.getElementById('imageInput');
 const selectedFilesDiv = document.getElementById('selectedFiles');
 const historyTableBody = document.getElementById('historyTableBody');
+const pageTitleEl = document.getElementById('pageTitle');
+const pageSubtitleEl = document.getElementById('pageSubtitle');
+const nameLabelEl = document.getElementById('nameLabel');
+const dateLabelEl = document.getElementById('dateLabel');
+const timeLabelEl = document.getElementById('timeLabel');
+const historyNameHeaderEl = document.getElementById('historyNameHeader');
 const submitBtn = document.getElementById('submitBtn');
 const clearBtn = document.getElementById('clearBtn');
 const declarationCheck = document.getElementById('declarationCheck');
+
+function applySubmissionModeLabels() {
+  const isExam = submissionMode === "EXAM";
+
+  if (isExam) {
+    document.title = "Practical Examination Submission - DentaNet LMS";
+    if (pageTitleEl) pageTitleEl.textContent = "Practical Examination Submission";
+    if (pageSubtitleEl) pageSubtitleEl.textContent = "Upload up to 3 images and submit them for AI evaluation.";
+    if (nameLabelEl) nameLabelEl.textContent = "Examination";
+    if (dateLabelEl) dateLabelEl.textContent = "Scheduled Date";
+    if (timeLabelEl) timeLabelEl.textContent = "Scheduled Time";
+    if (historyNameHeaderEl) historyNameHeaderEl.textContent = "Examination";
+    return;
+  }
+
+  document.title = "Practice Session Submission - DentaNet LMS";
+  if (pageTitleEl) pageTitleEl.textContent = "Practice Session Submission";
+  if (pageSubtitleEl) pageSubtitleEl.textContent = "Upload up to 3 images for AI feedback on your practice session.";
+  if (nameLabelEl) nameLabelEl.textContent = "Practice Session";
+  if (dateLabelEl) dateLabelEl.textContent = "Session Date";
+  if (timeLabelEl) timeLabelEl.textContent = "Session Time";
+  if (historyNameHeaderEl) historyNameHeaderEl.textContent = "Practice Session";
+}
 
 function getToken() {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -448,35 +480,36 @@ function updateSubmissionAvailability() {
   clearBtn.disabled = retentionExpired || examAlreadySubmitted;
 
   if (retentionExpired) {
-    showAlert("This submission is older than 3 months and is no longer available.");
+    showAlert("This submission is older than 3 months and is no longer available.", "warning");
     return;
   }
 
   if (examAlreadySubmitted) {
-    showAlert("Submission already completed for this exam. Portal is now closed for re-submission.");
+    showAlert("Submission already completed for this exam. Portal is now closed for re-submission.", "warning");
     return;
   }
 
   if (!windowState.open) {
     if (windowState.reason === "awaiting_approval") {
-      showAlert("Your booking is still pending approval. Submission will open after approval and slot end.");
+      showAlert("Your booking is still pending approval. Submission will open after approval and slot end.", "info");
     } else if (windowState.reason === "before_end") {
-      showAlert("Submission opens once your booked slot ends.");
+      showAlert("Submission opens once your booked slot ends.", "info");
     } else if (windowState.reason === "window_closed") {
-      showAlert("Submission window closed. You can submit only within 2 hours after slot end.");
+      showAlert("Submission window closed. You can submit only within 2 hours after slot end.", "warning");
     } else {
-      showAlert("Submission is currently locked for this slot.");
+      showAlert("Submission is currently locked for this slot.", "warning");
     }
     return;
   } else if (!uploadAllowed && passed) {
-    showAlert("Submission window is closed for this slot.");
+    showAlert("Submission window is closed for this slot.", "warning");
     return;
   } else if (!uploadAllowed) {
-    showAlert("Upload is currently locked.");
+    showAlert("Upload is currently locked.", "warning");
   }
 }
 
-async function resolveSubmissionContext() {
+async function resolveSubmissionContext(options = {}) {
+  const { notify = true } = options;
   const token = getToken();
 
   if (!token) {
@@ -526,7 +559,9 @@ async function resolveSubmissionContext() {
     hubUrl += `?module_id=${encodeURIComponent(moduleId)}`;
   }
 
-  showAlert("No active submission window found. Redirecting to submission hub.");
+  if (notify) {
+    showAlert("No active submission window found. Redirecting to submission hub.", "warning");
+  }
   setTimeout(() => {
     window.location.replace(hubUrl);
   }, 1200);
@@ -537,6 +572,10 @@ async function resolveSubmissionContext() {
 function showAlert(message, type = 'error') {
   if (type === 'success' && typeof showSuccessNotification === 'function') {
     showSuccessNotification(message);
+    return;
+  }
+  if (type === 'info' && typeof showInfoNotification === 'function') {
+    showInfoNotification(message);
     return;
   }
   if (type === 'warning' && typeof showWarningNotification === 'function') {
@@ -653,8 +692,8 @@ async function loadSubmissionPage() {
 
   try {
 
-  if (!submissionMode) {
-    showAlert("Missing exam_id or request_id in URL. Open this page from the Submission Hub.");
+  if (!submissionMode || (submissionMode === "EXAM" && !hasValidExamId) || (submissionMode === "PRACTICE" && !hasValidRequestId)) {
+    await resolveSubmissionContext({ notify: false });
     return;
   }
 
@@ -715,10 +754,19 @@ async function loadSubmissionPage() {
 
   } catch(error){
 
-    showAlert(
-      error.message ||
-      "Failed to load submission"
-    );
+    const msg = error.message || "Failed to load submission";
+
+    if (
+      String(msg).toLowerCase().includes("no booked practice session") ||
+      String(msg).toLowerCase().includes("not found") ||
+      String(msg).toLowerCase().includes("missing exam_id") ||
+      String(msg).toLowerCase().includes("missing request_id")
+    ) {
+      await resolveSubmissionContext({ notify: false });
+      return;
+    }
+
+    showAlert(msg, "warning");
   }
 }
 
@@ -944,7 +992,7 @@ async function submitCurrentItem(){
   try{
 
     if (isExamAlreadySubmitted()) {
-      showAlert("Submission already completed for this exam. Re-submission is not allowed.");
+      showAlert("Submission already completed for this exam. Re-submission is not allowed.", "warning");
       return;
     }
 
@@ -954,7 +1002,7 @@ async function submitCurrentItem(){
     }
 
     if (!declarationCheck?.checked) {
-      showAlert("Please confirm the academic integrity declaration before submitting.");
+      showAlert("Please confirm the academic integrity declaration before submitting.", "warning");
       return;
     }
 
@@ -1066,6 +1114,8 @@ clearBtn.addEventListener("click", () => {
 document.addEventListener(
 "DOMContentLoaded",
 async ()=>{
+
+  applySubmissionModeLabels();
 
   const user=
     await requireAuth("student");
