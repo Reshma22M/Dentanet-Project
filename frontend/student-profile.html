@@ -160,7 +160,10 @@
 
   <script>
     const DEFAULT_PROFILE_IMAGE = "public/images/stu.jpg";
-    const FILE_BASE_URL = "http://localhost:3001";
+    const FILE_BASE_URL =
+      (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+        ? API_BASE_URL.replace(/\/api\/?$/, "")
+        : window.location.origin;
 
     function setStatus(message, type = "default") {
       const statusEl = document.getElementById("profileStatus");

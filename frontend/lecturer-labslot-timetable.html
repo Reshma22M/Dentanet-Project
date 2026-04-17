@@ -529,7 +529,11 @@ document.addEventListener("DOMContentLoaded", async function() {
 
   const profileImageEl = document.getElementById("lecturerProfileImage");
   if (profileImageEl && user.profile_image_url) {
-    profileImageEl.src = `http://localhost:3001${user.profile_image_url}?t=${Date.now()}`;
+    const base =
+      (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+        ? API_BASE_URL.replace(/\/api\/?$/, "")
+        : window.location.origin;
+    profileImageEl.src = `${base}${user.profile_image_url}?t=${Date.now()}`;
   }
 
   const logoutBtn = document.getElementById("logoutBtn");

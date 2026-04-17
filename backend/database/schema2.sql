@@ -1,5 +1,4 @@
--- DentaNet LMS - Clean Final Schema
--- Use this on a fresh database or after taking a backup.
+-- DentaNet LMS
 
 CREATE DATABASE IF NOT EXISTS dentanet_lms3
   CHARACTER SET utf8mb4

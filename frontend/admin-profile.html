@@ -286,7 +286,10 @@
 
   <script>
     const DEFAULT_PROFILE_IMAGE = "public/images/admin.jpg";
-    const FILE_BASE_URL = "http://localhost:3001";
+    const FILE_BASE_URL =
+      (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
+        ? API_BASE_URL.replace(/\/api\/?$/, "")
+        : window.location.origin;
 
     function setStatus(message, type = "default") {
       const status = document.getElementById("statusMsg");
