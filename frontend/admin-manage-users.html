@@ -486,7 +486,7 @@ function updateAdminCreationHint() {
     const adminBtn = document.getElementById("openCreateAdminModal");
     const admins = allUsers.filter(u => u.account_type === "admin");
     const totalAdmins = admins.length;
-    const isPrimaryAdmin = currentAdmin && currentAdmin.email === 'reshmamohamed@icloud.com';
+    const isPrimaryAdmin = currentAdmin && Number(currentAdmin.id) === 1;
 
     if (!isPrimaryAdmin) {
         if (section) {
@@ -550,11 +550,11 @@ function renderActiveUsersTable(users) {
         const statusBadge = isUserActive(user) ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>` : `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending Approval</span>`;
 
         const isAdminRow = user.account_type === "admin";
-        const isPrimaryAdminLoggedIn = currentAdmin && currentAdmin.email === 'reshmamohamed@icloud.com';
+        const isPrimaryAdminLoggedIn = currentAdmin && Number(currentAdmin.id) === 1;
         const canManageThisAdminRow = !isAdminRow || isPrimaryAdminLoggedIn;
 
         const disableDeactivate =
-            (isAdminRow && user.email === 'reshmamohamed@icloud.com') ||
+            (isAdminRow && Number(user.id) === 1) ||
             !canManageThisAdminRow;
 
         const actionButtons = canManageThisAdminRow
