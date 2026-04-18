@@ -1052,11 +1052,23 @@ async function submitCurrentItem(){
         }
       );
 
-    const data=
-      await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : { error: await response.text() };
 
-    if (!response.ok)
-      throw new Error(data.error);
+    if (!response.ok) {
+      if (response.status === 413) {
+        throw new Error("Upload request is too large for server settings. Ask admin to increase Nginx upload limit (client_max_body_size).");
+      }
+
+      const backendError =
+        (data && typeof data.error === "string" && data.error.trim()) ||
+        (data && typeof data.message === "string" && data.message.trim()) ||
+        "";
+
+      throw new Error(backendError || `Submission failed (HTTP ${response.status})`);
+    }
 
     showAlert(
       "Submission successful",

@@ -1296,7 +1296,20 @@ router.get("/lecturer/reports/ai-accuracy", authenticateToken, async (req, res) 
 // =======================================================
 // CREATE SUBMISSION
 // =======================================================
-router.post("/", authenticateToken, upload.array("images", 3), async (req, res) => {
+router.post(
+    "/",
+    authenticateToken,
+    (req, res, next) => {
+        upload.array("images", 3)(req, res, (err) => {
+            if (!err) return next();
+
+            return res.status(400).json({
+                ok: false,
+                error: normalizeError(err, "Image upload failed")
+            });
+        });
+    },
+    async (req, res) => {
     try {
         const studentId = req.user.id;
         const { requestId, submissionType, comments } = req.body;

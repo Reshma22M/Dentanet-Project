@@ -1,5 +1,4 @@
--- DentaNet LMS schema3.sql (live schema snapshot)
--- Generated: 2026-04-16T19:00:45.285Z
+-- DentaNet LMS schema3.sql 
 -- Database: dentanet_lms
 
 SET NAMES utf8mb4;
@@ -11,7 +10,6 @@ USE `dentanet_lms`;
 -- ----------------------------
 -- Table structure for `admins`
 -- ----------------------------
-DROP TABLE IF EXISTS `admins`;
 CREATE TABLE `admins` (
   `admin_id` int NOT NULL AUTO_INCREMENT,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -30,7 +28,6 @@ CREATE TABLE `admins` (
 -- ----------------------------
 -- Table structure for `api_evaluations`
 -- ----------------------------
-DROP TABLE IF EXISTS `api_evaluations`;
 CREATE TABLE `api_evaluations` (
   `api_evaluation_id` int NOT NULL AUTO_INCREMENT,
   `submission_id` int NOT NULL,
@@ -50,7 +47,6 @@ CREATE TABLE `api_evaluations` (
 -- ----------------------------
 -- Table structure for `departments`
 -- ----------------------------
-DROP TABLE IF EXISTS `departments`;
 CREATE TABLE `departments` (
   `department_id` int NOT NULL AUTO_INCREMENT,
   `department_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -62,7 +58,6 @@ CREATE TABLE `departments` (
 -- ----------------------------
 -- Table structure for `exam_slot_requests`
 -- ----------------------------
-DROP TABLE IF EXISTS `exam_slot_requests`;
 CREATE TABLE `exam_slot_requests` (
   `request_id` int NOT NULL,
   `exam_id` int NOT NULL,
@@ -78,7 +73,6 @@ CREATE TABLE `exam_slot_requests` (
 -- ----------------------------
 -- Table structure for `exam_time_slots`
 -- ----------------------------
-DROP TABLE IF EXISTS `exam_time_slots`;
 CREATE TABLE `exam_time_slots` (
   `slot_id` int NOT NULL AUTO_INCREMENT,
   `exam_id` int NOT NULL,
@@ -102,7 +96,6 @@ CREATE TABLE `exam_time_slots` (
 -- ----------------------------
 -- Table structure for `exams`
 -- ----------------------------
-DROP TABLE IF EXISTS `exams`;
 CREATE TABLE `exams` (
   `exam_id` int NOT NULL AUTO_INCREMENT,
   `module_id` int NOT NULL,
@@ -129,7 +122,6 @@ CREATE TABLE `exams` (
 -- ----------------------------
 -- Table structure for `final_results`
 -- ----------------------------
-DROP TABLE IF EXISTS `final_results`;
 CREATE TABLE `final_results` (
   `result_id` int NOT NULL AUTO_INCREMENT,
   `submission_id` int NOT NULL,
@@ -148,7 +140,6 @@ CREATE TABLE `final_results` (
 -- ----------------------------
 -- Table structure for `lab_machines`
 -- ----------------------------
-DROP TABLE IF EXISTS `lab_machines`;
 CREATE TABLE `lab_machines` (
   `machine_id` int NOT NULL AUTO_INCREMENT,
   `machine_code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -166,7 +157,6 @@ CREATE TABLE `lab_machines` (
 -- ----------------------------
 -- Table structure for `lecturer_reviews`
 -- ----------------------------
-DROP TABLE IF EXISTS `lecturer_reviews`;
 CREATE TABLE `lecturer_reviews` (
   `review_id` int NOT NULL AUTO_INCREMENT,
   `submission_id` int NOT NULL,
@@ -186,7 +176,6 @@ CREATE TABLE `lecturer_reviews` (
 -- ----------------------------
 -- Table structure for `lecturers`
 -- ----------------------------
-DROP TABLE IF EXISTS `lecturers`;
 CREATE TABLE `lecturers` (
   `lecturer_id` int NOT NULL AUTO_INCREMENT,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -210,7 +199,6 @@ CREATE TABLE `lecturers` (
 -- ----------------------------
 -- Table structure for `material_types`
 -- ----------------------------
-DROP TABLE IF EXISTS `material_types`;
 CREATE TABLE `material_types` (
   `material_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -222,7 +210,6 @@ CREATE TABLE `material_types` (
 -- ----------------------------
 -- Table structure for `module_lecturers`
 -- ----------------------------
-DROP TABLE IF EXISTS `module_lecturers`;
 CREATE TABLE `module_lecturers` (
   `module_id` int NOT NULL,
   `lecturer_id` int NOT NULL,
@@ -242,7 +229,6 @@ CREATE TABLE `module_lecturers` (
 -- ----------------------------
 -- Table structure for `module_students`
 -- ----------------------------
-DROP TABLE IF EXISTS `module_students`;
 CREATE TABLE `module_students` (
   `module_id` int NOT NULL,
   `student_id` int NOT NULL,
@@ -259,7 +245,6 @@ CREATE TABLE `module_students` (
 -- ----------------------------
 -- Table structure for `modules`
 -- ----------------------------
-DROP TABLE IF EXISTS `modules`;
 CREATE TABLE `modules` (
   `module_id` int NOT NULL AUTO_INCREMENT,
   `module_code` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -281,7 +266,6 @@ CREATE TABLE `modules` (
 -- ----------------------------
 -- Table structure for `notifications`
 -- ----------------------------
-DROP TABLE IF EXISTS `notifications`;
 CREATE TABLE `notifications` (
   `notification_id` int NOT NULL AUTO_INCREMENT,
   `recipient_role` enum('student','lecturer','admin') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -303,7 +287,6 @@ CREATE TABLE `notifications` (
 -- ----------------------------
 -- Table structure for `password_reset_tokens`
 -- ----------------------------
-DROP TABLE IF EXISTS `password_reset_tokens`;
 CREATE TABLE `password_reset_tokens` (
   `token_id` int NOT NULL AUTO_INCREMENT,
   `account_type` enum('admin','student','lecturer') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -326,7 +309,6 @@ CREATE TABLE `password_reset_tokens` (
 -- ----------------------------
 -- Table structure for `practice_slot_requests`
 -- ----------------------------
-DROP TABLE IF EXISTS `practice_slot_requests`;
 CREATE TABLE `practice_slot_requests` (
   `request_id` int NOT NULL,
   `purpose` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -340,7 +322,6 @@ CREATE TABLE `practice_slot_requests` (
 -- ----------------------------
 -- Table structure for `retake_requests`
 -- ----------------------------
-DROP TABLE IF EXISTS `retake_requests`;
 CREATE TABLE `retake_requests` (
   `retake_id` int NOT NULL AUTO_INCREMENT,
   `submission_id` int NOT NULL,
@@ -362,7 +343,6 @@ CREATE TABLE `retake_requests` (
 -- ----------------------------
 -- Table structure for `slot_allocations`
 -- ----------------------------
-DROP TABLE IF EXISTS `slot_allocations`;
 CREATE TABLE `slot_allocations` (
   `allocation_id` int NOT NULL AUTO_INCREMENT,
   `request_id` int NOT NULL,
@@ -383,7 +363,6 @@ CREATE TABLE `slot_allocations` (
 -- ----------------------------
 -- Table structure for `slot_requests`
 -- ----------------------------
-DROP TABLE IF EXISTS `slot_requests`;
 CREATE TABLE `slot_requests` (
   `request_id` int NOT NULL AUTO_INCREMENT,
   `student_user_id` int NOT NULL,
@@ -405,7 +384,6 @@ CREATE TABLE `slot_requests` (
 -- ----------------------------
 -- Table structure for `student_study_materials`
 -- ----------------------------
-DROP TABLE IF EXISTS `student_study_materials`;
 CREATE TABLE `student_study_materials` (
   `student_material_id` int NOT NULL AUTO_INCREMENT,
   `module_id` int NOT NULL,
@@ -431,7 +409,6 @@ CREATE TABLE `student_study_materials` (
 -- ----------------------------
 -- Table structure for `students`
 -- ----------------------------
-DROP TABLE IF EXISTS `students`;
 CREATE TABLE `students` (
   `student_id` int NOT NULL AUTO_INCREMENT,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -455,7 +432,7 @@ CREATE TABLE `students` (
 -- ----------------------------
 -- Table structure for `study_materials`
 -- ----------------------------
-DROP TABLE IF EXISTS `study_materials`;
+
 CREATE TABLE `study_materials` (
   `material_id` int NOT NULL AUTO_INCREMENT,
   `module_id` int NOT NULL,
@@ -481,7 +458,6 @@ CREATE TABLE `study_materials` (
 -- ----------------------------
 -- Table structure for `submission_files`
 -- ----------------------------
-DROP TABLE IF EXISTS `submission_files`;
 CREATE TABLE `submission_files` (
   `file_id` int NOT NULL AUTO_INCREMENT,
   `submission_id` int NOT NULL,
@@ -497,7 +473,6 @@ CREATE TABLE `submission_files` (
 -- ----------------------------
 -- Table structure for `submissions`
 -- ----------------------------
-DROP TABLE IF EXISTS `submissions`;
 CREATE TABLE `submissions` (
   `submission_id` int NOT NULL AUTO_INCREMENT,
   `request_id` int NOT NULL,
