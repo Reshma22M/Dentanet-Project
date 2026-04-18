@@ -490,3 +490,20 @@ CREATE TABLE `submissions` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT INTO departments (department_name) VALUES
+('Basic Sciences'),
+('Community Dental Health'),
+('Oral Medicine & Periodontology'),
+('Oral & Maxillofacial Surgery'),
+('Oral Pathology'),
+('Prosthetic Dentistry'),
+('Restorative Dentistry');
+
+INSERT INTO dentanet_lms.material_types (name) VALUES
+('PDF'),
+('YouTube'),
+('Video'),
+('External Link'),
+('Document'),
+('Other');
