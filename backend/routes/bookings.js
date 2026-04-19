@@ -209,11 +209,19 @@ router.post("/", authenticateToken, async (req, res) => {
         }
 
         const bookingStart = buildDateTime(normalizedBookingDate, normalizedStartTime);
+        const bookingEnd = buildDateTime(normalizedBookingDate, normalizedEndTime);
 
-        if (!bookingStart) {
+        if (!bookingStart || !bookingEnd) {
             return res.status(400).json({
                 ok: false,
                 error: "Invalid booking date or time"
+            });
+        }
+
+        if (bookingEnd.getTime() <= bookingStart.getTime()) {
+            return res.status(400).json({
+                ok: false,
+                error: "endTime must be after startTime"
             });
         }
 

@@ -1178,7 +1178,8 @@ router.get("/lecturer/reports/batch-performance", authenticateToken, async (req,
                 m.module_name,
                 fr.final_grade,
                 fr.pass_fail,
-                fr.published_at
+                fr.published_at,
+                DATE_FORMAT(fr.published_at, '%Y-%m-%d') AS published_date
             FROM submissions s
             JOIN final_results fr
                 ON fr.submission_id = s.submission_id
@@ -1287,6 +1288,37 @@ router.get("/lecturer/reports/batch-performance", authenticateToken, async (req,
             average_grade: entry.records ? Number((entry.grade_total / entry.records).toFixed(2)) : 0
         })).sort((a, b) => b.records - a.records);
 
+        const timelineMap = new Map();
+        for (const row of selectedRows) {
+            const dateKey = String(row.published_date || "").trim();
+            if (!dateKey) continue;
+
+            if (!timelineMap.has(dateKey)) {
+                timelineMap.set(dateKey, {
+                    date: dateKey,
+                    records: 0,
+                    pass_count: 0,
+                    grade_total: 0
+                });
+            }
+
+            const entry = timelineMap.get(dateKey);
+            entry.records += 1;
+            entry.grade_total += toSafeNumber(row.final_grade);
+            if (String(row.pass_fail || "").toUpperCase() === "PASS") {
+                entry.pass_count += 1;
+            }
+        }
+
+        const timeline = Array.from(timelineMap.values())
+            .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+            .map((entry) => ({
+                date: entry.date,
+                records: entry.records,
+                pass_rate: entry.records ? Number(((entry.pass_count / entry.records) * 100).toFixed(2)) : 0,
+                average_grade: entry.records ? Number((entry.grade_total / entry.records).toFixed(2)) : 0
+            }));
+
         return res.json({
             ok: true,
             generated_at: new Date().toISOString(),
@@ -1304,7 +1336,8 @@ router.get("/lecturer/reports/batch-performance", authenticateToken, async (req,
                 average_grade: Number(avgGrade.toFixed(2))
             },
             students,
-            modules
+            modules,
+            timeline
         });
     } catch (error) {
         console.error("Batch performance report error:", error);
