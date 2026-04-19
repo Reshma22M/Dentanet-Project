@@ -688,8 +688,9 @@ function renderPracticeSubmissionsPanel(container) {
   container.innerHTML = practiceSummary.map((item) => {
     const requestId = item.request_id ? String(item.request_id) : "";
     const submitLink = requestId
-      ? `practical-exam-submission.html?request_id=${encodeURIComponent(requestId)}&module_id=${encodeURIComponent(currentModuleId)}`
+      ? `practical-exam-submission.html?request_id=${encodeURIComponent(requestId)}&module_id=${encodeURIComponent(currentModuleId)}&submission_type=PRACTICE`
       : "#";
+    const resultsLink = `grades-feedback.html${currentModuleId ? `?module_id=${encodeURIComponent(currentModuleId)}` : ''}${item.submission_id ? `${currentModuleId ? '&' : '?'}submission_id=${encodeURIComponent(item.submission_id)}` : ''}`;
     const hasSubmission = !!item.submission_id;
     const published = item.final_grade != null || item.api_score != null;
     const statusText = item.pass_fail || item.api_status || "Pending";
@@ -723,15 +724,15 @@ function renderPracticeSubmissionsPanel(container) {
 
     let actionHtml = "";
     if (hasSubmission) {
-      actionHtml = requestId
+      actionHtml = item.submission_id
         ? `<a
-            href="${submitLink}"
+            href="${resultsLink}"
             class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
           >
-            View Submission
+            View Results
           </a>`
         : `<span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed">
-            Session Link Unavailable
+            Result Link Unavailable
           </span>`;
     } else if (submissionOpen) {
       actionHtml = requestId
