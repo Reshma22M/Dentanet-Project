@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="assets/js/common.js"></script>
   <script src="assets/js/api.js"></script>
   <script>
     tailwind.config = {
@@ -579,7 +580,16 @@
 
     async function publishResult() {
       if (!submissionId) return;
-      if (!window.confirm("Publish this final result to the student now?")) return;
+      const confirmed = typeof showConfirmDialog === "function"
+        ? await showConfirmDialog({
+            title: "Publish Final Result",
+            message: "Publish this final result to the student now?",
+            confirmText: "Publish",
+            cancelText: "Cancel",
+            confirmClass: "bg-primary hover:bg-accent"
+          })
+        : window.confirm("Publish this final result to the student now?");
+      if (!confirmed) return;
 
       publishBtn.disabled = true;
       publishBtn.textContent = "Publishing...";

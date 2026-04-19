@@ -32,7 +32,7 @@ class DentaNetComponents {
         const menuItems = {
             student: [
                 { icon: 'dashboard', label: 'Dashboard', href: 'student-dashboard.html' },
-                { icon: 'edit_document', label: 'Exam Submission', href: 'practical-exam-submission.html' },
+                { icon: 'edit_document', label: 'Exam Submission', href: 'submission-hub.html' },
                 { icon: 'calendar_today', label: 'Lab Booking', href: 'lab-slot-booking.html' },
                 { icon: 'menu_book', label: 'Study Materials', href: 'study-materials.html' },
                 { icon: 'bar_chart', label: 'Reports & Feedback', href: 'grades-feedback.html' }

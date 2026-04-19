@@ -163,12 +163,23 @@
   }
 
   function getSidebarHTML(activePage) {
+    const selectedModuleId =
+      sessionStorage.getItem('selectedStudentModuleId') ||
+      sessionStorage.getItem('selectedModuleId') ||
+      '';
+
+    function withModuleContext(link) {
+      if (!selectedModuleId) return link.href;
+      if (link.id !== 'submission') return link.href;
+      return `${link.href}?module_id=${encodeURIComponent(selectedModuleId)}`;
+    }
+
     const navItems = SIDEBAR_LINKS.map(function (link) {
       var isActive = link.id === activePage;
       var cls = isActive
         ? "flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl shadow-md"
         : "flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-gray-800 rounded-xl transition-colors";
-      return '<a class="' + cls + '" href="' + link.href + '">' +
+      return '<a class="' + cls + '" href="' + withModuleContext(link) + '">' +
         '<span class="material-icons-round text-[20px]">' + link.icon + '</span>' +
         '<span class="font-medium">' + link.label + '</span></a>';
     }).join("\n");

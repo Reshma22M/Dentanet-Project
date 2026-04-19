@@ -138,7 +138,7 @@
 
           <div class="flex items-center gap-3 flex-wrap mb-1">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Submission Hub</h1>
-            <span id="moduleBadge" class="module-badge hidden">Loading…</span>
+            <span id="moduleBadge" class="module-badge hidden">Loading...</span>
           </div>
           <p id="moduleSubtitle" class="text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
             Submit your practice and examination work for this module.
@@ -148,15 +148,15 @@
         <!-- Stats row -->
         <div class="flex gap-4 flex-wrap shrink-0">
           <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
-            <p class="text-2xl font-extrabold text-primary" id="statPractice">—</p>
+            <p class="text-2xl font-extrabold text-primary" id="statPractice">-</p>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Practice</p>
           </div>
           <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
-            <p class="text-2xl font-extrabold text-primary" id="statExam">—</p>
+            <p class="text-2xl font-extrabold text-primary" id="statExam">-</p>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Exams</p>
           </div>
           <div class="bg-white dark:bg-card-dark rounded-2xl border border-purple-50 dark:border-gray-800 px-5 py-3 shadow-sm text-center">
-            <p class="text-2xl font-extrabold text-green-500" id="statSubmitted">—</p>
+            <p class="text-2xl font-extrabold text-green-500" id="statSubmitted">-</p>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Submitted</p>
           </div>
         </div>
@@ -213,7 +213,7 @@ const API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('h
   ? API_BASE_URL.replace(/\/api$/, '')
   : window.location.origin;
 
-// ── URL params ──────────────────────────────────────────
+// URL params
 const urlParams   = new URLSearchParams(window.location.search);
 const moduleId =
   urlParams.get('module_id') ||
@@ -221,18 +221,23 @@ const moduleId =
   sessionStorage.getItem('selectedModuleId') ||
   '';
 
+if (moduleId) {
+  sessionStorage.setItem('selectedStudentModuleId', String(moduleId));
+  sessionStorage.setItem('selectedModuleId', String(moduleId));
+}
+
 const focusExamId = urlParams.get('exam_id');   // highlight a specific exam if coming from module details
 let currentPractices = [];
 let currentExams = [];
 
-// ── Helpers ─────────────────────────────────────────────
+// Helpers
 function esc(v) {
   return String(v ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function fmtDate(d) {
-  if (!d) return '—';
+  if (!d) return '-';
   const isoMatch = String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const ddMmYyyyMatch = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   let dt = null;
@@ -245,21 +250,21 @@ function fmtDate(d) {
     dt = new Date(d);
   }
 
-  if (isNaN(dt.getTime())) return '—';
+  if (isNaN(dt.getTime())) return '-';
   return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
 }
 
 function fmtTime(t) {
-  if (!t) return '—';
+  if (!t) return '-';
   const [h, m] = String(t).split(':');
   const hr = parseInt(h, 10);
   return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
 }
 
 function fmtDateTime(d) {
-  if (!d) return '—';
+  if (!d) return '-';
   const dt = new Date(d);
-  if (isNaN(dt.getTime())) return '—';
+  if (isNaN(dt.getTime())) return '-';
   return dt.toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -327,6 +332,10 @@ function getWindowTimingText(windowState, submittedAt) {
     return `Submissions open at ${fmtDateTime(windowState.endDate)} (after slot end)`;
   }
 
+  if (windowState.reason === 'before_start' && windowState.startDate) {
+    return `Exam starts at ${fmtDateTime(windowState.startDate)}`;
+  }
+
   if (windowState.reason === 'window_closed') {
     return `Closed at ${fmtDateTime(windowState.windowEnd)}`;
   }
@@ -356,6 +365,27 @@ function getSubmissionWindowState(session, type) {
 
   const now = new Date();
   const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
+  const startDate = (() => {
+    const dateValue = getDateKey(session?.booking_date || session?.slot_date);
+    const startValue = session?.start_time || session?.exam_start_time || "00:00:00";
+    if (!dateValue) return null;
+    const [yyyy, mm, dd] = dateValue.split("-").map(Number);
+    const [hh, min, sec] = String(startValue).slice(0, 8).split(":").map((v) => Number(v || 0));
+    const parsed = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  })();
+
+  if (startDate && now < startDate) {
+    return {
+      open: false,
+      reason: 'before_start',
+      startDate,
+      endDate,
+      windowEnd,
+      label: type === 'EXAM' ? 'Exam scheduled' : 'Session scheduled',
+      note: 'Submission opens after your booked slot ends.'
+    };
+  }
 
   if (now < endDate) {
     return {
@@ -427,7 +457,7 @@ function showAlert(msg, type = 'error') {
   box.textContent = msg;
 }
 
-// ── Tab switching ────────────────────────────────────────
+// Tab switching
 function setupTabs() {
   const buttons = document.querySelectorAll('.tab-button');
   const panels  = document.querySelectorAll('.tab-panel');
@@ -454,16 +484,23 @@ function setupTabs() {
   });
 }
 
-// ── Submission card builders ─────────────────────────────
+// Submission card builders
 
 function buildPracticeCard(session) {
   const windowState = getSubmissionWindowState(session, 'PRACTICE');
   const allowed = windowState.open;
   const hasSubmission = !!session.submission_id;
   const isPassed = hasSessionPassed(session) && !allowed;
+  const hasValidRequestId =
+    session.request_id !== null &&
+    session.request_id !== undefined &&
+    String(session.request_id).trim() !== '' &&
+    String(session.request_id).toLowerCase() !== 'undefined' &&
+    String(session.request_id).toLowerCase() !== 'null';
 
-  // Submission link – carry module_id through
-  const subLink = `practical-exam-submission.html?request_id=${session.request_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
+  const subLink = hasValidRequestId
+    ? `practical-exam-submission.html?request_id=${encodeURIComponent(session.request_id)}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`
+    : '#';
 
   const aiScore = session.api_score != null
     ? `<span class="ml-2 text-xs font-bold text-primary">AI Score: ${session.api_score}</span>`
@@ -497,7 +534,7 @@ function buildPracticeCard(session) {
     </div>
 
     <div class="shrink-0 flex flex-col gap-2 items-end">
-      ${allowed
+      ${allowed && hasValidRequestId
         ? `<a href="${subLink}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
@@ -508,13 +545,13 @@ function buildPracticeCard(session) {
            </span>`
       }
       ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${windowState.note}</span>` : ''}
+      ${allowed && !hasValidRequestId ? `<span class="text-xs text-red-500 font-semibold">Session link unavailable. Please refresh and try again.</span>` : ''}
       <span class="text-xs text-slate-500">${esc(getWindowTimingText(windowState, session.submitted_at))}</span>
       ${isPassed ? `<span class="text-xs text-red-500 font-semibold">Exam date already passed. Cannot upload.</span>` : ''}
     </div>
   </article>
   `;
 }
-
 function buildExamCard(exam) {
   const examWindow = getSubmissionWindowState({
     slot_status: exam.slot_status,
@@ -528,8 +565,8 @@ function buildExamCard(exam) {
   const needsRetake = isPublished && String(exam.decision || '').toUpperCase() === 'RETAKE';
   const isHighlighted = focusExamId && String(exam.exam_id) === String(focusExamId);
 
-  // Submission link – carry module_id through
-  const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
+  // Submission link - carry module_id through
+  const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${exam.request_id ? `&exam_request_id=${encodeURIComponent(exam.request_id)}` : ''}${exam.slot_id ? `&exam_slot_id=${encodeURIComponent(exam.slot_id)}` : ''}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
 
   const gradeinfo = isPublished
     ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${exam.published_grade}%</span>`
@@ -550,7 +587,7 @@ function buildExamCard(exam) {
       ${exam.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1 line-clamp-1">${esc(exam.description)}</p>` : ''}
 
       <p class="text-xs text-primary font-semibold">
-        ${fmtDate(exam.booking_date || exam.slot_date)} &nbsp;•&nbsp; ${fmtTime(exam.start_time || exam.exam_start_time)} – ${fmtTime(exam.end_time || exam.exam_end_time)}
+        ${fmtDate(exam.booking_date || exam.slot_date)} &nbsp;•&nbsp; ${fmtTime(exam.start_time || exam.exam_start_time)} - ${fmtTime(exam.end_time || exam.exam_end_time)}
       </p>
 
       <div class="flex flex-wrap items-center gap-3 mt-2">
@@ -631,7 +668,7 @@ function emptyState(icon, message) {
   </div>`;
 }
 
-// ── Render functions ─────────────────────────────────────
+// Render functions
 
 function renderPractice(sessions) {
   const container = document.getElementById('practiceContainer');
@@ -666,18 +703,29 @@ function renderExams(exams) {
   }
 }
 
-// ── Load data ─────────────────────────────────────────────
+// Load data
 
 async function load() {
   try {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) { showAlert('Not logged in'); return; }
+    if (!moduleId) {
+      showAlert('Please open Submissions from a specific module to view module-based sessions only.', 'warning');
+      document.getElementById('practiceContainer').innerHTML =
+        emptyState('science', 'Select a module first. Open a module and use its Submissions tab.');
+      document.getElementById('examContainer').innerHTML =
+        emptyState('fact_check', 'Select a module first. Open a module and use its Submissions tab.');
+      document.getElementById('statPractice').textContent = '0';
+      document.getElementById('statExam').textContent = '0';
+      document.getElementById('statSubmitted').textContent = '0';
+      return;
+    }
 
     let endpoint;
     if (moduleId) {
       endpoint = `${API_BASE}/api/submissions/student/module/${encodeURIComponent(moduleId)}`;
     } else {
-      // Fallback – generic hub (all modules)
+      // Fallback - generic hub (all modules)
       endpoint = `${API_BASE}/api/submissions/student/dashboard-data`;
     }
 
@@ -688,7 +736,7 @@ async function load() {
     // Module badge & subtitle
     if (data.module) {
       const badge = document.getElementById('moduleBadge');
-      badge.textContent = `${data.module.module_code} – ${data.module.module_name}`;
+      badge.textContent = `${data.module.module_code} - ${data.module.module_name}`;
       badge.classList.remove('hidden');
       document.getElementById('moduleSubtitle').textContent =
         data.module.description || 'Submit your practical and examination work for this module.';
@@ -711,8 +759,16 @@ async function load() {
       }
     }
 
-    const practices = Array.isArray(data.practiceSessions) ? data.practiceSessions.filter(session => !isPastRetentionWindow(session)) : [];
-    const exams     = Array.isArray(data.examSessions)     ? data.examSessions.filter(exam => !isPastRetentionWindow(exam)) : [];
+    const practices = Array.isArray(data.practiceSessions)
+      ? data.practiceSessions
+          .filter((session) => String(session.module_id || '') === String(moduleId))
+          .filter((session) => !isPastRetentionWindow(session))
+      : [];
+    const exams = Array.isArray(data.examSessions)
+      ? data.examSessions
+          .filter((exam) => String(exam.module_id || '') === String(moduleId))
+          .filter((exam) => !isPastRetentionWindow(exam))
+      : [];
     currentPractices = practices;
     currentExams = exams;
 
@@ -736,7 +792,7 @@ async function load() {
   }
 }
 
-// ── Init ──────────────────────────────────────────────────
+// Init
 
 document.addEventListener('DOMContentLoaded', async function () {
   if (typeof requireAuth !== 'function') {

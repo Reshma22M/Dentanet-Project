@@ -268,21 +268,35 @@ const API_BASE = (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('h
 
 const urlParams  = new URLSearchParams(window.location.search);
 const urlExamId = urlParams.get('exam_id') || '';
+const urlExamRequestId = urlParams.get('exam_request_id') || '';
+const urlExamSlotId = urlParams.get('exam_slot_id') || '';
 const urlRequestId = urlParams.get('request_id') || '';
-
-const examId =
-  (urlRequestId ? '' : (urlExamId || sessionStorage.getItem('selectedSubmissionExamId'))) ||
-  '';
-
-const requestId =
-  urlRequestId ||
-  (!urlExamId && !examId ? (sessionStorage.getItem('selectedSubmissionRequestId') || '') : '');
-
 const moduleId =
   urlParams.get('module_id') ||
   sessionStorage.getItem('selectedStudentModuleId') ||
   sessionStorage.getItem('selectedModuleId') ||
   '';
+
+if (moduleId) {
+  sessionStorage.setItem('selectedStudentModuleId', String(moduleId));
+  sessionStorage.setItem('selectedModuleId', String(moduleId));
+}
+const canUseSessionContext = false;
+const examId = urlRequestId
+  ? ''
+  : (urlExamId || '');
+const examRequestId = urlExamRequestId || '';
+const examSlotId = urlExamSlotId || '';
+const requestId = urlRequestId ||
+  '';
+
+function buildSubmissionHubUrl() {
+  let hubUrl = 'submission-hub.html';
+  if (moduleId) {
+    hubUrl += `?module_id=${encodeURIComponent(moduleId)}`;
+  }
+  return hubUrl;
+}
 
 // Build back-to-hub link
 (function buildBackLink() {
@@ -298,12 +312,18 @@ let submissionMode = null;
 
 if (examId) {
   submissionMode = 'EXAM';
+} else if (examRequestId) {
+  submissionMode = 'EXAM';
+} else if (examSlotId) {
+  submissionMode = 'EXAM';
 } else if (requestId) {
   submissionMode = 'PRACTICE';
   sessionStorage.removeItem("selectedSubmissionExamId");
 }
 
-const hasValidExamId = examId && examId !== "undefined" && examId !== "null";
+const hasValidExamId = (examId && examId !== "undefined" && examId !== "null")
+  || (examRequestId && examRequestId !== "undefined" && examRequestId !== "null")
+  || (examSlotId && examSlotId !== "undefined" && examSlotId !== "null");
 const hasValidRequestId = requestId && requestId !== "undefined" && requestId !== "null";
 
 let selectedFiles = [];
@@ -418,6 +438,13 @@ function getExamSubmissionWindowState(data) {
 
   const now = new Date();
   const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
+  const startDate = getSessionEndDate(
+    data.booking_date || data.slot_date,
+    data.start_time || data.exam_start_time,
+    data.start_time || data.exam_start_time
+  );
+
+  if (startDate && now < startDate) return { open: false, reason: "before_start", startDate, endDate, windowEnd };
 
   if (now < endDate) return { open: false, reason: "before_end", endDate, windowEnd };
   if (now > windowEnd) return { open: false, reason: "window_closed", endDate, windowEnd };
@@ -492,6 +519,8 @@ function updateSubmissionAvailability() {
   if (!windowState.open) {
     if (windowState.reason === "awaiting_approval") {
       showAlert("Your booking is still pending approval. Submission will open after approval and slot end.", "info");
+    } else if (windowState.reason === "before_start") {
+      showAlert("Exam is scheduled. Submission opens after your booked slot ends.", "info");
     } else if (windowState.reason === "before_end") {
       showAlert("Submission opens once your booked slot ends.", "info");
     } else if (windowState.reason === "window_closed") {
@@ -516,7 +545,20 @@ async function resolveSubmissionContext(options = {}) {
     throw new Error("User not logged in");
   }
 
-  const response = await fetch(`${API_BASE}/api/submissions/student/dashboard-data`, {
+  if (!moduleId) {
+    const hubUrl = buildSubmissionHubUrl();
+    if (notify) {
+      showAlert("Module context is missing. Redirecting to submission hub.", "warning");
+    }
+    setTimeout(() => {
+      window.location.replace(hubUrl);
+    }, 800);
+    return true;
+  }
+
+  const endpoint = `${API_BASE}/api/submissions/student/module/${encodeURIComponent(moduleId)}`;
+
+  const response = await fetch(endpoint, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -534,11 +576,12 @@ async function resolveSubmissionContext(options = {}) {
   const eligibleExam = examSessions.find(item => {
     const windowState = getExamSubmissionWindowState(item);
     return windowState.open &&
+      !item.submission_id &&
       !isPastRetentionWindowFromValues(item.booking_date || item.slot_date, item.end_time || item.exam_end_time, item.start_time || item.exam_start_time);
   });
 
   if (eligibleExam) {
-    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}`;
+    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}${eligibleExam.request_id ? `&exam_request_id=${encodeURIComponent(eligibleExam.request_id)}` : ""}${eligibleExam.slot_id ? `&exam_slot_id=${encodeURIComponent(eligibleExam.slot_id)}` : ""}`;
     window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
     return true;
   }
@@ -554,10 +597,7 @@ async function resolveSubmissionContext(options = {}) {
     return true;
   }
 
-  let hubUrl = 'submission-hub.html';
-  if (moduleId) {
-    hubUrl += `?module_id=${encodeURIComponent(moduleId)}`;
-  }
+  const hubUrl = buildSubmissionHubUrl();
 
   if (notify) {
     showAlert("No active submission window found. Redirecting to submission hub.", "warning");
@@ -709,9 +749,11 @@ async function loadSubmissionPage() {
     let endpoint;
 
     if (submissionMode === "EXAM") {
-
-      endpoint =
-        `${API_BASE}/api/submissions/exam/${examId}`;
+      endpoint = examRequestId
+        ? `${API_BASE}/api/submissions/exam-request/${encodeURIComponent(examRequestId)}`
+        : examSlotId
+          ? `${API_BASE}/api/submissions/exam-slot/${encodeURIComponent(examSlotId)}`
+          : `${API_BASE}/api/submissions/exam/${examId}`;
 
     } else {
 
@@ -739,7 +781,7 @@ async function loadSubmissionPage() {
       : data.practice;
 
     if (submissionMode === "EXAM" && pageData?.exam_id) {
-      sessionStorage.setItem("selectedSubmissionExamId", String(pageData.exam_id));
+      sessionStorage.removeItem("selectedSubmissionExamId");
     }
     if (pageData?.request_id) {
       sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
@@ -755,13 +797,20 @@ async function loadSubmissionPage() {
   } catch(error){
 
     const msg = error.message || "Failed to load submission";
+    const hasExplicitContext =
+      !!urlExamRequestId ||
+      !!urlExamSlotId ||
+      !!urlRequestId ||
+      !!urlExamId;
+    const normalizedMsg = String(msg).toLowerCase();
+    const shouldAutoResolve = !hasExplicitContext && (
+      normalizedMsg.includes("no booked practice session") ||
+      normalizedMsg.includes("not found") ||
+      normalizedMsg.includes("missing exam_id") ||
+      normalizedMsg.includes("missing request_id")
+    );
 
-    if (
-      String(msg).toLowerCase().includes("no booked practice session") ||
-      String(msg).toLowerCase().includes("not found") ||
-      String(msg).toLowerCase().includes("missing exam_id") ||
-      String(msg).toLowerCase().includes("missing request_id")
-    ) {
+    if (shouldAutoResolve) {
       await resolveSubmissionContext({ notify: false });
       return;
     }
@@ -1126,6 +1175,11 @@ clearBtn.addEventListener("click", () => {
 document.addEventListener(
 "DOMContentLoaded",
 async ()=>{
+
+  if (!urlExamRequestId && !urlExamSlotId && !urlRequestId && !urlExamId) {
+    window.location.replace(buildSubmissionHubUrl());
+    return;
+  }
 
   applySubmissionModeLabels();
 

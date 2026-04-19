@@ -213,6 +213,7 @@ router.get("/student/dashboard-data", authenticateToken, async (req, res) => {
                 sr.start_time,
                 sr.end_time,
                 sr.status AS slot_status,
+                psr.module_id,
                 psr.purpose,
 
                 latest.submission_id,
@@ -435,6 +436,7 @@ router.get("/student/module/:module_id", authenticateToken, async (req, res) => 
                 sr.start_time,
                 sr.end_time,
                 sr.status AS slot_status,
+                psr.module_id,
                 psr.purpose,
 
                 latest.submission_id,
@@ -535,8 +537,17 @@ router.get("/exam/:exam_id", authenticateToken, async (req, res) => {
                 ets.slot_id,
                 ets.slot_date,
                 ets.start_time AS exam_start_time,
-                ets.end_time AS exam_end_time
-
+                ets.end_time AS exam_end_time,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM submissions sx
+                        WHERE sx.request_id = sr.request_id
+                          AND sx.student_id = sr.student_user_id
+                          AND sx.submission_type = 'EXAM'
+                    ) THEN 1
+                    ELSE 0
+                END AS has_submission_for_request
             FROM exam_slot_requests esr
             JOIN slot_requests sr
                 ON esr.request_id = sr.request_id
@@ -547,7 +558,9 @@ router.get("/exam/:exam_id", authenticateToken, async (req, res) => {
 
             WHERE sr.student_user_id = ?
               AND e.exam_id = ?
-            ORDER BY ets.slot_date DESC, ets.start_time DESC
+              AND sr.slot_type = 'EXAM'
+              AND UPPER(COALESCE(sr.status, '')) NOT IN ('CANCELLED', 'DENIED')
+            ORDER BY has_submission_for_request ASC, ets.slot_date DESC, ets.start_time DESC
             LIMIT 1
         `, [studentId, examId]);
 
@@ -928,6 +941,208 @@ router.get("/lecturer/exams/:submission_id", authenticateToken, async (req, res)
         return res.status(500).json({
             ok: false,
             error: "Failed to load lecturer exam submission detail"
+        });
+    }
+});
+
+// =======================================================
+// GET ONE EXAM SUBMISSION PAGE BY REQUEST (PRECISE SLOT)
+// =======================================================
+router.get("/exam-request/:request_id", authenticateToken, async (req, res) => {
+    try {
+        const studentId = req.user.id;
+        const requestId = req.params.request_id;
+
+        const [examRows] = await promisePool.query(`
+            SELECT
+                e.exam_id,
+                e.exam_name,
+                e.description,
+                e.status AS exam_status,
+
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+
+                ets.slot_id,
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM submissions sx
+                        WHERE sx.request_id = sr.request_id
+                          AND sx.student_id = sr.student_user_id
+                          AND sx.submission_type = 'EXAM'
+                    ) THEN 1
+                    ELSE 0
+                END AS has_submission_for_request
+            FROM exam_slot_requests esr
+            JOIN slot_requests sr
+                ON esr.request_id = sr.request_id
+            JOIN exam_time_slots ets
+                ON esr.slot_id = ets.slot_id
+            JOIN exams e
+                ON esr.exam_id = e.exam_id
+
+            WHERE sr.student_user_id = ?
+              AND sr.request_id = ?
+              AND sr.slot_type = 'EXAM'
+            LIMIT 1
+        `, [studentId, requestId]);
+
+        if (!examRows.length) {
+            return res.status(404).json({
+                ok: false,
+                error: "No booked examination slot found for this request"
+            });
+        }
+
+        const [historyRows] = await promisePool.query(`
+            SELECT
+                s.submission_id,
+                s.attempt_number,
+                s.comments,
+                s.submitted_at,
+                s.updated_at,
+
+                lr.final_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail,
+                fr.published_at
+
+            FROM submissions s
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = s.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = s.submission_id
+            WHERE s.request_id = ?
+              AND s.student_id = ?
+              AND s.submission_type = 'EXAM'
+            ORDER BY s.attempt_number DESC
+        `, [requestId, studentId]);
+
+        return res.json({
+            ok: true,
+            mode: "EXAM",
+            exam: examRows[0],
+            history: historyRows
+        });
+    } catch (error) {
+        console.error("Load exam submission page by request error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load examination submission data"
+        });
+    }
+});
+
+// =======================================================
+// GET ONE EXAM SUBMISSION PAGE BY SLOT (PRECISE SLOT)
+// =======================================================
+router.get("/exam-slot/:slot_id", authenticateToken, async (req, res) => {
+    try {
+        const studentId = req.user.id;
+        const slotId = req.params.slot_id;
+
+        const [examRows] = await promisePool.query(`
+            SELECT
+                e.exam_id,
+                e.exam_name,
+                e.description,
+                e.status AS exam_status,
+
+                sr.request_id,
+                sr.student_user_id AS student_id,
+                sr.booking_date,
+                sr.start_time,
+                sr.end_time,
+                sr.status AS slot_status,
+
+                ets.slot_id,
+                ets.slot_date,
+                ets.start_time AS exam_start_time,
+                ets.end_time AS exam_end_time,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM submissions sx
+                        WHERE sx.request_id = sr.request_id
+                          AND sx.student_id = sr.student_user_id
+                          AND sx.submission_type = 'EXAM'
+                    ) THEN 1
+                    ELSE 0
+                END AS has_submission_for_request
+            FROM exam_slot_requests esr
+            JOIN slot_requests sr
+                ON esr.request_id = sr.request_id
+            JOIN exam_time_slots ets
+                ON esr.slot_id = ets.slot_id
+            JOIN exams e
+                ON esr.exam_id = e.exam_id
+
+            WHERE sr.student_user_id = ?
+              AND ets.slot_id = ?
+              AND sr.slot_type = 'EXAM'
+            ORDER BY sr.request_id DESC
+            LIMIT 1
+        `, [studentId, slotId]);
+
+        if (!examRows.length) {
+            return res.status(404).json({
+                ok: false,
+                error: "No booked examination slot found for this slot"
+            });
+        }
+
+        const requestId = examRows[0].request_id;
+        const [historyRows] = await promisePool.query(`
+            SELECT
+                s.submission_id,
+                s.attempt_number,
+                s.comments,
+                s.submitted_at,
+                s.updated_at,
+
+                lr.final_grade,
+                lr.decision,
+                lr.lecturer_feedback,
+
+                fr.final_grade AS published_grade,
+                fr.final_feedback,
+                fr.pass_fail,
+                fr.published_at
+
+            FROM submissions s
+            LEFT JOIN lecturer_reviews lr
+                ON lr.submission_id = s.submission_id
+            LEFT JOIN final_results fr
+                ON fr.submission_id = s.submission_id
+            WHERE s.request_id = ?
+              AND s.student_id = ?
+              AND s.submission_type = 'EXAM'
+            ORDER BY s.attempt_number DESC
+        `, [requestId, studentId]);
+
+        return res.json({
+            ok: true,
+            mode: "EXAM",
+            exam: examRows[0],
+            history: historyRows
+        });
+    } catch (error) {
+        console.error("Load exam submission page by slot error:", error);
+        return res.status(500).json({
+            ok: false,
+            error: "Failed to load examination submission data"
         });
     }
 });
@@ -1403,7 +1618,17 @@ router.post(
                 SELECT
                     ets.slot_date,
                     ets.start_time AS exam_start_time,
-                    ets.end_time AS exam_end_time
+                    ets.end_time AS exam_end_time,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM submissions sx
+                        WHERE sx.request_id = sr.request_id
+                          AND sx.student_id = sr.student_user_id
+                          AND sx.submission_type = 'EXAM'
+                    ) THEN 1
+                    ELSE 0
+                END AS has_submission_for_request
                 FROM exam_slot_requests esr
                 JOIN exam_time_slots ets
                   ON esr.slot_id = ets.slot_id
@@ -1457,6 +1682,22 @@ router.post(
                 return res.status(400).json({
                     ok: false,
                     error: "Practice submission is allowed only for approved bookings"
+                });
+            }
+
+            const [existingPracticeSubmissionRows] = await promisePool.query(`
+                SELECT submission_id
+                FROM submissions
+                WHERE request_id = ?
+                  AND student_id = ?
+                  AND submission_type = 'PRACTICE'
+                LIMIT 1
+            `, [requestId, studentId]);
+
+            if (existingPracticeSubmissionRows.length > 0) {
+                return res.status(409).json({
+                    ok: false,
+                    error: "Practice submission already completed. Re-submission is not allowed."
                 });
             }
 

@@ -299,13 +299,20 @@
       const endDate = new Date(yyyy, mm - 1, dd, hh, min, sec || 0, 0);
       if (Number.isNaN(endDate.getTime())) return { open: false, reason: "locked" };
 
+      const startTime = booking.start_time || "00:00:00";
+      const [shh, smin, ssec] = String(startTime).slice(0, 8).split(":").map((v) => Number(v || 0));
+      const startDate = new Date(yyyy, mm - 1, dd, shh, smin, ssec || 0, 0);
+
       const now = new Date();
       const windowEnd = new Date(endDate.getTime() + (2 * 60 * 60 * 1000));
 
+      if (!Number.isNaN(startDate.getTime()) && now < startDate) {
+        return { open: false, reason: "before_start", startDate, endDate, windowEnd };
+      }
       if (now < endDate) return { open: false, reason: "before_end", endDate, windowEnd };
       if (now > windowEnd) return { open: false, reason: "window_closed", endDate, windowEnd };
 
-      return { open: true, reason: "open", endDate, windowEnd };
+      return { open: true, reason: "open", startDate, endDate, windowEnd };
     }
 
     function getWindowDetailText(windowState, submittedAt) {
@@ -322,6 +329,9 @@
       }
       if (windowState.reason === "before_end" && windowState.endDate) {
         return `Submission opens at: ${formatDateTime(windowState.endDate)}`;
+      }
+      if (windowState.reason === "before_start" && windowState.startDate) {
+        return `Exam starts at: ${formatDateTime(windowState.startDate)}`;
       }
       if (windowState.reason === "window_closed" && windowState.windowEnd) {
         return `Submission closed at: ${formatDateTime(windowState.windowEnd)}`;
@@ -844,19 +854,6 @@ function renderSubmissions() {
     const bookingLink =
       `lab-slot-booking.html?module_id=${encodeURIComponent(currentModuleId)}&exam_id=${encodeURIComponent(exam.exam_id)}`;
 
-    const submitLink =
-      `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}`;
-    const resultsLink = `grades-feedback.html?module_id=${encodeURIComponent(currentModuleId)}`;
-
-    const examAttempts = submissionSummary
-      .filter(item => String(item.exam_id || "") === examId)
-      .sort((a, b) => Number(b.attempt_number || 0) - Number(a.attempt_number || 0));
-    const latestAttempt = examAttempts[0] || null;
-    const hasSubmission = !!latestAttempt?.submission_id;
-    const published = latestAttempt && latestAttempt.published_grade != null;
-    const decision = String(latestAttempt?.decision || "").toUpperCase();
-    const needsRetake = published && decision === "RETAKE";
-
     const examBookings = bookings
       .filter(booking =>
         String(booking.exam_id || "") === examId &&
@@ -871,8 +868,22 @@ function renderSubmissions() {
       });
 
     const activeBooking = examBookings[0] || null;
+    const submitLink =
+      `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}${activeBooking?.request_id ? `&exam_request_id=${encodeURIComponent(activeBooking.request_id)}` : ""}${activeBooking?.slot_id ? `&exam_slot_id=${encodeURIComponent(activeBooking.slot_id)}` : ""}`;
+    const resultsLink = `grades-feedback.html?module_id=${encodeURIComponent(currentModuleId)}`;
     const bookingStatus = String(activeBooking?.status || "").toUpperCase();
     const windowState = getBookingSubmissionWindowState(activeBooking);
+    const activeRequestId = String(activeBooking?.request_id || "");
+    const activeBookingAttempts = activeRequestId
+      ? submissionSummary
+        .filter(item => String(item.request_id || "") === activeRequestId)
+        .sort((a, b) => Number(b.attempt_number || 0) - Number(a.attempt_number || 0))
+      : [];
+    const latestAttempt = activeBookingAttempts[0] || null;
+    const hasSubmission = !!activeBookingAttempts[0]?.submission_id;
+    const published = !!(activeBookingAttempts[0] && activeBookingAttempts[0].published_grade != null);
+    const decision = String(activeBookingAttempts[0]?.decision || "").toUpperCase();
+    const needsRetake = published && decision === "RETAKE";
 
     const statusColors = {
       SCHEDULED: "bg-blue-100 text-blue-700",
@@ -936,10 +947,18 @@ function renderSubmissions() {
         </span>
       `;
       helperText = `<p class="text-xs text-yellow-700 mt-2 font-semibold">Your slot request is pending admin approval.</p>`;
+    } else if (windowState.reason === "before_start") {
+      actionHtml = `
+        <span class="shrink-0 px-5 py-2.5 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-semibold text-center flex items-center gap-2 cursor-not-allowed">
+          <span class="material-icons-round text-[16px]">event</span>
+          Exam Scheduled
+        </span>
+      `;
+      helperText = `<p class="text-xs text-indigo-700 mt-2 font-semibold">Exam has not started yet. Submission opens after your booked slot ends.</p>`;
     } else if (windowState.reason === "before_end") {
       actionHtml = `
         <span class="shrink-0 px-5 py-2.5 bg-blue-100 text-blue-700 rounded-xl text-sm font-semibold text-center flex items-center gap-2 cursor-not-allowed">
-          <span class="material-icons-round text-[16px]">task_alt</span>
+          <span class="material-icons-round text-[16px]">schedule</span>
           Exam In Progress
         </span>
       `;
@@ -1025,7 +1044,7 @@ function renderSubmissions() {
   }).join("");
 }
 window.openExamSubmission = function (examId, moduleId) {
-  sessionStorage.setItem("selectedSubmissionExamId", String(examId));
+  sessionStorage.removeItem("selectedSubmissionExamId");
   sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
   sessionStorage.setItem("selectedModuleId", String(moduleId));
 };
