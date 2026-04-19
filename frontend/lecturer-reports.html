@@ -556,6 +556,9 @@
       const criteriaValues = criteria.map((c) => toNum(c.acceptable_rate));
 
       const criteriaCtx = document.getElementById("aiCriteriaChart");
+      const agreementCtx = document.getElementById("aiAgreementChart");
+      if (!criteriaCtx || !agreementCtx) return;
+
       destroyChart(aiCriteriaChart);
       aiCriteriaChart = new Chart(criteriaCtx, {
         type: "bar",
@@ -596,7 +599,6 @@
       const outlierLabels = outliers.map((o, idx) => o.registration_number || `Case ${idx + 1}`);
       const gapValues = outliers.map((o) => Math.abs(toNum(o.score_diff)));
 
-      const agreementCtx = document.getElementById("aiAgreementChart");
       destroyChart(aiAgreementChart);
       aiAgreementChart = new Chart(agreementCtx, {
         type: "bar",
@@ -703,8 +705,6 @@
               <thead><tr>${headHtml}</tr></thead>
               <tbody>${rowHtml || `<tr><td colspan="${headers.length}" style="padding:8px">No records.</td></tr>`}</tbody>
             </table>
-          </body>
-        </html>
       `);
       win.document.close();
       win.focus();
@@ -712,19 +712,29 @@
     }
 
     async function loadModulesIntoFilters() {
-      const result = await API.modules.getAll();
-      const modules = result.ok && Array.isArray(result.modules) ? result.modules : [];
-      const selects = [document.getElementById("batchModuleId"), document.getElementById("apiModuleId")];
+      const selects = [document.getElementById("batchModuleId"), document.getElementById("apiModuleId")]
+        .filter(Boolean);
+      if (!selects.length) return;
 
-      selects.forEach((select) => {
-        select.innerHTML = `<option value="">All Assigned Modules</option>`;
-        modules.forEach((module) => {
-          const option = document.createElement("option");
-          option.value = module.module_id;
-          option.textContent = `${module.module_code} - ${module.module_name}`;
-          select.appendChild(option);
+      try {
+        const result = await API.modules.getAll();
+        const modules = result.ok
+          ? (Array.isArray(result.modules) ? result.modules : (Array.isArray(result.data) ? result.data : []))
+          : [];
+
+        selects.forEach((select) => {
+          select.innerHTML = `<option value="">All Assigned Modules</option>`;
+          modules.forEach((module) => {
+            const option = document.createElement("option");
+            option.value = module.module_id;
+            option.textContent = `${module.module_code} - ${module.module_name}`;
+            select.appendChild(option);
+          });
         });
-      });
+      } catch (error) {
+        console.error("Load modules failed:", error);
+        showErrorNotification("Unable to load modules. Please refresh and try again.");
+      }
     }
 
     async function onBatchGenerate(event, options = {}) {
@@ -750,6 +760,9 @@
         if (!silentSuccess) {
           showSuccessNotification("Batch performance report generated.");
         }
+      } catch (error) {
+        console.error("Batch report generation failed:", error);
+        showErrorNotification("Failed to generate batch performance report.");
       } finally {
         btn.disabled = false;
         btn.textContent = "Generate";
@@ -757,7 +770,9 @@
     }
 
     async function onAiGenerate(event) {
-      event.preventDefault();
+      if (event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
       const filters = collectAiFilters();
       const btn = document.getElementById("apiGenerateBtn");
       btn.disabled = true;
@@ -773,25 +788,34 @@
         lastAiReport = result;
         renderAiReport(result);
         showSuccessNotification("AI accuracy report generated.");
+      } catch (error) {
+        console.error("AI accuracy report generation failed:", error);
+        showErrorNotification("Failed to generate AI accuracy report.");
       } finally {
         btn.disabled = false;
         btn.textContent = "Generate";
       }
     }
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      const user = await requireAuth("lecturer");
-      if (!user) return;
-
+    function bindReportUiHandlers() {
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) logoutBtn.addEventListener("click", () => API.auth.logout());
 
-      document.getElementById("batchTab").addEventListener("click", () => switchReportTab("batch"));
-      document.getElementById("apiTab").addEventListener("click", () => switchReportTab("api"));
-      document.getElementById("batchReportForm").addEventListener("submit", onBatchGenerate);
-      document.getElementById("apiReportForm").addEventListener("submit", onAiGenerate);
+      const batchTab = document.getElementById("batchTab");
+      const apiTab = document.getElementById("apiTab");
+      const batchForm = document.getElementById("batchReportForm");
+      const apiForm = document.getElementById("apiReportForm");
+      const batchExportCsvBtn = document.getElementById("batchExportCsvBtn");
+      const apiExportCsvBtn = document.getElementById("apiExportCsvBtn");
+      const batchDownloadPdfBtn = document.getElementById("batchDownloadPdfBtn");
+      const apiDownloadPdfBtn = document.getElementById("apiDownloadPdfBtn");
 
-      document.getElementById("batchExportCsvBtn").addEventListener("click", () => {
+      if (batchTab) batchTab.addEventListener("click", () => switchReportTab("batch"));
+      if (apiTab) apiTab.addEventListener("click", () => switchReportTab("api"));
+      if (batchForm) batchForm.addEventListener("submit", onBatchGenerate);
+      if (apiForm) apiForm.addEventListener("submit", onAiGenerate);
+
+      if (batchExportCsvBtn) batchExportCsvBtn.addEventListener("click", () => {
         const rows = (lastBatchReport?.students || []).map((s) => ({
           student_name: s.student_name,
           registration_number: s.registration_number,
@@ -806,7 +830,7 @@
         exportCsv("batch-performance-report.csv", rows);
       });
 
-      document.getElementById("apiExportCsvBtn").addEventListener("click", () => {
+      if (apiExportCsvBtn) apiExportCsvBtn.addEventListener("click", () => {
         const rows = (lastAiReport?.outliers || []).map((o) => ({
           submission_id: o.submission_id,
           student_name: o.student_name,
@@ -821,7 +845,7 @@
         exportCsv("ai-accuracy-report.csv", rows);
       });
 
-      document.getElementById("batchDownloadPdfBtn").addEventListener("click", () => {
+      if (batchDownloadPdfBtn) batchDownloadPdfBtn.addEventListener("click", () => {
         const report = lastBatchReport;
         if (!report || !report.summary) {
           showWarningNotification("Generate the batch report first.");
@@ -863,7 +887,7 @@
         });
       });
 
-      document.getElementById("apiDownloadPdfBtn").addEventListener("click", () => {
+      if (apiDownloadPdfBtn) apiDownloadPdfBtn.addEventListener("click", () => {
         const report = lastAiReport;
         if (!report || !report.summary) {
           showWarningNotification("Generate the AI accuracy report first.");
@@ -904,6 +928,14 @@
           rows
         });
       });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      bindReportUiHandlers();
+      switchReportTab("batch");
+
+      const user = await requireAuth("lecturer");
+      if (!user) return;
 
       await loadModulesIntoFilters();
       await onBatchGenerate(null, { silentSuccess: true });
