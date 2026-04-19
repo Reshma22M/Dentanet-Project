@@ -37,7 +37,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div>
         <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Grades & Feedback</h1>
-        <p class="text-slate-500 dark:text-slate-400">Published AI and lecturer results will appear here.</p>
+        <p id="pageSubtitle" class="text-slate-500 dark:text-slate-400">Published AI and lecturer results will appear here.</p>
       </div>
     </div>
 
@@ -72,6 +72,18 @@
 <div id="shell-footer"></div>
 
 <script>
+const urlParams = new URLSearchParams(window.location.search);
+const moduleId =
+  urlParams.get("module_id") ||
+  sessionStorage.getItem("selectedStudentModuleId") ||
+  sessionStorage.getItem("selectedModuleId") ||
+  "";
+
+if (moduleId) {
+  sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
+  sessionStorage.setItem("selectedModuleId", String(moduleId));
+}
+
 function showAlert(message, type = "error") {
   if (type === "success" && typeof showSuccessNotification === "function") {
     showSuccessNotification(message);
@@ -140,13 +152,34 @@ function buildResultCard(item) {
 async function loadResults() {
   try {
     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+    const list = document.getElementById("resultsList");
+    const summary = document.getElementById("resultSummary");
+    const subtitle = document.getElementById("pageSubtitle");
+
+    if (!token) {
+      throw new Error("Not logged in");
+    }
+
+    if (!moduleId) {
+      list.innerHTML = `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
+          Open this page from a specific module to view module-based results.
+        </div>
+      `;
+      summary.textContent = "Select a module first to view published results.";
+      if (subtitle) {
+        subtitle.textContent = "Please open Grades from a module context.";
+      }
+      return;
+    }
+
     const apiBase = (typeof API_BASE_URL === "string" && API_BASE_URL)
       ? API_BASE_URL
       : (window.location.protocol.startsWith("http")
           ? `${window.location.origin}/api`
           : "http://localhost:3002/api");
 
-    const response = await fetch(`${apiBase}/submissions/student/dashboard-data`, {
+    const response = await fetch(`${apiBase}/submissions/student/module/${encodeURIComponent(moduleId)}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -155,6 +188,11 @@ async function loadResults() {
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to load results");
+    }
+
+    if (subtitle && data.module) {
+      const moduleCode = data.module.module_code ? `${data.module.module_code} - ` : "";
+      subtitle.textContent = `Showing published results for ${moduleCode}${data.module.module_name || "selected module"}.`;
     }
 
     const practiceResults = (data.practiceSessions || [])
@@ -184,9 +222,6 @@ async function loadResults() {
     const results = [...examResults, ...practiceResults].sort((a, b) => {
       return new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0);
     });
-
-    const list = document.getElementById("resultsList");
-    const summary = document.getElementById("resultSummary");
 
     if (!results.length) {
       list.innerHTML = `

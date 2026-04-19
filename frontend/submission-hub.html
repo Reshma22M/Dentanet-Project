@@ -501,6 +501,7 @@ function buildPracticeCard(session) {
   const subLink = hasValidRequestId
     ? `practical-exam-submission.html?request_id=${encodeURIComponent(session.request_id)}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}&submission_type=PRACTICE`
     : '#';
+  const resultsLink = `grades-feedback.html${moduleId ? `?module_id=${encodeURIComponent(moduleId)}` : ''}${session.submission_id ? `${moduleId ? '&' : '?'}submission_id=${encodeURIComponent(session.submission_id)}` : ''}`;
 
   const aiScore = session.api_score != null
     ? `<span class="ml-2 text-xs font-bold text-primary">AI Score: ${session.api_score}</span>`
@@ -534,7 +535,12 @@ function buildPracticeCard(session) {
     </div>
 
     <div class="shrink-0 flex flex-col gap-2 items-end">
-      ${allowed && hasValidRequestId && !hasSubmission
+      ${hasSubmission
+        ? `<a href="${resultsLink}"
+             class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-dark">
+             View Results
+           </a>`
+        : (allowed && hasValidRequestId
         ? `<a href="${subLink}"
              onclick="try{sessionStorage.setItem('selectedSubmissionRequestId','${encodeURIComponent(String(session.request_id))}');}catch(e){}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
@@ -542,9 +548,9 @@ function buildPracticeCard(session) {
              Submit Now
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
-             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>${hasSubmission ? 'Submitted' : windowState.label}
+             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>${windowState.label}
            </span>`
-      }
+      )}
       ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${windowState.note}</span>` : ''}
       ${allowed && !hasValidRequestId ? `<span class="text-xs text-red-500 font-semibold">Session link unavailable. Please refresh and try again.</span>` : ''}
       <span class="text-xs text-slate-500">${esc(getWindowTimingText(windowState, session.submitted_at))}</span>
