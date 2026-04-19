@@ -171,20 +171,6 @@
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-            <div class="report-panel p-6">
-              <h3 class="text-lg font-bold mb-4">Pass vs Fail Distribution</h3>
-              <div class="h-72">
-                <canvas id="batchPassFailChart"></canvas>
-              </div>
-            </div>
-            <div class="report-panel p-6">
-              <h3 class="text-lg font-bold mb-4">Performance Trend (By Published Date)</h3>
-              <div class="h-72">
-                <canvas id="batchTrendChart"></canvas>
-              </div>
-            </div>
-          </div>
           <div class="report-panel p-6">
             <h3 class="text-lg font-bold mb-4">Student Performance</h3>
             <div class="overflow-x-auto">
@@ -298,8 +284,6 @@
     let lastAiReport = null;
     let studentPerformanceChart = null;
     let modulePerformanceChart = null;
-    let batchPassFailChart = null;
-    let batchTrendChart = null;
     let aiCriteriaChart = null;
     let aiAgreementChart = null;
 
@@ -406,7 +390,6 @@
 
       const students = Array.isArray(report?.students) ? report.students : [];
       const modules = Array.isArray(report?.modules) ? report.modules : [];
-      const timeline = Array.isArray(report?.timeline) ? report.timeline : [];
 
       const topStudents = [...students]
         .sort((a, b) => toNum(b.average_grade) - toNum(a.average_grade))
@@ -419,23 +402,12 @@
       const modulePassRateData = modules.map((m) => toNum(m.pass_rate));
       const moduleFailRateData = modules.map((m) => Math.max(0, 100 - toNum(m.pass_rate)));
 
-      const totalPass = students.reduce((sum, row) => sum + toNum(row.pass_count), 0);
-      const totalFail = students.reduce((sum, row) => sum + toNum(row.fail_count), 0);
-
-      const trendLabels = timeline.map((t) => t.date || "");
-      const trendAverageGrades = timeline.map((t) => toNum(t.average_grade));
-      const trendPassRates = timeline.map((t) => toNum(t.pass_rate));
-
       const studentCtx = document.getElementById("studentPerformanceChart");
       const moduleCtx = document.getElementById("modulePerformanceChart");
-      const passFailCtx = document.getElementById("batchPassFailChart");
-      const trendCtx = document.getElementById("batchTrendChart");
-      if (!studentCtx || !moduleCtx || !passFailCtx || !trendCtx) return;
+      if (!studentCtx || !moduleCtx) return;
 
       destroyChart(studentPerformanceChart);
       destroyChart(modulePerformanceChart);
-      destroyChart(batchPassFailChart);
-      destroyChart(batchTrendChart);
 
       studentPerformanceChart = new Chart(studentCtx, {
         type: "bar",
@@ -659,97 +631,6 @@
         }
       });
 
-      batchPassFailChart = new Chart(passFailCtx, {
-        type: "doughnut",
-        data: {
-          labels: ["Pass", "Fail"],
-          datasets: [{
-            data: [totalPass, totalFail],
-            backgroundColor: [
-              "rgba(16,185,129,0.78)",
-              "rgba(239,68,68,0.78)"
-            ],
-            borderColor: [
-              "rgba(5,150,105,1)",
-              "rgba(220,38,38,1)"
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: { color: "#64748b" }
-            },
-            tooltip: {
-              backgroundColor: "#0f172a",
-              titleColor: "#fff",
-              bodyColor: "#e2e8f0",
-              padding: 10
-            }
-          }
-        }
-      });
-
-      batchTrendChart = new Chart(trendCtx, {
-        type: "line",
-        data: {
-          labels: trendLabels.length ? trendLabels : ["No data"],
-          datasets: [
-            {
-              label: "Average Grade",
-              data: trendAverageGrades.length ? trendAverageGrades : [0],
-              borderColor: "rgba(37,99,235,1)",
-              backgroundColor: "rgba(37,99,235,0.2)",
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-              pointHoverRadius: 4
-            },
-            {
-              label: "Pass Rate %",
-              data: trendPassRates.length ? trendPassRates : [0],
-              borderColor: "rgba(5,150,105,1)",
-              backgroundColor: "rgba(5,150,105,0.2)",
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-              pointHoverRadius: 4,
-              borderDash: [6, 4]
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
-              grid: { display: false }
-            },
-            y: {
-              beginAtZero: true,
-              suggestedMax: 100,
-              ticks: { color: "#64748b" },
-              grid: { color: "rgba(148,163,184,0.22)" }
-            }
-          },
-          plugins: {
-            legend: {
-              labels: { color: "#64748b" }
-            },
-            tooltip: {
-              backgroundColor: "#0f172a",
-              titleColor: "#fff",
-              bodyColor: "#e2e8f0",
-              padding: 10
-            }
-          }
-        }
-      });
     }
 
     function exportCsv(filename, rows) {
@@ -975,14 +856,6 @@
             {
               title: "Module Pass/Fail Mix (%)",
               imageData: modulePerformanceChart ? modulePerformanceChart.toBase64Image() : null
-            },
-            {
-              title: "Pass vs Fail Distribution",
-              imageData: batchPassFailChart ? batchPassFailChart.toBase64Image() : null
-            },
-            {
-              title: "Performance Trend (By Published Date)",
-              imageData: batchTrendChart ? batchTrendChart.toBase64Image() : null
             }
           ],
           headers: ["Student", "Registration", "Batch", "Average", "Best", "Pass", "Fail"],

@@ -1651,17 +1651,7 @@ router.post(
                 SELECT
                     ets.slot_date,
                     ets.start_time AS exam_start_time,
-                    ets.end_time AS exam_end_time,
-                CASE
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM submissions sx
-                        WHERE sx.request_id = sr.request_id
-                          AND sx.student_id = sr.student_user_id
-                          AND sx.submission_type = 'EXAM'
-                    ) THEN 1
-                    ELSE 0
-                END AS has_submission_for_request
+                    ets.end_time AS exam_end_time
                 FROM exam_slot_requests esr
                 JOIN exam_time_slots ets
                   ON esr.slot_id = ets.slot_id

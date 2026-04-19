@@ -272,6 +272,11 @@ const urlExamRequestId = urlParams.get('exam_request_id') || '';
 const urlExamSlotId = urlParams.get('exam_slot_id') || '';
 const urlRequestId = urlParams.get('request_id') || '';
 const urlSubmissionType = String(urlParams.get('submission_type') || '').trim().toUpperCase();
+const sessionSubmissionMode = String(sessionStorage.getItem('selectedSubmissionMode') || '').trim().toUpperCase();
+const sessionExamId = sessionStorage.getItem('selectedSubmissionExamId') || '';
+const sessionExamRequestId = sessionStorage.getItem('selectedSubmissionExamRequestId') || '';
+const sessionExamSlotId = sessionStorage.getItem('selectedSubmissionExamSlotId') || '';
+const sessionPracticeRequestId = sessionStorage.getItem('selectedSubmissionRequestId') || '';
 const moduleId =
   urlParams.get('module_id') ||
   sessionStorage.getItem('selectedStudentModuleId') ||
@@ -282,20 +287,29 @@ if (moduleId) {
   sessionStorage.setItem('selectedStudentModuleId', String(moduleId));
   sessionStorage.setItem('selectedModuleId', String(moduleId));
 }
-const canUseSessionContext = false;
-const examId = urlRequestId
-  ? ''
-  : (urlExamId || '');
-const examRequestId = urlExamRequestId || '';
-const examSlotId = urlExamSlotId || '';
-const requestId = urlRequestId ||
-  sessionStorage.getItem('selectedSubmissionRequestId') ||
-  '';
 const hasAnyExplicitSubmissionContext = ["exam_id", "exam_request_id", "exam_slot_id", "request_id"]
   .some((key) => urlParams.has(key));
 const requestedMode = urlSubmissionType === "PRACTICE" || urlSubmissionType === "EXAM"
   ? urlSubmissionType
   : null;
+const hasExplicitExamContext = !!(urlExamId || urlExamRequestId || urlExamSlotId);
+const hasExplicitPracticeContext = !!urlRequestId;
+
+let submissionMode = null;
+if (requestedMode === "PRACTICE" || requestedMode === "EXAM") {
+  submissionMode = requestedMode;
+} else if (hasExplicitExamContext) {
+  submissionMode = "EXAM";
+} else if (hasExplicitPracticeContext) {
+  submissionMode = "PRACTICE";
+} else if (sessionSubmissionMode === "PRACTICE" || sessionSubmissionMode === "EXAM") {
+  submissionMode = sessionSubmissionMode;
+}
+
+const examId = urlExamId || (submissionMode === "EXAM" ? sessionExamId : '') || '';
+const examRequestId = urlExamRequestId || (submissionMode === "EXAM" ? sessionExamRequestId : '') || '';
+const examSlotId = urlExamSlotId || (submissionMode === "EXAM" ? sessionExamSlotId : '') || '';
+const requestId = urlRequestId || (submissionMode === "PRACTICE" ? sessionPracticeRequestId : '') || '';
 
 function buildSubmissionHubUrl() {
   let hubUrl = 'submission-hub.html';
@@ -315,27 +329,21 @@ function buildSubmissionHubUrl() {
   backLink.href = href;
 })();
 
-let submissionMode = null;
-
-if (requestedMode === "PRACTICE") {
-  submissionMode = "PRACTICE";
-} else if (requestedMode === "EXAM") {
-  submissionMode = "EXAM";
-} else if (examId) {
+if (!submissionMode && examId) {
   submissionMode = 'EXAM';
-} else if (examRequestId) {
+} else if (!submissionMode && examRequestId) {
   submissionMode = 'EXAM';
-} else if (examSlotId) {
+} else if (!submissionMode && examSlotId) {
   submissionMode = 'EXAM';
-} else if (requestId) {
+} else if (!submissionMode && requestId) {
   submissionMode = 'PRACTICE';
-  sessionStorage.removeItem("selectedSubmissionExamId");
 }
 
 const hasValidExamId = (examId && examId !== "undefined" && examId !== "null")
   || (examRequestId && examRequestId !== "undefined" && examRequestId !== "null")
   || (examSlotId && examSlotId !== "undefined" && examSlotId !== "null");
 const hasValidRequestId = requestId && requestId !== "undefined" && requestId !== "null";
+const preferredSubmissionMode = requestedMode || submissionMode || sessionSubmissionMode || "EXAM";
 
 let selectedFiles = [];
 let pageData = null;
@@ -604,13 +612,31 @@ async function resolveSubmissionContext(options = {}) {
 
   if (eligiblePractice || fallbackPractice) {
     const practice = eligiblePractice || fallbackPractice;
+    try {
+      sessionStorage.setItem("selectedSubmissionMode", "PRACTICE");
+      sessionStorage.setItem("selectedSubmissionRequestId", String(practice.request_id || ""));
+      sessionStorage.removeItem("selectedSubmissionExamId");
+      sessionStorage.removeItem("selectedSubmissionExamRequestId");
+      sessionStorage.removeItem("selectedSubmissionExamSlotId");
+    } catch (e) {}
     const redirectUrl = `practical-exam-submission.html?request_id=${encodeURIComponent(practice.request_id)}&submission_type=PRACTICE`;
     window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
     return true;
   }
 
   if (eligibleExam) {
-    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}${eligibleExam.request_id ? `&exam_request_id=${encodeURIComponent(eligibleExam.request_id)}` : ""}${eligibleExam.slot_id ? `&exam_slot_id=${encodeURIComponent(eligibleExam.slot_id)}` : ""}`;
+    try {
+      sessionStorage.setItem("selectedSubmissionMode", "EXAM");
+      sessionStorage.setItem("selectedSubmissionExamId", String(eligibleExam.exam_id || ""));
+      if (eligibleExam.request_id != null) {
+        sessionStorage.setItem("selectedSubmissionExamRequestId", String(eligibleExam.request_id));
+      }
+      if (eligibleExam.slot_id != null) {
+        sessionStorage.setItem("selectedSubmissionExamSlotId", String(eligibleExam.slot_id));
+      }
+      sessionStorage.removeItem("selectedSubmissionRequestId");
+    } catch (e) {}
+    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}${eligibleExam.request_id ? `&exam_request_id=${encodeURIComponent(eligibleExam.request_id)}` : ""}${eligibleExam.slot_id ? `&exam_slot_id=${encodeURIComponent(eligibleExam.slot_id)}` : ""}&submission_type=EXAM`;
     window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
     return true;
   }
@@ -757,7 +783,7 @@ async function loadSubmissionPage() {
     }
     await resolveSubmissionContext({
       notify: false,
-      preferredMode: requestedMode || submissionMode || "PRACTICE"
+      preferredMode: preferredSubmissionMode
     });
     return;
   }
@@ -805,11 +831,28 @@ async function loadSubmissionPage() {
       ? data.exam
       : data.practice;
 
-    if (submissionMode === "EXAM" && pageData?.exam_id) {
-      sessionStorage.removeItem("selectedSubmissionExamId");
-    }
-    if (pageData?.request_id) {
-      sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
+    if (submissionMode === "EXAM") {
+      try {
+        sessionStorage.setItem("selectedSubmissionMode", "EXAM");
+        if (pageData?.exam_id != null) {
+          sessionStorage.setItem("selectedSubmissionExamId", String(pageData.exam_id));
+        }
+        if (pageData?.request_id != null) {
+          sessionStorage.setItem("selectedSubmissionExamRequestId", String(pageData.request_id));
+        }
+        if (pageData?.slot_id != null) {
+          sessionStorage.setItem("selectedSubmissionExamSlotId", String(pageData.slot_id));
+        }
+        sessionStorage.removeItem("selectedSubmissionRequestId");
+      } catch (e) {}
+    } else if (pageData?.request_id) {
+      try {
+        sessionStorage.setItem("selectedSubmissionMode", "PRACTICE");
+        sessionStorage.setItem("selectedSubmissionRequestId", String(pageData.request_id));
+        sessionStorage.removeItem("selectedSubmissionExamId");
+        sessionStorage.removeItem("selectedSubmissionExamRequestId");
+        sessionStorage.removeItem("selectedSubmissionExamSlotId");
+      } catch (e) {}
     }
 
     submissionHistory =
@@ -834,7 +877,7 @@ async function loadSubmissionPage() {
     if (shouldAutoResolve) {
       await resolveSubmissionContext({
         notify: false,
-        preferredMode: requestedMode || submissionMode || "PRACTICE"
+        preferredMode: preferredSubmissionMode
       });
       return;
     }
@@ -1210,7 +1253,7 @@ async ()=>{
   if (!hasAnyExplicitSubmissionContext && !requestId && !examId && !examRequestId && !examSlotId) {
     await resolveSubmissionContext({
       notify: true,
-      preferredMode: requestedMode || submissionMode || "PRACTICE"
+      preferredMode: preferredSubmissionMode
     });
     return;
   }

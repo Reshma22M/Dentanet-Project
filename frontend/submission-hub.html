@@ -542,7 +542,7 @@ function buildPracticeCard(session) {
            </a>`
         : (allowed && hasValidRequestId
         ? `<a href="${subLink}"
-             onclick="try{sessionStorage.setItem('selectedSubmissionRequestId','${encodeURIComponent(String(session.request_id))}');}catch(e){}"
+             onclick="try{sessionStorage.setItem('selectedSubmissionMode','PRACTICE');sessionStorage.setItem('selectedSubmissionRequestId','${encodeURIComponent(String(session.request_id))}');sessionStorage.removeItem('selectedSubmissionExamId');sessionStorage.removeItem('selectedSubmissionExamRequestId');sessionStorage.removeItem('selectedSubmissionExamSlotId');}catch(e){}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
              Submit Now
@@ -626,6 +626,7 @@ function buildExamCard(exam) {
            </div>`
         : (allowed && !hasSubmission
         ? `<a href="${subLink}"
+             onclick="try{sessionStorage.setItem('selectedSubmissionMode','EXAM');sessionStorage.setItem('selectedSubmissionExamId','${encodeURIComponent(String(exam.exam_id || ''))}');${exam.request_id ? `sessionStorage.setItem('selectedSubmissionExamRequestId','${encodeURIComponent(String(exam.request_id))}');` : `sessionStorage.removeItem('selectedSubmissionExamRequestId');`}${exam.slot_id ? `sessionStorage.setItem('selectedSubmissionExamSlotId','${encodeURIComponent(String(exam.slot_id))}');` : `sessionStorage.removeItem('selectedSubmissionExamSlotId');`}sessionStorage.removeItem('selectedSubmissionRequestId');}catch(e){}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
              Submit Now

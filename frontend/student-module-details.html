@@ -870,7 +870,7 @@ function renderSubmissions() {
 
     const activeBooking = examBookings[0] || null;
     const submitLink =
-      `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}${activeBooking?.request_id ? `&exam_request_id=${encodeURIComponent(activeBooking.request_id)}` : ""}${activeBooking?.slot_id ? `&exam_slot_id=${encodeURIComponent(activeBooking.slot_id)}` : ""}`;
+      `practical-exam-submission.html?exam_id=${encodeURIComponent(exam.exam_id)}&module_id=${encodeURIComponent(currentModuleId)}${activeBooking?.request_id ? `&exam_request_id=${encodeURIComponent(activeBooking.request_id)}` : ""}${activeBooking?.slot_id ? `&exam_slot_id=${encodeURIComponent(activeBooking.slot_id)}` : ""}&submission_type=EXAM`;
     const resultsLink = `grades-feedback.html?module_id=${encodeURIComponent(currentModuleId)}`;
     const bookingStatus = String(activeBooking?.status || "").toUpperCase();
     const windowState = getBookingSubmissionWindowState(activeBooking);
@@ -976,7 +976,7 @@ function renderSubmissions() {
       actionHtml = `
         <a
           href="${submitLink}"
-          onclick="openExamSubmission('${encodeURIComponent(exam.exam_id)}', '${encodeURIComponent(currentModuleId)}')"
+          onclick="openExamSubmission('${encodeURIComponent(exam.exam_id)}', '${encodeURIComponent(currentModuleId)}', '${activeBooking?.request_id ? encodeURIComponent(activeBooking.request_id) : ""}', '${activeBooking?.slot_id ? encodeURIComponent(activeBooking.slot_id) : ""}')"
           class="shrink-0 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all text-center flex items-center gap-2"
         >
           <span class="material-icons-round text-[16px]">upload</span>
@@ -1044,8 +1044,20 @@ function renderSubmissions() {
     `;
   }).join("");
 }
-window.openExamSubmission = function (examId, moduleId) {
-  sessionStorage.removeItem("selectedSubmissionExamId");
+window.openExamSubmission = function (examId, moduleId, requestId, slotId) {
+  sessionStorage.setItem("selectedSubmissionMode", "EXAM");
+  sessionStorage.setItem("selectedSubmissionExamId", String(examId || ""));
+  if (requestId) {
+    sessionStorage.setItem("selectedSubmissionExamRequestId", String(requestId));
+  } else {
+    sessionStorage.removeItem("selectedSubmissionExamRequestId");
+  }
+  if (slotId) {
+    sessionStorage.setItem("selectedSubmissionExamSlotId", String(slotId));
+  } else {
+    sessionStorage.removeItem("selectedSubmissionExamSlotId");
+  }
+  sessionStorage.removeItem("selectedSubmissionRequestId");
   sessionStorage.setItem("selectedStudentModuleId", String(moduleId));
   sessionStorage.setItem("selectedModuleId", String(moduleId));
 };
