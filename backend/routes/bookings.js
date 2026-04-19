@@ -581,7 +581,7 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         }
 
         const requestId = Number(req.params.id);
-        const { status, machineId } = req.body;
+        const { status, machineCode, machineId } = req.body;
 
         const validStatuses = [
             "PENDING",
@@ -630,33 +630,52 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         await connection.beginTransaction();
 
         if (normalizedStatus === "APPROVED") {
-            if (!machineId) {
+            const normalizedMachineCode = String(machineCode || "").trim();
+            if (!normalizedMachineCode && !machineId) {
                 await connection.rollback();
                 return res.status(400).json({
                     ok: false,
-                    error: "machineId is required when approving a booking"
+                    error: "machineCode is required when approving a booking"
                 });
             }
 
-            const numericMachineId = Number(machineId);
+            let resolvedMachineId = null;
+            let machineRows = [];
 
-            const [machineRows] = await connection.query(
-                `
-                SELECT machine_id, status
-                FROM lab_machines
-                WHERE machine_id = ?
-                LIMIT 1
-                `,
-                [numericMachineId]
-            );
+            if (normalizedMachineCode) {
+                const [rowsByCode] = await connection.query(
+                    `
+                    SELECT machine_id, machine_code, status
+                    FROM lab_machines
+                    WHERE LOWER(machine_code) = LOWER(?)
+                    LIMIT 1
+                    `,
+                    [normalizedMachineCode]
+                );
+                machineRows = rowsByCode;
+            } else {
+                const numericMachineId = Number(machineId);
+                const [rowsById] = await connection.query(
+                    `
+                    SELECT machine_id, machine_code, status
+                    FROM lab_machines
+                    WHERE machine_id = ?
+                    LIMIT 1
+                    `,
+                    [numericMachineId]
+                );
+                machineRows = rowsById;
+            }
 
             if (machineRows.length === 0) {
                 await connection.rollback();
                 return res.status(404).json({
                     ok: false,
-                    error: "Selected machine not found"
+                    error: "Selected machine code not found"
                 });
             }
+
+            resolvedMachineId = Number(machineRows[0].machine_id);
 
             if (machineRows[0].status !== "ready") {
                 await connection.rollback();
@@ -681,7 +700,7 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
                     approved_by = VALUES(approved_by),
                     approved_at = CURRENT_TIMESTAMP
                 `,
-                [requestId, numericMachineId, req.user.id]
+                [requestId, resolvedMachineId, req.user.id]
             );
         }
 

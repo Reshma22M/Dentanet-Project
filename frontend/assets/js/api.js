@@ -301,9 +301,9 @@ const API = {
             return await parseResponse(response);
         },
 
-        updateStatus: async (id, status, machineId = null) => {
+        updateStatus: async (id, status, machineCode = null) => {
             const payload = { status };
-            if (machineId) payload.machineId = machineId;
+            if (machineCode) payload.machineCode = machineCode;
 
             const response = await fetch(`${API_BASE_URL}/bookings/${id}/status`, {
                 method: "PUT",
