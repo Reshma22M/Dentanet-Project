@@ -8,7 +8,7 @@ const path = require("path");
 const { pool } = require("./config/database");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // During development, allow relaxed Content Security Policy to support
 // dynamic scripts (Tailwind CDN, inline scripts) that may use eval.

@@ -71,6 +71,86 @@ function saveAuthData(token, user) {
     }
     if (user) {
         localStorage.setItem("user", JSON.stringify(user));
+        if (typeof applyCurrentUserProfileImage === "function") {
+            applyCurrentUserProfileImage(user);
+        }
+    }
+}
+
+function getFileBaseUrl() {
+    if (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http")) {
+        return API_BASE_URL.replace(/\/api\/?$/, "");
+    }
+    if (typeof window !== "undefined" && window.location && window.location.origin) {
+        return window.location.origin;
+    }
+    return "";
+}
+
+function buildProfileImageUrl(imagePath) {
+    if (!imagePath) return null;
+
+    if (/^https?:\/\//i.test(imagePath)) {
+        return `${imagePath}${imagePath.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    }
+
+    if (imagePath.startsWith("/")) {
+        const base = getFileBaseUrl();
+        return `${base}${imagePath}?t=${Date.now()}`;
+    }
+
+    return imagePath;
+}
+
+function applyCurrentUserProfileImage(userOverride = null) {
+    try {
+        const user = userOverride || getCurrentUser();
+        if (!user || !user.profile_image_url) return;
+
+        const role = String(user.role || user.account_type || "").toLowerCase();
+        if (!["admin", "student", "lecturer"].includes(role)) return;
+
+        const profileUrl = buildProfileImageUrl(user.profile_image_url);
+        if (!profileUrl) return;
+
+        const defaultByRole = {
+            admin: "public/images/profile-placeholder.svg",
+            lecturer: "public/images/profile-placeholder.svg",
+            student: "public/images/profile-placeholder.svg"
+        };
+
+        const idTargets = [
+            "topProfileImage",
+            "adminProfileImage",
+            "lecturerProfileImage",
+            "studentProfileImage",
+            "sidebarProfileImage",
+            "shellSidebarAvatar",
+            "profilePreview"
+        ];
+
+        idTargets.forEach((id) => {
+            const img = document.getElementById(id);
+            if (img && img.tagName === "IMG") {
+                img.src = profileUrl;
+            }
+        });
+
+        const roleDefault = defaultByRole[role];
+        const allImages = document.querySelectorAll("img");
+        allImages.forEach((img) => {
+            const src = String(img.getAttribute("src") || "");
+            const alt = String(img.getAttribute("alt") || "").toLowerCase();
+            const isProfileLike = alt.includes("profile") || alt.includes("avatar");
+            const isRoleDefault = src.includes(roleDefault);
+
+            if (isProfileLike || isRoleDefault) {
+                img.src = profileUrl;
+            }
+        });
+    } catch (error) {
+        // Keep auth flow safe even if avatar hydration fails on a page.
+        console.warn("Profile image hydration skipped:", error?.message || error);
     }
 }
 
@@ -106,6 +186,9 @@ const API = {
 
                 if (data.ok && data.user) {
                     localStorage.setItem("user", JSON.stringify(data.user));
+                    if (typeof applyCurrentUserProfileImage === "function") {
+                        applyCurrentUserProfileImage(data.user);
+                    }
                 }
 
                 return data;
@@ -994,3 +1077,9 @@ showWarningNotification("Unable to verify session right now. Please check your c
 }
 
 }, 300000); // every 5 minutes
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof applyCurrentUserProfileImage === "function") {
+        applyCurrentUserProfileImage();
+    }
+});

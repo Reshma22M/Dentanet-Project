@@ -183,7 +183,7 @@
         ${navItems}
       </nav>
       <a href="student-profile.html" class="mt-auto pt-6 border-t border-purple-200 dark:border-gray-700 flex items-center gap-3 hover:opacity-90 transition">
-        <img id="shellSidebarAvatar" alt="Profile" class="w-10 h-10 rounded-full border-2 border-primary/30 object-cover" src="public/images/stu.jpg"/>
+        <img id="shellSidebarAvatar" alt="Profile" class="w-10 h-10 rounded-full border-2 border-primary/30 object-cover" src="public/images/profile-placeholder.svg"/>
         <div>
           <p id="shellSidebarName" class="text-sm font-bold text-gray-900 dark:text-white">Student</p>
           <p class="text-[10px] text-primary font-bold uppercase tracking-wider">Dental Student</p>

@@ -399,7 +399,7 @@ async function handleUpdateUser(req, res, accountType, id) {
           recipientId: id,
           title: "Account approved",
           message: "Your account has been approved. You can now log in to DentaNet LMS.",
-          notificationType: "account",
+          notificationType: "system",
           relatedEntityType: "student",
           relatedEntityId: id
         });

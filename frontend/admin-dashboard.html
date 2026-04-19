@@ -168,7 +168,7 @@ tailwind.config = {
 
                 <div class="dashboard-card p-4 flex items-center gap-4 min-w-[300px]">
                     <a href="admin-profile.html" class="shrink-0">
-                        <img id="adminProfileImage" alt="Admin Profile" class="w-16 h-16 rounded-2xl border-2 border-primary object-cover" src="public/images/admin.jpg"/>
+                        <img id="adminProfileImage" alt="Admin Profile" class="w-16 h-16 rounded-2xl border-2 border-primary object-cover" src="public/images/profile-placeholder.svg"/>
                     </a>
                     <div class="flex-1">
                         <p id="adminName" class="text-sm font-bold text-slate-900 dark:text-white">Admin User</p>
@@ -358,7 +358,7 @@ async function initializeDashboard() {
     const profileImage =
         admin.profile_image_url
         ? `${API_ORIGIN}${admin.profile_image_url}?t=${Date.now()}`
-        : "public/images/admin.jpg";
+        : "public/images/profile-placeholder.svg";
 
     const adminName = document.getElementById("adminName");
     const adminProfileImage = document.getElementById("adminProfileImage");

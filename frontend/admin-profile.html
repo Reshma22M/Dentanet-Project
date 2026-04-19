@@ -186,7 +186,7 @@
               <div class="flex flex-col items-center text-center">
                 <img
                   id="profilePreview"
-                  src="public/images/admin.jpg"
+                  src="public/images/profile-placeholder.svg"
                   alt="Admin Profile"
                   class="w-28 h-28 rounded-3xl object-cover border-4 border-primary/10 shadow-sm"
                 />
@@ -285,7 +285,7 @@
   </div>
 
   <script>
-    const DEFAULT_PROFILE_IMAGE = "public/images/admin.jpg";
+    const DEFAULT_PROFILE_IMAGE = "public/images/profile-placeholder.svg";
     const FILE_BASE_URL =
       (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith("http"))
         ? API_BASE_URL.replace(/\/api\/?$/, "")
