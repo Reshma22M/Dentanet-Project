@@ -271,6 +271,7 @@ const urlExamId = urlParams.get('exam_id') || '';
 const urlExamRequestId = urlParams.get('exam_request_id') || '';
 const urlExamSlotId = urlParams.get('exam_slot_id') || '';
 const urlRequestId = urlParams.get('request_id') || '';
+const urlSubmissionType = String(urlParams.get('submission_type') || '').trim().toUpperCase();
 const moduleId =
   urlParams.get('module_id') ||
   sessionStorage.getItem('selectedStudentModuleId') ||
@@ -288,7 +289,13 @@ const examId = urlRequestId
 const examRequestId = urlExamRequestId || '';
 const examSlotId = urlExamSlotId || '';
 const requestId = urlRequestId ||
+  sessionStorage.getItem('selectedSubmissionRequestId') ||
   '';
+const hasAnyExplicitSubmissionContext = ["exam_id", "exam_request_id", "exam_slot_id", "request_id"]
+  .some((key) => urlParams.has(key));
+const requestedMode = urlSubmissionType === "PRACTICE" || urlSubmissionType === "EXAM"
+  ? urlSubmissionType
+  : null;
 
 function buildSubmissionHubUrl() {
   let hubUrl = 'submission-hub.html';
@@ -310,7 +317,11 @@ function buildSubmissionHubUrl() {
 
 let submissionMode = null;
 
-if (examId) {
+if (requestedMode === "PRACTICE") {
+  submissionMode = "PRACTICE";
+} else if (requestedMode === "EXAM") {
+  submissionMode = "EXAM";
+} else if (examId) {
   submissionMode = 'EXAM';
 } else if (examRequestId) {
   submissionMode = 'EXAM';
@@ -538,8 +549,9 @@ function updateSubmissionAvailability() {
 }
 
 async function resolveSubmissionContext(options = {}) {
-  const { notify = true } = options;
+  const { notify = true, preferredMode = null } = options;
   const token = getToken();
+  const normalizedPreferredMode = String(preferredMode || "").toUpperCase();
 
   if (!token) {
     throw new Error("User not logged in");
@@ -573,26 +585,32 @@ async function resolveSubmissionContext(options = {}) {
   const examSessions = Array.isArray(data.examSessions) ? data.examSessions : [];
   const practiceSessions = Array.isArray(data.practiceSessions) ? data.practiceSessions : [];
 
-  const eligibleExam = examSessions.find(item => {
+  const findEligibleExam = () => examSessions.find(item => {
     const windowState = getExamSubmissionWindowState(item);
     return windowState.open &&
       !item.submission_id &&
       !isPastRetentionWindowFromValues(item.booking_date || item.slot_date, item.end_time || item.exam_end_time, item.start_time || item.exam_start_time);
   });
+  const findEligiblePractice = () => practiceSessions.find(item =>
+    getPracticeSubmissionWindowState(item).open &&
+    !item.submission_id &&
+    !isPastRetentionWindowFromValues(item.booking_date, item.end_time, item.start_time)
+  );
 
-  if (eligibleExam) {
-    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}${eligibleExam.request_id ? `&exam_request_id=${encodeURIComponent(eligibleExam.request_id)}` : ""}${eligibleExam.slot_id ? `&exam_slot_id=${encodeURIComponent(eligibleExam.slot_id)}` : ""}`;
+  const checkPracticeFirst = normalizedPreferredMode === "PRACTICE";
+  const eligiblePractice = checkPracticeFirst ? findEligiblePractice() : null;
+  const eligibleExam = (!checkPracticeFirst || !eligiblePractice) ? findEligibleExam() : null;
+  const fallbackPractice = (!eligiblePractice && !eligibleExam) ? findEligiblePractice() : null;
+
+  if (eligiblePractice || fallbackPractice) {
+    const practice = eligiblePractice || fallbackPractice;
+    const redirectUrl = `practical-exam-submission.html?request_id=${encodeURIComponent(practice.request_id)}&submission_type=PRACTICE`;
     window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
     return true;
   }
 
-  const eligiblePractice = practiceSessions.find(item =>
-    getPracticeSubmissionWindowState(item).open &&
-    !isPastRetentionWindowFromValues(item.booking_date, item.end_time, item.start_time)
-  );
-
-  if (eligiblePractice) {
-    const redirectUrl = `practical-exam-submission.html?request_id=${encodeURIComponent(eligiblePractice.request_id)}`;
+  if (eligibleExam) {
+    const redirectUrl = `practical-exam-submission.html?exam_id=${encodeURIComponent(eligibleExam.exam_id)}${eligibleExam.request_id ? `&exam_request_id=${encodeURIComponent(eligibleExam.request_id)}` : ""}${eligibleExam.slot_id ? `&exam_slot_id=${encodeURIComponent(eligibleExam.slot_id)}` : ""}`;
     window.location.replace(moduleId ? `${redirectUrl}&module_id=${encodeURIComponent(moduleId)}` : redirectUrl);
     return true;
   }
@@ -733,7 +751,14 @@ async function loadSubmissionPage() {
   try {
 
   if (!submissionMode || (submissionMode === "EXAM" && !hasValidExamId) || (submissionMode === "PRACTICE" && !hasValidRequestId)) {
-    await resolveSubmissionContext({ notify: false });
+    if (hasAnyExplicitSubmissionContext) {
+      showAlert("This submission link is invalid or incomplete. Please open it again from the submission list.", "warning");
+      return;
+    }
+    await resolveSubmissionContext({
+      notify: false,
+      preferredMode: requestedMode || submissionMode || "PRACTICE"
+    });
     return;
   }
 
@@ -797,13 +822,9 @@ async function loadSubmissionPage() {
   } catch(error){
 
     const msg = error.message || "Failed to load submission";
-    const hasExplicitContext =
-      !!urlExamRequestId ||
-      !!urlExamSlotId ||
-      !!urlRequestId ||
-      !!urlExamId;
     const normalizedMsg = String(msg).toLowerCase();
-    const shouldAutoResolve = !hasExplicitContext && (
+    const hasRecoveredContext = !!(requestId || examId || examRequestId || examSlotId);
+    const shouldAutoResolve = !hasAnyExplicitSubmissionContext && !hasRecoveredContext && (
       normalizedMsg.includes("no booked practice session") ||
       normalizedMsg.includes("not found") ||
       normalizedMsg.includes("missing exam_id") ||
@@ -811,7 +832,10 @@ async function loadSubmissionPage() {
     );
 
     if (shouldAutoResolve) {
-      await resolveSubmissionContext({ notify: false });
+      await resolveSubmissionContext({
+        notify: false,
+        preferredMode: requestedMode || submissionMode || "PRACTICE"
+      });
       return;
     }
 
@@ -1176,17 +1200,20 @@ document.addEventListener(
 "DOMContentLoaded",
 async ()=>{
 
-  if (!urlExamRequestId && !urlExamSlotId && !urlRequestId && !urlExamId) {
-    window.location.replace(buildSubmissionHubUrl());
-    return;
-  }
-
   applySubmissionModeLabels();
 
   const user=
     await requireAuth("student");
 
   if (!user) return;
+
+  if (!hasAnyExplicitSubmissionContext && !requestId && !examId && !examRequestId && !examSlotId) {
+    await resolveSubmissionContext({
+      notify: true,
+      preferredMode: requestedMode || submissionMode || "PRACTICE"
+    });
+    return;
+  }
 
   await loadSubmissionPage();
   setInterval(() => {

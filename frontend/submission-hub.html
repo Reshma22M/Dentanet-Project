@@ -499,7 +499,7 @@ function buildPracticeCard(session) {
     String(session.request_id).toLowerCase() !== 'null';
 
   const subLink = hasValidRequestId
-    ? `practical-exam-submission.html?request_id=${encodeURIComponent(session.request_id)}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`
+    ? `practical-exam-submission.html?request_id=${encodeURIComponent(session.request_id)}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}&submission_type=PRACTICE`
     : '#';
 
   const aiScore = session.api_score != null
@@ -534,14 +534,15 @@ function buildPracticeCard(session) {
     </div>
 
     <div class="shrink-0 flex flex-col gap-2 items-end">
-      ${allowed && hasValidRequestId
+      ${allowed && hasValidRequestId && !hasSubmission
         ? `<a href="${subLink}"
+             onclick="try{sessionStorage.setItem('selectedSubmissionRequestId','${encodeURIComponent(String(session.request_id))}');}catch(e){}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
-             ${hasSubmission ? 'Resubmit' : 'Submit Now'}
+             Submit Now
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
-             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>${windowState.label}
+             <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>${hasSubmission ? 'Submitted' : windowState.label}
            </span>`
       }
       ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${windowState.note}</span>` : ''}
@@ -566,7 +567,7 @@ function buildExamCard(exam) {
   const isHighlighted = focusExamId && String(exam.exam_id) === String(focusExamId);
 
   // Submission link - carry module_id through
-  const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${exam.request_id ? `&exam_request_id=${encodeURIComponent(exam.request_id)}` : ''}${exam.slot_id ? `&exam_slot_id=${encodeURIComponent(exam.slot_id)}` : ''}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}`;
+  const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${exam.request_id ? `&exam_request_id=${encodeURIComponent(exam.request_id)}` : ''}${exam.slot_id ? `&exam_slot_id=${encodeURIComponent(exam.slot_id)}` : ''}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}&submission_type=EXAM`;
 
   const gradeinfo = isPublished
     ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${exam.published_grade}%</span>`
@@ -617,15 +618,15 @@ function buildExamCard(exam) {
                   </button>`
                : ""}
            </div>`
-        : (allowed
+        : (allowed && !hasSubmission
         ? `<a href="${subLink}"
              class="submit-btn inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold">
              <span class="material-icons-round text-[18px]">upload_file</span>
-             ${hasSubmission ? 'Resubmit' : 'Submit Now'}
+             Submit Now
            </a>`
         : `<span class="text-xs text-gray-400 font-semibold bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
              <span class="material-icons-round text-[14px] align-middle mr-1">lock</span>
-             ${examWindow.label}
+             ${hasSubmission ? 'Submitted' : examWindow.label}
            </span>`
       )}
       ${!allowed ? `<span class="text-xs text-gray-500 font-semibold">${examWindow.note}</span>` : ''}
