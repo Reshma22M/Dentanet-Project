@@ -259,6 +259,21 @@
               </div>
             </div>
           </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+            <div class="report-panel p-6">
+              <h3 class="text-lg font-bold mb-4">Criteria Acceptable Rate (%)</h3>
+              <div class="h-72">
+                <canvas id="aiCriteriaChart"></canvas>
+              </div>
+            </div>
+            <div class="report-panel p-6">
+              <h3 class="text-lg font-bold mb-4">AI vs Lecturer Score Gap</h3>
+              <div class="h-72">
+                <canvas id="aiAgreementChart"></canvas>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </main>
@@ -269,6 +284,8 @@
     let lastAiReport = null;
     let studentPerformanceChart = null;
     let modulePerformanceChart = null;
+    let aiCriteriaChart = null;
+    let aiAgreementChart = null;
 
     function switchReportTab(tab) {
       const batchTab = document.getElementById("batchTab");
@@ -395,7 +412,7 @@
         data: {
           labels: studentLabels,
           datasets: [{
-            label: "Average Grade",
+            label: "Average Grade (Ranked)",
             data: studentData,
             borderWidth: 1,
             borderRadius: 8,
@@ -404,18 +421,19 @@
           }]
         },
         options: {
+          indexAxis: "y",
           responsive: true,
           maintainAspectRatio: false,
           scales: {
             x: {
-              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
-              grid: { display: false }
-            },
-            y: {
               beginAtZero: true,
               suggestedMax: 100,
-              ticks: { color: "#64748b" },
+              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
               grid: { color: "rgba(148,163,184,0.22)" }
+            },
+            y: {
+              ticks: { color: "#64748b" },
+              grid: { display: false }
             }
           },
           plugins: {
@@ -431,34 +449,32 @@
       });
 
       modulePerformanceChart = new Chart(moduleCtx, {
-        type: "line",
+        type: "bar",
         data: {
           labels: moduleLabels,
           datasets: [{
             label: "Average Grade",
             data: moduleData,
-            borderWidth: 2,
-            fill: true,
-            tension: 0.25,
-            pointRadius: 4,
-            pointBackgroundColor: "rgba(5,150,105,1)",
-            backgroundColor: "rgba(16,185,129,0.18)",
+            borderWidth: 1,
+            borderRadius: 8,
+            backgroundColor: "rgba(16,185,129,0.7)",
             borderColor: "rgba(5,150,105,1)"
           }]
         },
         options: {
+          indexAxis: "y",
           responsive: true,
           maintainAspectRatio: false,
           scales: {
             x: {
-              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
-              grid: { display: false }
-            },
-            y: {
               beginAtZero: true,
               suggestedMax: 100,
-              ticks: { color: "#64748b" },
+              ticks: { color: "#64748b", maxRotation: 0, minRotation: 0 },
               grid: { color: "rgba(148,163,184,0.22)" }
+            },
+            y: {
+              ticks: { color: "#64748b" },
+              grid: { display: false }
             }
           },
           plugins: {
@@ -513,6 +529,92 @@
           </tr>
         `).join("")
         : `<tr><td colspan="5" class="py-4 text-slate-500">No variance data available.</td></tr>`;
+
+      renderAiCharts(report);
+    }
+
+    function renderAiCharts(report) {
+      if (typeof Chart !== "function") return;
+
+      const criteria = Array.isArray(report?.criteria) ? report.criteria : [];
+      const criteriaLabels = criteria.map((c) => (c.key || "").replaceAll("_", " "));
+      const criteriaValues = criteria.map((c) => toNum(c.acceptable_rate));
+
+      const criteriaCtx = document.getElementById("aiCriteriaChart");
+      destroyChart(aiCriteriaChart);
+      aiCriteriaChart = new Chart(criteriaCtx, {
+        type: "bar",
+        data: {
+          labels: criteriaLabels,
+          datasets: [{
+            label: "Acceptable Rate %",
+            data: criteriaValues,
+            borderWidth: 1,
+            borderRadius: 8,
+            backgroundColor: "rgba(59,130,246,0.75)",
+            borderColor: "rgba(37,99,235,1)"
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              beginAtZero: true,
+              suggestedMax: 100,
+              ticks: { color: "#64748b" },
+              grid: { color: "rgba(148,163,184,0.22)" }
+            },
+            y: {
+              ticks: { color: "#64748b" },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      const outliers = Array.isArray(report?.outliers) ? report.outliers : [];
+      const outlierLabels = outliers.map((o, idx) => o.registration_number || `Case ${idx + 1}`);
+      const gapValues = outliers.map((o) => Math.abs(toNum(o.score_diff)));
+
+      const agreementCtx = document.getElementById("aiAgreementChart");
+      destroyChart(aiAgreementChart);
+      aiAgreementChart = new Chart(agreementCtx, {
+        type: "bar",
+        data: {
+          labels: outlierLabels,
+          datasets: [{
+            label: "Absolute Score Gap",
+            data: gapValues,
+            borderWidth: 1,
+            borderRadius: 8,
+            backgroundColor: "rgba(239,68,68,0.72)",
+            borderColor: "rgba(220,38,38,1)"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { color: "#64748b", maxRotation: 45, minRotation: 45 },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: "#64748b" },
+              grid: { color: "rgba(148,163,184,0.22)" }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
     }
 
     function exportCsv(filename, rows) {
@@ -539,11 +641,20 @@
       URL.revokeObjectURL(url);
     }
 
-    function openPrintReport({ title, subtitle, summaryPairs, headers, rows }) {
+    function openPrintReport({ title, subtitle, summaryPairs, headers, rows, chartBlocks = [] }) {
       const now = new Date();
       const summaryHtml = summaryPairs.map(([label, value]) =>
         `<div style="padding:10px;border:1px solid #e2e8f0;border-radius:8px"><div style="font-size:12px;color:#64748b">${label}</div><div style="font-size:20px;font-weight:700;margin-top:4px">${value}</div></div>`
       ).join("");
+      const chartsHtml = chartBlocks
+        .filter((block) => block && block.imageData)
+        .map((block) => `
+          <div style="margin:16px 0">
+            <h3 style="margin:0 0 8px;font-size:16px">${block.title || "Chart"}</h3>
+            <img src="${block.imageData}" alt="${block.title || "Chart"}" style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px" />
+          </div>
+        `)
+        .join("");
 
       const headHtml = headers.map((h) => `<th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">${h}</th>`).join("");
       const rowHtml = rows.map((row) => `<tr>${row.map((cell) => `<td style="padding:8px;border-bottom:1px solid #f1f5f9">${cell ?? "-"}</td>`).join("")}</tr>`).join("");
@@ -571,6 +682,7 @@
             <p>${subtitle}</p>
             <p>Generated at: ${now.toLocaleString()}</p>
             <div class="summary">${summaryHtml}</div>
+            ${chartsHtml}
             <table>
               <thead><tr>${headHtml}</tr></thead>
               <tbody>${rowHtml || `<tr><td colspan="${headers.length}" style="padding:8px">No records.</td></tr>`}</tbody>
@@ -720,6 +832,16 @@
             ["Pass Rate", `${toNum(summary.pass_rate).toFixed(2)}%`],
             ["Average Grade", toNum(summary.average_grade).toFixed(2)]
           ],
+          chartBlocks: [
+            {
+              title: "Top Students (Average Grade)",
+              imageData: studentPerformanceChart ? studentPerformanceChart.toBase64Image() : null
+            },
+            {
+              title: "Module Performance (Average Grade)",
+              imageData: modulePerformanceChart ? modulePerformanceChart.toBase64Image() : null
+            }
+          ],
           headers: ["Student", "Registration", "Batch", "Average", "Best", "Pass", "Fail"],
           rows
         });
@@ -751,6 +873,16 @@
             ["MAE", toNum(summary.mae).toFixed(2)],
             ["RMSE", toNum(summary.rmse).toFixed(2)],
             ["Within Tolerance", `${toNum(summary.within_tolerance_rate).toFixed(2)}%`]
+          ],
+          chartBlocks: [
+            {
+              title: "Criteria Acceptable Rate (%)",
+              imageData: aiCriteriaChart ? aiCriteriaChart.toBase64Image() : null
+            },
+            {
+              title: "AI vs Lecturer Score Gap",
+              imageData: aiAgreementChart ? aiAgreementChart.toBase64Image() : null
+            }
           ],
           headers: ["Student", "Registration", "Exam", "AI", "Lecturer", "Diff", "Abs Diff"],
           rows
