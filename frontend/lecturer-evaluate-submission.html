@@ -211,14 +211,23 @@
                       <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Final Grade</span>
                       <input id="finalGrade" type="number" min="0" max="100" step="0.01" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" required />
                     </label>
-                    <label class="block">
+                    <div class="block">
                       <span class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Decision</span>
-                      <select id="decision" class="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 focus:border-primary focus:ring-primary" required>
-                        <option value="PASS">PASS</option>
-                        <option value="FAIL">FAIL</option>
-                        <option value="RETAKE">RETAKE</option>
-                      </select>
-                    </label>
+                      <div class="rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+                        <div class="flex items-center justify-between gap-3">
+                          <p class="text-sm text-slate-600 dark:text-slate-300">
+                            Auto by cutoff:
+                            <span id="decisionCutoff" class="font-bold text-slate-900 dark:text-white">-</span>
+                          </p>
+                          <span id="decisionResolved" class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold bg-slate-200 text-slate-600">PENDING</span>
+                        </div>
+                        <label class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          <input id="retakeRequired" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
+                          Require retake
+                        </label>
+                        <p id="retakeHint" class="mt-1 text-xs text-slate-500 dark:text-slate-400">Retake is available only when the grade is below the passing cutoff.</p>
+                      </div>
+                    </div>
                   </div>
 
                   <label class="block">
@@ -322,6 +331,11 @@
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
     const zoomResetBtn = document.getElementById("zoomResetBtn");
+    const finalGradeInput = document.getElementById("finalGrade");
+    const decisionResolvedEl = document.getElementById("decisionResolved");
+    const decisionCutoffEl = document.getElementById("decisionCutoff");
+    const retakeRequiredInput = document.getElementById("retakeRequired");
+    const retakeHintEl = document.getElementById("retakeHint");
 
     let submissionData = null;
     let imageZoom = 1;
@@ -353,6 +367,81 @@
       }) : "-";
       const timePart = startTime && endTime ? `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}` : "-";
       return `${datePart} | ${timePart}`;
+    }
+
+    function getPassingCutoff() {
+      const parsed = Number(submissionData?.passing_grade);
+      return Number.isFinite(parsed) ? parsed : 50;
+    }
+
+    function getAutoPassFailDecision(rawGrade) {
+      const grade = Number(rawGrade);
+      if (!Number.isFinite(grade)) return null;
+      return grade >= getPassingCutoff() ? "PASS" : "FAIL";
+    }
+
+    function setDecisionBadge(value) {
+      if (!decisionResolvedEl) return;
+
+      decisionResolvedEl.className = "inline-flex items-center rounded-full px-3 py-1 text-xs font-bold";
+
+      if (value === "PASS") {
+        decisionResolvedEl.classList.add("bg-emerald-100", "text-emerald-700");
+      } else if (value === "FAIL") {
+        decisionResolvedEl.classList.add("bg-rose-100", "text-rose-700");
+      } else if (value === "RETAKE") {
+        decisionResolvedEl.classList.add("bg-amber-100", "text-amber-700");
+      } else {
+        decisionResolvedEl.classList.add("bg-slate-200", "text-slate-600");
+      }
+
+      decisionResolvedEl.textContent = value || "PENDING";
+    }
+
+    function updateDecisionUi() {
+      if (!finalGradeInput || !retakeRequiredInput) return;
+
+      const cutoff = getPassingCutoff();
+      if (decisionCutoffEl) {
+        decisionCutoffEl.textContent = Number.isInteger(cutoff)
+          ? `${cutoff}%`
+          : `${cutoff.toFixed(2)}%`;
+      }
+
+      const autoDecision = getAutoPassFailDecision(finalGradeInput.value);
+
+      if (!autoDecision) {
+        retakeRequiredInput.checked = false;
+        retakeRequiredInput.disabled = true;
+        setDecisionBadge("PENDING");
+        if (retakeHintEl) {
+          retakeHintEl.textContent = "Enter a valid final grade to compute decision.";
+        }
+        return;
+      }
+
+      if (autoDecision === "PASS") {
+        retakeRequiredInput.checked = false;
+        retakeRequiredInput.disabled = true;
+        setDecisionBadge("PASS");
+        if (retakeHintEl) {
+          retakeHintEl.textContent = "Grade meets cutoff. Retake is disabled.";
+        }
+        return;
+      }
+
+      retakeRequiredInput.disabled = false;
+      if (retakeRequiredInput.checked) {
+        setDecisionBadge("RETAKE");
+        if (retakeHintEl) {
+          retakeHintEl.textContent = "Retake is enabled for this failed attempt.";
+        }
+      } else {
+        setDecisionBadge("FAIL");
+        if (retakeHintEl) {
+          retakeHintEl.textContent = "Below cutoff. Enable retake if student should request another slot.";
+        }
+      }
     }
 
     async function resolveSubmissionIdFromQueue() {
@@ -489,12 +578,13 @@
       document.getElementById("publishedDecision").textContent = submission.pass_fail || "-";
       document.getElementById("publishedAt").textContent = formatDateTime(submission.published_at);
 
-      document.getElementById("finalGrade").value = submission.lecturer_grade !== null && submission.lecturer_grade !== undefined
+      finalGradeInput.value = submission.lecturer_grade !== null && submission.lecturer_grade !== undefined
         ? Number(submission.lecturer_grade)
         : (submission.api_score !== null && submission.api_score !== undefined ? Number(submission.api_score).toFixed(2) : "");
-      document.getElementById("decision").value = submission.decision || "PASS";
+      retakeRequiredInput.checked = String(submission.decision || "").toUpperCase() === "RETAKE";
       document.getElementById("lecturerFeedback").value = submission.lecturer_feedback || "";
       document.getElementById("overrideReason").value = submission.override_reason || "";
+      updateDecisionUi();
 
       renderImages(files);
     }
@@ -549,13 +639,25 @@
       event.preventDefault();
       if (!submissionId) return;
 
+      const finalGradeValue = Number(finalGradeInput.value);
+      if (!Number.isFinite(finalGradeValue) || finalGradeValue < 0 || finalGradeValue > 100) {
+        showMessage("Please enter a valid final grade between 0 and 100.");
+        return;
+      }
+
+      const autoDecision = getAutoPassFailDecision(finalGradeInput.value);
+      if (!autoDecision) {
+        showMessage("Unable to compute decision. Please enter a valid final grade.");
+        return;
+      }
+
       saveReviewBtn.disabled = true;
       saveReviewBtn.textContent = "Saving...";
 
       try {
         const payload = {
-          finalGrade: Number(document.getElementById("finalGrade").value),
-          decision: document.getElementById("decision").value,
+          finalGrade: finalGradeValue,
+          retakeRequired: autoDecision === "FAIL" && retakeRequiredInput.checked,
           lecturerFeedback: document.getElementById("lecturerFeedback").value.trim(),
           overrideReason: document.getElementById("overrideReason").value.trim()
         };
@@ -612,6 +714,8 @@
       }
     }
 
+    finalGradeInput?.addEventListener("input", updateDecisionUi);
+    retakeRequiredInput?.addEventListener("change", updateDecisionUi);
     reviewForm.addEventListener("submit", saveReview);
     publishBtn.addEventListener("click", publishResult);
     document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());

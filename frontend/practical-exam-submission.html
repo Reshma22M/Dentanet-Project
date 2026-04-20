@@ -726,6 +726,23 @@ function formatDateTime(dateValue) {
   });
 }
 
+function toLetterGrade(rawScore) {
+  const score = Number(rawScore);
+  if (!Number.isFinite(score)) return "-";
+  if (score >= 90) return "A+";
+  if (score >= 85) return "A";
+  if (score >= 80) return "A-";
+  if (score >= 75) return "B+";
+  if (score >= 70) return "B";
+  if (score >= 65) return "B-";
+  if (score >= 60) return "C+";
+  if (score >= 55) return "C";
+  if (score >= 50) return "C-";
+  if (score >= 45) return "D+";
+  if (score >= 40) return "D";
+  return "F";
+}
+
 function getWindowStatusLabel(windowState) {
   if (!windowState) return "Pending";
   if (windowState.open && windowState.windowEnd) {
@@ -940,14 +957,18 @@ function renderHistory() {
     `;
   } else {
     historyTableBody.innerHTML = submissionHistory.map((item) => {
-      const resultText =
+      const scoreValue =
         item.published_grade != null
-          ? `${item.published_grade}%`
+          ? item.published_grade
           : item.final_grade != null
-            ? `${item.final_grade}%`
+            ? item.final_grade
             : item.api_score != null
-              ? `${item.api_score}`
-              : "Pending";
+              ? item.api_score
+              : null;
+      const resultText =
+        scoreValue != null
+          ? toLetterGrade(scoreValue)
+          : "Pending";
 
       const statusText =
         item.pass_fail ||

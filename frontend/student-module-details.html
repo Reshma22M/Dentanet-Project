@@ -249,6 +249,23 @@
       });
     }
 
+    function toLetterGrade(rawScore) {
+      const score = Number(rawScore);
+      if (!Number.isFinite(score)) return "-";
+      if (score >= 90) return "A+";
+      if (score >= 85) return "A";
+      if (score >= 80) return "A-";
+      if (score >= 75) return "B+";
+      if (score >= 70) return "B";
+      if (score >= 65) return "B-";
+      if (score >= 60) return "C+";
+      if (score >= 55) return "C";
+      if (score >= 50) return "C-";
+      if (score >= 45) return "D+";
+      if (score >= 40) return "D";
+      return "F";
+    }
+
     function getExamEndDate(exam) {
       if (!exam || !exam.exam_date) return null;
       const timeValue = exam.end_time || exam.start_time || "23:59:59";
@@ -1034,7 +1051,7 @@ function renderSubmissions() {
             ${hasSubmission ? `
               <p class="text-xs text-gray-500 mt-1">
                 Latest submission: Attempt ${escapeHtml(String(latestAttempt.attempt_number || "-"))}
-                ${latestAttempt.published_grade != null ? `• Grade ${escapeHtml(String(latestAttempt.published_grade))}%` : "• Pending result"}
+                ${latestAttempt.published_grade != null ? `• Grade ${escapeHtml(toLetterGrade(latestAttempt.published_grade))}` : "• Pending result"}
               </p>
             ` : ""}
 

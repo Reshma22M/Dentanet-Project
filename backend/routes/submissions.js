@@ -1976,12 +1976,26 @@ router.post("/:submission_id/review", authenticateToken, async (req, res) => {
         }
 
         const submissionId = req.params.submission_id;
-        const { finalGrade, lecturerFeedback, decision, overrideReason } = req.body;
+        const {
+            finalGrade,
+            lecturerFeedback,
+            decision,
+            overrideReason,
+            retakeRequired
+        } = req.body;
 
-        if (finalGrade === undefined || !decision) {
+        if (finalGrade === undefined) {
             return res.status(400).json({
                 ok: false,
-                error: "Final grade and decision are required"
+                error: "Final grade is required"
+            });
+        }
+
+        const normalizedFinalGrade = Number(finalGrade);
+        if (!Number.isFinite(normalizedFinalGrade) || normalizedFinalGrade < 0 || normalizedFinalGrade > 100) {
+            return res.status(400).json({
+                ok: false,
+                error: "Final grade must be a valid number between 0 and 100"
             });
         }
 
@@ -1992,6 +2006,46 @@ router.post("/:submission_id/review", authenticateToken, async (req, res) => {
                 ok: false,
                 error: "You can only review submissions for your assigned module"
             });
+        }
+
+        const [examRows] = await promisePool.query(`
+            SELECT e.passing_grade
+            FROM submissions s
+            JOIN slot_requests sr
+              ON sr.request_id = s.request_id
+            JOIN exam_slot_requests esr
+              ON esr.request_id = sr.request_id
+            JOIN exams e
+              ON e.exam_id = esr.exam_id
+            WHERE s.submission_id = ?
+              AND s.submission_type = 'EXAM'
+            LIMIT 1
+        `, [submissionId]);
+
+        if (!examRows.length) {
+            return res.status(404).json({
+                ok: false,
+                error: "Exam submission not found"
+            });
+        }
+
+        const passingGradeRaw = Number(examRows[0].passing_grade);
+        const passingGrade = Number.isFinite(passingGradeRaw) ? passingGradeRaw : 50;
+        const autoPassFailDecision = normalizedFinalGrade >= passingGrade ? "PASS" : "FAIL";
+        const normalizedIncomingDecision = String(decision || "").trim().toUpperCase();
+        const wantsRetake = retakeRequired === true
+            || String(retakeRequired || "").toLowerCase() === "true"
+            || normalizedIncomingDecision === "RETAKE";
+
+        let normalizedDecision = autoPassFailDecision;
+        if (wantsRetake) {
+            if (autoPassFailDecision === "PASS") {
+                return res.status(400).json({
+                    ok: false,
+                    error: "Retake can only be enabled when final grade is below the exam passing cutoff"
+                });
+            }
+            normalizedDecision = "RETAKE";
         }
 
         await promisePool.query(`
@@ -2014,15 +2068,18 @@ router.post("/:submission_id/review", authenticateToken, async (req, res) => {
         `, [
             submissionId,
             lecturerId,
-            finalGrade,
+            normalizedFinalGrade,
             lecturerFeedback || null,
-            decision,
+            normalizedDecision,
             overrideReason || null
         ]);
 
         return res.json({
             ok: true,
-            message: "Lecturer review saved successfully"
+            message: "Lecturer review saved successfully",
+            decision: normalizedDecision,
+            passFail: autoPassFailDecision,
+            passingGrade
         });
     } catch (error) {
         console.error("Save lecturer review error:", error);

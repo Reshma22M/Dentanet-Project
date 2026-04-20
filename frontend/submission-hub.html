@@ -274,6 +274,23 @@ function fmtDateTime(d) {
   });
 }
 
+function toLetterGrade(rawScore) {
+  const score = Number(rawScore);
+  if (!Number.isFinite(score)) return '-';
+  if (score >= 90) return 'A+';
+  if (score >= 85) return 'A';
+  if (score >= 80) return 'A-';
+  if (score >= 75) return 'B+';
+  if (score >= 70) return 'B';
+  if (score >= 65) return 'B-';
+  if (score >= 60) return 'C+';
+  if (score >= 55) return 'C';
+  if (score >= 50) return 'C-';
+  if (score >= 45) return 'D+';
+  if (score >= 40) return 'D';
+  return 'F';
+}
+
 function getDateKey(value) {
   if (!value) return "";
   const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -504,7 +521,7 @@ function buildPracticeCard(session) {
   const resultsLink = `grades-feedback.html${moduleId ? `?module_id=${encodeURIComponent(moduleId)}` : ''}${session.submission_id ? `${moduleId ? '&' : '?'}submission_id=${encodeURIComponent(session.submission_id)}` : ''}`;
 
   const aiScore = session.api_score != null
-    ? `<span class="ml-2 text-xs font-bold text-primary">AI Score: ${session.api_score}</span>`
+    ? `<span class="ml-2 text-xs font-bold text-primary">AI Grade: ${esc(toLetterGrade(session.api_score))}</span>`
     : '';
 
   return `
@@ -576,7 +593,7 @@ function buildExamCard(exam) {
   const subLink = `practical-exam-submission.html?exam_id=${exam.exam_id}${exam.request_id ? `&exam_request_id=${encodeURIComponent(exam.request_id)}` : ''}${exam.slot_id ? `&exam_slot_id=${encodeURIComponent(exam.slot_id)}` : ''}${moduleId ? '&module_id=' + encodeURIComponent(moduleId) : ''}&submission_type=EXAM`;
 
   const gradeinfo = isPublished
-    ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${exam.published_grade}%</span>`
+    ? `<span class="ml-2 text-xs font-bold text-primary">Grade: ${esc(toLetterGrade(exam.published_grade))}</span>`
     : '';
 
   return `

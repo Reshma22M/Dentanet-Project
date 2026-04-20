@@ -111,8 +111,25 @@ function formatDate(value) {
   return date.toLocaleString();
 }
 
+function toLetterGrade(rawScore) {
+  const score = Number(rawScore);
+  if (!Number.isFinite(score)) return "-";
+  if (score >= 90) return "A+";
+  if (score >= 85) return "A";
+  if (score >= 80) return "A-";
+  if (score >= 75) return "B+";
+  if (score >= 70) return "B";
+  if (score >= 65) return "B-";
+  if (score >= 60) return "C+";
+  if (score >= 55) return "C";
+  if (score >= 50) return "C-";
+  if (score >= 45) return "D+";
+  if (score >= 40) return "D";
+  return "F";
+}
+
 function buildResultCard(item) {
-  const grade = item.grade != null ? Number(item.grade).toFixed(2) : "-";
+  const grade = item.grade != null ? toLetterGrade(item.grade) : "-";
   const resultBadgeClass = item.passFail === "PASS"
     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
     : (item.passFail === "RETAKE"
