@@ -663,6 +663,15 @@ const API = {
         return await parseResponse(response);
     },
 
+    removeStudent: async (moduleId, studentId) => {
+        const response = await fetch(`${API_BASE_URL}/modules/${moduleId}/students/${studentId}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+
+        return await parseResponse(response);
+    },
+
     create: async (moduleData) => {
         const response = await fetch(`${API_BASE_URL}/modules`, {
             method: "POST",

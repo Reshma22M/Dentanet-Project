@@ -419,6 +419,20 @@ function getModuleIdFromQuery() {
         .replace(/'/g, "&#039;");
     }
 
+    function notifyMessage(message, type = "error") {
+      if (type === "success" && typeof showSuccessNotification === "function") {
+        showSuccessNotification(message);
+        return;
+      }
+      if (type === "warning" && typeof showWarningNotification === "function") {
+        showWarningNotification(message);
+        return;
+      }
+      if (typeof showErrorNotification === "function") {
+        showErrorNotification(message);
+      }
+    }
+
     function showModuleNotFound(message = "No module id was provided.") {
       const title = document.getElementById("moduleTitle");
       const codeLine = document.getElementById("moduleCodeLine");
@@ -505,12 +519,49 @@ async function loadModule() {
                 <div class="text-right">
                   <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(s.registration_number || "-")}</p>
                   <p class="muted mt-1">Registration No.</p>
+                  <button
+                    type="button"
+                    onclick="removeStudentFromModule(${Number(s.student_id)})"
+                    class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-all"
+                  >
+                    <span class="material-symbols-outlined text-[15px]">person_remove</span>
+                    Remove
+                  </button>
                 </div>
               </div>
             </div>
           `).join("")}
         </div>
       `;
+    }
+
+    async function removeStudentFromModule(studentId) {
+      if (!currentModuleId || !studentId) return;
+
+      const confirmed = (typeof showConfirmDialog === "function")
+        ? await showConfirmDialog({
+            title: "Remove Student",
+            message: "Remove this student from the module?",
+            confirmText: "Remove",
+            confirmClass: "bg-rose-600 hover:bg-rose-700"
+          })
+        : confirm("Remove this student from the module?");
+
+      if (!confirmed) return;
+
+      try {
+        const result = await API.modules.removeStudent(currentModuleId, studentId);
+        if (!result.ok) {
+          notifyMessage(result.error || "Failed to remove student.");
+          return;
+        }
+
+        notifyMessage("Student removed from module successfully.", "success");
+        await loadMembers();
+      } catch (error) {
+        console.error("Remove student error:", error);
+        notifyMessage("Failed to remove student.");
+      }
     }
 
     async function loadModuleExams() {

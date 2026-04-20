@@ -79,6 +79,48 @@ function isValidStatus(status) {
   return ["DRAFT", "SCHEDULED", "OPEN", "CLOSED"].includes(status);
 }
 
+function normalizeDateOnly(dateValue) {
+  if (!dateValue) return null;
+
+  if (dateValue instanceof Date) {
+    if (Number.isNaN(dateValue.getTime())) return null;
+    const year = dateValue.getFullYear();
+    const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+    const day = String(dateValue.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const raw = String(dateValue).trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  return raw;
+}
+
+function getTodayDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentTimeString() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function parseTimeToMinutes(timeValue) {
+  if (!timeValue) return null;
+  const parts = String(timeValue).split(":");
+  if (parts.length < 2) return null;
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return (hours * 60) + minutes;
+}
+
 function buildExamDateTime(examDate, endTime, startTime) {
   if (!examDate) return null;
 
@@ -289,6 +331,7 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
     const finalExamName = String(exam_name).trim();
     const finalDescription = description ? String(description).trim() : null;
     const finalExamDate = exam_date || null;
+    const normalizedFinalExamDate = normalizeDateOnly(finalExamDate);
     const finalStartTime = start_time || null;
     const finalEndTime = end_time || null;
     const finalMaxAttempts = max_attempts ? Number(max_attempts) : 1;
@@ -318,6 +361,49 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
       });
     }
 
+    if (finalExamDate && !normalizedFinalExamDate) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid exam_date format",
+      });
+    }
+
+    if (normalizedFinalExamDate && normalizedFinalExamDate < getTodayDateString()) {
+      return res.status(400).json({
+        ok: false,
+        error: "Exam date cannot be before today",
+      });
+    }
+
+    if (finalStartTime && finalEndTime) {
+      const startMinutes = parseTimeToMinutes(finalStartTime);
+      const endMinutes = parseTimeToMinutes(finalEndTime);
+
+      if (startMinutes === null || endMinutes === null) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid start_time or end_time format",
+        });
+      }
+
+      if (endMinutes <= startMinutes) {
+        return res.status(400).json({
+          ok: false,
+          error: "end_time must be later than start_time",
+        });
+      }
+
+      if (normalizedFinalExamDate === getTodayDateString()) {
+        const currentMinutes = parseTimeToMinutes(getCurrentTimeString());
+        if (currentMinutes !== null && startMinutes <= currentMinutes) {
+          return res.status(400).json({
+            ok: false,
+            error: "For today's exam, start_time must be later than the current time",
+          });
+        }
+      }
+    }
+
     const [result] = await promisePool.query(
       `
       INSERT INTO exams (
@@ -339,7 +425,7 @@ router.post("/", authenticateToken, authorizeRole("lecturer"), async (req, res) 
         numericModuleId,
         finalExamName,
         finalDescription,
-        finalExamDate,
+        normalizedFinalExamDate,
         finalStartTime,
         finalEndTime,
         finalMaxAttempts,
@@ -487,6 +573,9 @@ router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res
       status,
       is_active,
     } = req.body;
+    const examDateProvided = Object.prototype.hasOwnProperty.call(req.body, "exam_date");
+    const startTimeProvided = Object.prototype.hasOwnProperty.call(req.body, "start_time");
+    const endTimeProvided = Object.prototype.hasOwnProperty.call(req.body, "end_time");
 
     const finalModuleId =
       module_id !== undefined && module_id !== ""
@@ -531,6 +620,7 @@ router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res
         : existing.description;
 
     const finalExamDate = exam_date !== undefined ? (exam_date || null) : existing.exam_date;
+    const normalizedFinalExamDate = normalizeDateOnly(finalExamDate);
     const finalStartTime = start_time !== undefined ? (start_time || null) : existing.start_time;
     const finalEndTime = end_time !== undefined ? (end_time || null) : existing.end_time;
 
@@ -565,6 +655,49 @@ router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res
       });
     }
 
+    if (finalExamDate && !normalizedFinalExamDate) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid exam_date format",
+      });
+    }
+
+    if (examDateProvided && normalizedFinalExamDate && normalizedFinalExamDate < getTodayDateString()) {
+      return res.status(400).json({
+        ok: false,
+        error: "Exam date cannot be before today",
+      });
+    }
+
+    if (finalStartTime && finalEndTime) {
+      const startMinutes = parseTimeToMinutes(finalStartTime);
+      const endMinutes = parseTimeToMinutes(finalEndTime);
+
+      if (startMinutes === null || endMinutes === null) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid start_time or end_time format",
+        });
+      }
+
+      if (endMinutes <= startMinutes) {
+        return res.status(400).json({
+          ok: false,
+          error: "end_time must be later than start_time",
+        });
+      }
+
+      if ((examDateProvided || startTimeProvided || endTimeProvided) && normalizedFinalExamDate === getTodayDateString()) {
+        const currentMinutes = parseTimeToMinutes(getCurrentTimeString());
+        if (currentMinutes !== null && startMinutes <= currentMinutes) {
+          return res.status(400).json({
+            ok: false,
+            error: "For today's exam, start_time must be later than the current time",
+          });
+        }
+      }
+    }
+
     await promisePool.query(
       `
       UPDATE exams
@@ -585,7 +718,7 @@ router.put("/:id", authenticateToken, authorizeRole("lecturer"), async (req, res
         finalModuleId,
         finalExamName,
         finalDescription,
-        finalExamDate,
+        normalizedFinalExamDate,
         finalStartTime,
         finalEndTime,
         finalMaxAttempts,

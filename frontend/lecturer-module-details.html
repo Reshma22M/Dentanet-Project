@@ -776,7 +776,7 @@ function getModuleIdFromQuery() {
                   <h4 class="text-lg font-bold text-slate-900 dark:text-white">${escapeHtml(material.title || "Untitled Study Material")}</h4>
                   <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     ${escapeHtml(material.material_type_name || "Study Material")}
-                    ${material.first_name || material.last_name ? ` • Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim())}` : ""}
+                    ${material.student_first_name || material.student_last_name || material.first_name || material.last_name ? ` • Shared by ${escapeHtml(`${material.student_first_name || material.first_name || ""} ${material.student_last_name || material.last_name || ""}`.trim())}` : ""}
                   </p>
                 </div>
               </div>
@@ -793,12 +793,39 @@ function getModuleIdFromQuery() {
       `;
     }
 
+    async function refreshModuleMaterials() {
+      if (!currentModuleId) return;
+
+      try {
+        const [materialsResult, studyMaterialsResult] = await Promise.all([
+          API.materials.getAll(currentModuleId),
+          API.studyMaterials.getAll(currentModuleId)
+        ]);
+
+        moduleMaterials = Array.isArray(materialsResult?.materials)
+          ? materialsResult.materials
+          : [];
+
+        moduleStudyMaterials = Array.isArray(studyMaterialsResult?.studyMaterials)
+          ? studyMaterialsResult.studyMaterials
+          : Array.isArray(studyMaterialsResult?.materials)
+            ? studyMaterialsResult.materials
+            : [];
+
+        renderMaterials();
+        renderStudyMaterials();
+        updateStats();
+      } catch (error) {
+        console.error("Failed to refresh module materials:", error);
+      }
+    }
+
     function setupTabs() {
       const buttons = Array.from(document.querySelectorAll("[data-tab]"));
       const panels = Array.from(document.querySelectorAll(".tab-panel"));
 
       buttons.forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
           const targetId = button.getAttribute("data-tab");
 
           buttons.forEach(btn => {
@@ -811,6 +838,10 @@ function getModuleIdFromQuery() {
           button.classList.remove("tab-btn-inactive");
           button.classList.add("tab-btn-active");
           document.getElementById(targetId).classList.remove("hidden");
+
+          if (targetId === "materialsTab" || targetId === "studyMaterialsTab") {
+            await refreshModuleMaterials();
+          }
         });
       });
     }

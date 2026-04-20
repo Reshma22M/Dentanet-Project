@@ -204,12 +204,12 @@
                   </div>
 
                   <div class="flex gap-4 pt-2">
-                    <button type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                    <button id="fileSubmitBtn" type="submit" class="px-8 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
                       <span class="material-symbols-outlined">cloud_upload</span>
                       Upload Material
                     </button>
 
-                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all" onclick="resetFilePreview()">
+                    <button id="fileClearBtn" type="button" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all" onclick="clearFormAction('file')">
                       Clear Form
                     </button>
                   </div>
@@ -246,12 +246,12 @@
                   </div>
 
                   <div class="flex gap-4 pt-2">
-                    <button type="submit" class="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                    <button id="youtubeSubmitBtn" type="submit" class="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
                       <span class="material-symbols-outlined">add_circle</span>
                       Add YouTube Video
                     </button>
 
-                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
+                    <button id="youtubeClearBtn" type="button" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all" onclick="clearFormAction('youtube')">
                       Clear Form
                     </button>
                   </div>
@@ -281,12 +281,12 @@
                   </div>
 
                   <div class="flex gap-4 pt-2">
-                    <button type="submit" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                    <button id="linkSubmitBtn" type="submit" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
                       <span class="material-symbols-outlined">add_link</span>
                       Add External Link
                     </button>
 
-                    <button type="reset" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all">
+                    <button id="linkClearBtn" type="button" class="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-all" onclick="clearFormAction('link')">
                       Clear Form
                     </button>
                   </div>
@@ -328,6 +328,49 @@
     </main>
   </div>
 
+  <div id="editMaterialModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="w-full max-w-xl bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Edit Material</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Update details and save changes.</p>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Module</label>
+          <select id="editMaterialModuleId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+            <option value="">Select Module</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+          <input id="editMaterialTitle" type="text" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" />
+        </div>
+
+        <div id="editMaterialUrlGroup" class="hidden">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">External URL</label>
+          <input id="editMaterialExternalUrl" type="url" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" />
+        </div>
+
+        <div id="editMaterialFileGroup" class="hidden">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Replace File (Optional)</label>
+          <input id="editMaterialFile" type="file" accept=".pdf,.doc,.docx,.mp4,.webm" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white file:font-semibold file:cursor-pointer" />
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Leave empty to keep current file.</p>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+        <button type="button" id="editMaterialCancelBtn" class="px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button type="button" id="editMaterialSaveBtn" class="px-5 py-2.5 rounded-lg bg-primary hover:bg-blue-600 text-white font-semibold transition-all">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
   <button class="fixed bottom-6 right-6 p-4 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[70]" onclick="document.documentElement.classList.toggle('dark')">
     <span class="material-icons-round dark:hidden text-slate-800">dark_mode</span>
     <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
@@ -338,11 +381,20 @@
     let selectedFile = null;
     let materialTypeMap = {};
     let backendBaseUrl = "";
+    let materialsCache = [];
+    let currentLecturerId = null;
+    let editMaterialState = null;
+    let currentModuleContextId = "";
 
     function initBackendBaseUrl() {
       backendBaseUrl = typeof API_BASE_URL === "string"
         ? API_BASE_URL.replace(/\/api\/?$/, "")
         : "http://localhost:3001";
+    }
+
+    function getModuleIdFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("module_id") || "";
     }
 
     function showStatus(message, type = "success") {
@@ -359,12 +411,15 @@
       statusBox.classList.remove(
         "hidden",
         "bg-green-100", "text-green-700", "border-green-200",
-        "bg-red-100", "text-red-700", "border-red-200"
+        "bg-red-100", "text-red-700", "border-red-200",
+        "bg-amber-100", "text-amber-700", "border-amber-200"
       );
       statusBox.classList.add("border");
 
       if (type === "error") {
         statusBox.classList.add("bg-red-100", "text-red-700", "border-red-200");
+      } else if (type === "warning") {
+        statusBox.classList.add("bg-amber-100", "text-amber-700", "border-amber-200");
       } else {
         statusBox.classList.add("bg-green-100", "text-green-700", "border-green-200");
       }
@@ -388,6 +443,141 @@
           content.classList.add("hidden");
         }
       });
+    }
+
+    function clearFormAction(formType) {
+      if (formType === "file") {
+        document.getElementById("fileUploadForm").reset();
+        resetFilePreview();
+        return;
+      }
+      if (formType === "youtube") {
+        document.getElementById("youtubeForm").reset();
+        return;
+      }
+      if (formType === "link") {
+        document.getElementById("linkForm").reset();
+      }
+    }
+
+    function isLinkTypeName(typeName) {
+      const value = String(typeName || "").toLowerCase();
+      return value === "youtube" || value === "external link";
+    }
+
+    function populateEditModuleOptions(selectedModuleId) {
+      const select = document.getElementById("editMaterialModuleId");
+      if (!select) return;
+
+      const sourceSelect = document.getElementById("filterModuleId");
+      select.innerHTML = '<option value="">Select Module</option>';
+
+      if (sourceSelect) {
+        Array.from(sourceSelect.options)
+          .filter((opt) => String(opt.value || "").trim() !== "")
+          .forEach((opt) => {
+            const option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.textContent;
+            if (String(opt.value) === String(selectedModuleId)) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+      }
+    }
+
+    function updateEditMaterialFieldVisibility() {
+      const typeName = String(editMaterialState?.material_type_name || "").toLowerCase();
+      const isLink = isLinkTypeName(typeName);
+      const urlGroup = document.getElementById("editMaterialUrlGroup");
+      const fileGroup = document.getElementById("editMaterialFileGroup");
+
+      if (isLink) {
+        urlGroup.classList.remove("hidden");
+        fileGroup.classList.add("hidden");
+      } else {
+        urlGroup.classList.add("hidden");
+        fileGroup.classList.remove("hidden");
+      }
+    }
+
+    function closeEditMaterialModal() {
+      editMaterialState = null;
+      const modal = document.getElementById("editMaterialModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      document.getElementById("editMaterialTitle").value = "";
+      document.getElementById("editMaterialExternalUrl").value = "";
+      document.getElementById("editMaterialFile").value = "";
+    }
+
+    function openEditMaterialModal(material) {
+      if (!material) return;
+
+      editMaterialState = material;
+      populateEditModuleOptions(material.module_id);
+      document.getElementById("editMaterialTitle").value = material.title || "";
+      document.getElementById("editMaterialExternalUrl").value = material.external_url || "";
+      document.getElementById("editMaterialFile").value = "";
+      updateEditMaterialFieldVisibility();
+
+      const modal = document.getElementById("editMaterialModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    async function submitEditMaterial() {
+      if (!editMaterialState) return;
+
+      const moduleId = document.getElementById("editMaterialModuleId").value;
+      const title = document.getElementById("editMaterialTitle").value.trim();
+      const externalUrl = document.getElementById("editMaterialExternalUrl").value.trim();
+      const replacementFile = document.getElementById("editMaterialFile").files[0] || null;
+      const typeName = String(editMaterialState.material_type_name || "").toLowerCase();
+      const isLink = isLinkTypeName(typeName);
+
+      if (!moduleId || !title) {
+        showStatus("Module and title are required.", "error");
+        return;
+      }
+      if (isLink && !externalUrl) {
+        showStatus("External URL is required for this material type.", "error");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("module_id", moduleId);
+      formData.append("material_type_id", editMaterialState.material_type_id);
+      formData.append("title", title);
+      if (isLink) {
+        formData.append("external_url", externalUrl);
+      } else if (replacementFile) {
+        formData.append("file", replacementFile);
+      }
+
+      const saveBtn = document.getElementById("editMaterialSaveBtn");
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      try {
+        const result = await API.materials.update(editMaterialState.material_id, formData);
+        if (!result.ok) {
+          showStatus(result.error || "Failed to update material.", "error");
+          return;
+        }
+
+        showStatus("Material updated successfully.", "success");
+        closeEditMaterialModal();
+        await loadMaterials();
+      } catch (error) {
+        console.error("Edit material error:", error);
+        showStatus("Failed to update material.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Changes";
+      }
     }
 
     function escapeHtml(value) {
@@ -486,6 +676,9 @@
               const option = document.createElement("option");
               option.value = module.module_id;
               option.textContent = `${module.module_code} - ${module.module_name}`;
+              if (currentModuleContextId && String(module.module_id) === String(currentModuleContextId)) {
+                option.selected = true;
+              }
               select.appendChild(option);
             });
           });
@@ -544,6 +737,7 @@
       try {
         const result = await API.materials.getAll(filterModuleId || null, filterTypeId || null);
         const materials = Array.isArray(result) ? result : (result.materials || []);
+        materialsCache = Array.isArray(materials) ? materials : [];
 
         loading.classList.add("hidden");
 
@@ -556,6 +750,7 @@
           const link = buildMaterialUrl(material);
           const typeVisual = getTypeVisual(material.material_type_name);
           const thumbnail = getMaterialThumbnailUrl(material);
+          const canManage = currentLecturerId && Number(material.uploaded_by) === Number(currentLecturerId);
           const preview = thumbnail
             ? `
               <img
@@ -588,11 +783,16 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <button onclick="deleteMaterial(${material.material_id})" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
-                  <span class="material-symbols-outlined text-red-600 dark:text-red-400">delete</span>
-                </button>
-              </div>
+              ${canManage ? `
+                <div class="flex items-center gap-2">
+                  <button onclick="editMaterial(${material.material_id})" class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-all" title="Edit">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">edit</span>
+                  </button>
+                  <button onclick="deleteMaterial(${material.material_id})" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400">delete</span>
+                  </button>
+                </div>
+              ` : ""}
             </div>
           `;
         }).join("");
@@ -633,7 +833,30 @@
       `;
     }
 
+    async function editMaterial(id) {
+      const material = materialsCache.find((item) => Number(item.material_id) === Number(id));
+      if (!material) {
+        showStatus("Material not found.", "error");
+        return;
+      }
+      if (!currentLecturerId || Number(material.uploaded_by) !== Number(currentLecturerId)) {
+        showStatus("You can only edit your own materials.", "error");
+        return;
+      }
+      openEditMaterialModal(material);
+    }
+
     async function deleteMaterial(id) {
+      const material = materialsCache.find((item) => Number(item.material_id) === Number(id));
+      if (!material) {
+        showStatus("Material not found.", "error");
+        return;
+      }
+      if (!currentLecturerId || Number(material.uploaded_by) !== Number(currentLecturerId)) {
+        showStatus("You can only delete your own materials.", "error");
+        return;
+      }
+
       const confirmed = (typeof showConfirmDialog === "function")
         ? await showConfirmDialog({
             title: "Delete Material",
@@ -662,24 +885,22 @@
     async function submitFileForm(event) {
       event.preventDefault();
 
-      if (!selectedFile) {
-        showStatus("Please select a file.", "error");
-        return;
-      }
-
       const moduleId = document.getElementById("fileModuleId").value;
       const materialTypeId = document.getElementById("fileMaterialTypeId").value;
       const title = document.getElementById("fileTitle").value.trim();
 
       if (!moduleId || !materialTypeId || !title) {
-        showStatus("Module, material type, title, and file are required.", "error");
+        showStatus("Module, material type, and title are required.", "error");
+        return;
+      }
+      if (!selectedFile) {
+        showStatus("Please select a file.", "error");
         return;
       }
 
       const progressContainer = document.getElementById("uploadProgressContainer");
       const progressBar = document.getElementById("uploadProgressBar");
       const progressText = document.getElementById("uploadProgressText");
-
       progressBar.style.width = "0%";
       progressText.textContent = "Uploading... 0%";
       progressContainer.classList.remove("hidden");
@@ -704,7 +925,6 @@
 
         progressBar.style.width = "100%";
         progressText.textContent = "Upload complete";
-
         showStatus("Material uploaded successfully.");
         event.target.reset();
         resetFilePreview();
@@ -803,9 +1023,11 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       initBackendBaseUrl();
+      currentModuleContextId = getModuleIdFromQuery();
 
       const user = await requireAuth("lecturer");
       if (!user) return;
+      currentLecturerId = Number(user.id || user.lecturer_id || 0) || null;
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
         API.auth.logout();
@@ -841,8 +1063,29 @@
       document.getElementById("youtubeForm").addEventListener("submit", submitYoutubeForm);
       document.getElementById("linkForm").addEventListener("submit", submitLinkForm);
 
+      const editModal = document.getElementById("editMaterialModal");
+      const editCancelBtn = document.getElementById("editMaterialCancelBtn");
+      const editSaveBtn = document.getElementById("editMaterialSaveBtn");
+      if (editCancelBtn) {
+        editCancelBtn.addEventListener("click", closeEditMaterialModal);
+      }
+      if (editSaveBtn) {
+        editSaveBtn.addEventListener("click", submitEditMaterial);
+      }
+      if (editModal) {
+        editModal.addEventListener("click", (event) => {
+          if (event.target === editModal) {
+            closeEditMaterialModal();
+          }
+        });
+      }
+
       await loadModulesIntoSelects();
       await loadMaterialTypes();
+      if (currentModuleContextId) {
+        const filterSelect = document.getElementById("filterModuleId");
+        if (filterSelect) filterSelect.value = String(currentModuleContextId);
+      }
       await loadMaterials();
     });
   </script>

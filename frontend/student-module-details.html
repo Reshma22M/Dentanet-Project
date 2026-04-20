@@ -452,7 +452,7 @@
       const panels = Array.from(document.querySelectorAll(".tab-panel"));
 
       buttons.forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
           const targetId = button.getAttribute("data-tab");
 
           buttons.forEach(btn => {
@@ -467,6 +467,10 @@
 
           const targetPanel = document.getElementById(targetId);
           if (targetPanel) targetPanel.classList.remove("hidden");
+
+          if (targetId === "materialsPanel") {
+            await refreshModuleMaterials();
+          }
         });
       });
     }
@@ -557,7 +561,7 @@
                   </p>
                   ${isStudentShare ? `
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Shared by ${escapeHtml(`${material.first_name || ""} ${material.last_name || ""}`.trim() || "Student")}
+                      Shared by ${escapeHtml(`${material.student_first_name || material.first_name || ""} ${material.student_last_name || material.last_name || ""}`.trim() || "Student")}
                     </p>
                   ` : ""}
                 </div>
@@ -1101,6 +1105,31 @@ window.requestRetake = async function (submissionIdEncoded, examIdEncoded) {
         : moduleStudyMaterials.map(material => createMaterialCard(material, true)).join("");
     }
 
+    async function refreshModuleMaterials() {
+      if (!currentModuleId) return;
+
+      try {
+        const [materialsResult, studyResult] = await Promise.all([
+          API.materials.getAll(currentModuleId),
+          API.studyMaterials.getAll(currentModuleId)
+        ]);
+
+        moduleMaterials = Array.isArray(materialsResult?.materials)
+          ? materialsResult.materials
+          : [];
+
+        moduleStudyMaterials = Array.isArray(studyResult?.studyMaterials)
+          ? studyResult.studyMaterials
+          : Array.isArray(studyResult?.materials)
+            ? studyResult.materials
+            : [];
+
+        renderMaterials();
+      } catch (error) {
+        console.warn("Failed to refresh module materials:", error);
+      }
+    }
+
     async function loadStudentModuleDetails() {
       currentModuleId = getModuleIdFromQuery();
       sessionStorage.setItem("selectedStudentModuleId", currentModuleId);
@@ -1160,27 +1189,8 @@ window.requestRetake = async function (submissionIdEncoded, examIdEncoded) {
         moduleBookings = [];
       }
 
-      // 4. Load lecturer materials
-      try {
-        const materialsResult = await API.materials.getAll(currentModuleId);
-        moduleMaterials = Array.isArray(materialsResult.materials) ? materialsResult.materials : [];
-      } catch (e) {
-        console.warn("Materials load failed:", e);
-        moduleMaterials = [];
-      }
-
-      // 5. Load student shared materials
-      try {
-        const studyResult = await API.studyMaterials.getAll(currentModuleId);
-        moduleStudyMaterials = Array.isArray(studyResult.studyMaterials)
-          ? studyResult.studyMaterials
-          : Array.isArray(studyResult.materials)
-            ? studyResult.materials
-            : [];
-      } catch (e) {
-        console.warn("Study materials load failed:", e);
-        moduleStudyMaterials = [];
-      }
+      // 4 & 5. Load module materials (lecturer + student shared)
+      await refreshModuleMaterials();
 
       // 6. Load submission summary (published results + decisions per exam)
       try {

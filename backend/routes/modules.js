@@ -336,6 +336,72 @@ router.get("/:id/members", authenticateToken, async (req, res) => {
 });
 
 // ======================================================
+// REMOVE STUDENT FROM MODULE (ADMIN ONLY)
+// ======================================================
+router.delete("/:id/students/:student_id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        ok: false,
+        error: "Only admins can remove students from modules"
+      });
+    }
+
+    const moduleId = Number(req.params.id);
+    const studentId = Number(req.params.student_id);
+
+    if (!moduleId || !studentId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid module id or student id"
+      });
+    }
+
+    const [moduleRows] = await promisePool.query(
+      `SELECT module_id FROM modules WHERE module_id = ? LIMIT 1`,
+      [moduleId]
+    );
+
+    if (moduleRows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "Module not found"
+      });
+    }
+
+    const [result] = await promisePool.query(
+      `
+      UPDATE module_students
+      SET
+        is_active = FALSE
+      WHERE module_id = ?
+        AND student_id = ?
+        AND is_active = TRUE
+      `,
+      [moduleId, studentId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "Student is not actively enrolled in this module"
+      });
+    }
+
+    return res.json({
+      ok: true,
+      message: "Student removed from module successfully"
+    });
+  } catch (error) {
+    console.error("Remove student from module error:", error);
+    return res.status(500).json({
+      ok: false,
+      error: "Failed to remove student from module"
+    });
+  }
+});
+
+// ======================================================
 // CREATE MODULE (ADMIN ONLY)
 // ======================================================
 router.post("/", authenticateToken, async (req, res) => {

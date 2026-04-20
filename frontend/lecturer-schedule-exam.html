@@ -178,7 +178,7 @@
         <span class="material-icons-round text-lg">event_available</span>
         Schedule Exam
       </button>
-      <button onclick="document.getElementById('examForm').reset(); hideAlert();" class="w-full sm:w-auto px-8 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all" type="button">
+      <button onclick="clearExamForm();" class="w-full sm:w-auto px-8 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all" type="button">
         Clear
       </button>
     </div>
@@ -214,6 +214,10 @@
   function hideAlert() {
     return;
   }
+
+  let scheduledExamsCache = [];
+  let editingExamId = null;
+  let currentLecturerId = null;
 
   async function loadModules() {
     const params = new URLSearchParams(window.location.search);
@@ -253,6 +257,157 @@
     return date.toLocaleDateString();
   }
 
+  function getTodayDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function getCurrentTimeString() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
+
+  function parseTimeToMinutes(timeValue) {
+    if (!timeValue) return null;
+    const parts = String(timeValue).split(":");
+    if (parts.length < 2) return null;
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    return (hours * 60) + minutes;
+  }
+
+  function syncTimeConstraints() {
+    const examDateInput = document.getElementById("exam-date");
+    const startTimeInput = document.getElementById("start-time");
+    const endTimeInput = document.getElementById("end-time");
+    if (!examDateInput || !startTimeInput || !endTimeInput) return;
+
+    const isToday = examDateInput.value === getTodayDateString();
+    const currentTime = getCurrentTimeString();
+
+    if (isToday) {
+      startTimeInput.min = currentTime;
+    } else {
+      startTimeInput.removeAttribute("min");
+    }
+
+    if (startTimeInput.value) {
+      endTimeInput.min = startTimeInput.value;
+    } else if (isToday) {
+      endTimeInput.min = currentTime;
+    } else {
+      endTimeInput.removeAttribute("min");
+    }
+  }
+
+  function initializeDateConstraints() {
+    const examDateInput = document.getElementById("exam-date");
+    if (!examDateInput) return;
+    examDateInput.min = getTodayDateString();
+    syncTimeConstraints();
+  }
+
+  function normalizeDateForInput(value) {
+    if (!value) return "";
+    return String(value).slice(0, 10);
+  }
+
+  function normalizeTimeForInput(value) {
+    if (!value) return "";
+    return String(value).slice(0, 5);
+  }
+
+  function setSubmitButtonState() {
+    const btn = document.getElementById("submitBtn");
+    if (!btn) return;
+
+    if (editingExamId) {
+      btn.innerHTML = '<span class="material-icons-round text-lg">edit_calendar</span> Update Exam';
+    } else {
+      btn.innerHTML = '<span class="material-icons-round text-lg">event_available</span> Schedule Exam';
+    }
+  }
+
+  function clearExamForm() {
+    const form = document.getElementById("examForm");
+    if (form) form.reset();
+    editingExamId = null;
+    initializeDateConstraints();
+    setSubmitButtonState();
+    hideAlert();
+  }
+
+  function startEditExam(examId) {
+    const exam = scheduledExamsCache.find((item) => Number(item.exam_id) === Number(examId));
+    if (!exam) {
+      showAlert("Unable to load this exam for editing.", "error");
+      return;
+    }
+    if (currentLecturerId && Number(exam.created_by) !== Number(currentLecturerId)) {
+      showAlert("You can only edit exams created by you.", "error");
+      return;
+    }
+
+    editingExamId = Number(exam.exam_id);
+
+    document.getElementById("exam-title").value = exam.exam_name || "";
+    document.getElementById("instructions").value = exam.description || "";
+    document.getElementById("exam-date").value = normalizeDateForInput(exam.exam_date);
+    document.getElementById("start-time").value = normalizeTimeForInput(exam.start_time);
+    document.getElementById("end-time").value = normalizeTimeForInput(exam.end_time);
+    document.getElementById("max-attempts").value = exam.max_attempts || 1;
+    document.getElementById("passing-grade").value = exam.passing_grade ?? 50;
+    document.getElementById("exam-status").value = exam.status || "SCHEDULED";
+
+    syncTimeConstraints();
+    setSubmitButtonState();
+    window.scrollTo({ top: document.getElementById("examForm").offsetTop - 120, behavior: "smooth" });
+  }
+
+  async function deleteExam(examId) {
+    const exam = scheduledExamsCache.find((item) => Number(item.exam_id) === Number(examId));
+    if (exam && currentLecturerId && Number(exam.created_by) !== Number(currentLecturerId)) {
+      showAlert("You can only delete exams created by you.", "error");
+      return;
+    }
+
+    const confirmed = (typeof showConfirmDialog === "function")
+      ? await showConfirmDialog({
+          title: "Delete Exam",
+          message: "Are you sure you want to delete this exam?",
+          confirmText: "Delete",
+          confirmClass: "bg-red-600 hover:bg-red-700"
+        })
+      : confirm("Are you sure you want to delete this exam?");
+
+    if (!confirmed) return;
+
+    try {
+      const result = await API.exams.delete(examId);
+      if (!result.ok) {
+        showAlert(result.error || "Failed to delete exam.", "error");
+        return;
+      }
+
+      if (Number(editingExamId) === Number(examId)) {
+        clearExamForm();
+      }
+
+      showAlert("Exam deleted successfully.", "success");
+      await loadScheduledExams();
+    } catch (error) {
+      console.error("Delete exam error:", error);
+      showAlert("Failed to delete exam.", "error");
+    }
+  }
+
   function renderScheduledExams(exams) {
     const list = document.getElementById("scheduledExamsList");
     if (!Array.isArray(exams) || exams.length === 0) {
@@ -283,6 +438,28 @@
             <p class="font-semibold text-primary">${escapeHtml(exam.status || "DRAFT")}</p>
           </div>
         </div>
+        <div class="flex items-center gap-2">
+          ${currentLecturerId && Number(exam.created_by) !== Number(currentLecturerId) ? `
+            <span class="text-xs text-slate-400 dark:text-slate-500 font-semibold">Not created by you</span>
+          ` : `
+            <button
+              type="button"
+              onclick="startEditExam(${Number(exam.exam_id)})"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all"
+            >
+              <span class="material-icons-round text-[17px]">edit</span>
+              Edit
+            </button>
+            <button
+              type="button"
+              onclick="deleteExam(${Number(exam.exam_id)})"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-all"
+            >
+              <span class="material-icons-round text-[17px]">delete</span>
+              Delete
+            </button>
+          `}
+        </div>
       </div>
     `).join("");
   }
@@ -294,6 +471,7 @@
       const result = await API.exams.getAll(window.currentModuleId);
       loading.classList.add("hidden");
       const exams = Array.isArray(result) ? result : (result.exams || []);
+      scheduledExamsCache = Array.isArray(exams) ? exams : [];
       renderScheduledExams(exams);
     } catch (error) {
       loading.classList.add("hidden");
@@ -327,22 +505,47 @@
       showAlert("Exam title is required.", "error");
       return;
     }
+    if (examData.exam_date && examData.exam_date < getTodayDateString()) {
+      showAlert("Exam date cannot be before today.", "error");
+      return;
+    }
     if ((examData.start_time && !examData.end_time) || (!examData.start_time && examData.end_time)) {
       showAlert("Please provide both start time and end time, or leave both empty.", "error");
       return;
     }
+    if (examData.start_time && examData.end_time) {
+      const startMinutes = parseTimeToMinutes(examData.start_time);
+      const endMinutes = parseTimeToMinutes(examData.end_time);
+      if (startMinutes === null || endMinutes === null) {
+        showAlert("Please enter valid start and end times.", "error");
+        return;
+      }
+      if (endMinutes <= startMinutes) {
+        showAlert("End time must be later than start time.", "error");
+        return;
+      }
+      if (examData.exam_date === getTodayDateString()) {
+        const nowMinutes = parseTimeToMinutes(getCurrentTimeString());
+        if (nowMinutes !== null && startMinutes <= nowMinutes) {
+          showAlert("For today, start time must be later than the current time.", "error");
+          return;
+        }
+      }
+    }
 
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
-    btn.textContent = "Scheduling...";
+    btn.textContent = editingExamId ? "Updating..." : "Scheduling...";
 
     try {
-      const result = await API.exams.create(examData);
+      const result = editingExamId
+        ? await API.exams.update(editingExamId, examData)
+        : await API.exams.create(examData);
       if (!result.ok) {
-        showAlert(result.error || "Failed to schedule exam.", "error");
+        showAlert(result.error || (editingExamId ? "Failed to update exam." : "Failed to schedule exam."), "error");
       } else {
-        showAlert("✓ Exam scheduled successfully!", "success");
-        document.getElementById("examForm").reset();
+        showAlert(editingExamId ? "Exam updated successfully!" : "Exam scheduled successfully!", "success");
+        clearExamForm();
         await loadScheduledExams();
       }
     } catch (error) {
@@ -350,23 +553,34 @@
       showAlert("Network error. Please try again.", "error");
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<span class="material-icons-round text-lg">event_available</span> Schedule Exam';
+      setSubmitButtonState();
     }
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
+    initializeDateConstraints();
+
+    const examDateInput = document.getElementById("exam-date");
+    const startTimeInput = document.getElementById("start-time");
+    const endTimeInput = document.getElementById("end-time");
+    if (examDateInput) examDateInput.addEventListener("change", syncTimeConstraints);
+    if (startTimeInput) startTimeInput.addEventListener("change", syncTimeConstraints);
+    if (endTimeInput) endTimeInput.addEventListener("change", syncTimeConstraints);
+
     if (typeof requireAuth !== "function") {
       showAlert("api.js failed to load correctly.", "error");
       return;
     }
     const user = await requireAuth("lecturer");
     if (!user) return;
+    currentLecturerId = Number(user.id || user.lecturer_id || 0) || null;
 
     document.getElementById("logoutBtn").addEventListener("click", () => API.auth.logout());
     document.getElementById("examForm").addEventListener("submit", handleExamSubmit);
 
     await loadModules();
     await loadScheduledExams();
+    setSubmitButtonState();
   });
 </script>
 </html>
