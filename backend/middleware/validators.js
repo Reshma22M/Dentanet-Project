@@ -1,7 +1,4 @@
-/**
- * Validation Middleware for DentaNet LMS
- * Updated to match current database schema and auth flow
- */
+//Validation Middleware for DentaNet LMS
 
 // ========================================
 // 1. GENERAL VALIDATORS

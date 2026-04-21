@@ -350,6 +350,9 @@ const API_ORIGIN = (typeof API_BASE_URL === "string" && API_BASE_URL.startsWith(
 let allModules = [];
 let allLecturers = [];
 let currentMode = "create";
+let moduleImageUploadInProgress = false;
+let pendingModuleImageFile = null;
+let pendingModuleImageObjectUrl = null;
 
 document.addEventListener("DOMContentLoaded", function () {
     setupLogout();
@@ -686,6 +689,13 @@ function resetModuleForm() {
     const fileInput = document.getElementById("moduleImageFileInput");
     const editingId = document.getElementById("editingModuleId");
 
+    if (pendingModuleImageObjectUrl) {
+        URL.revokeObjectURL(pendingModuleImageObjectUrl);
+        pendingModuleImageObjectUrl = null;
+    }
+    pendingModuleImageFile = null;
+    moduleImageUploadInProgress = false;
+
     if (form) form.reset();
     if (fileInput) fileInput.value = "";
     if (editingId) editingId.value = "";
@@ -736,36 +746,26 @@ function setupModulePreviewBindings() {
     }
 
     if (fileInput) {
-        fileInput.addEventListener("change", async function () {
+        fileInput.addEventListener("change", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
             if (!this.files || !this.files.length) return;
 
             const file = this.files[0];
             if (!file) return;
 
-            if (uploadStatus) uploadStatus.textContent = "Uploading...";
-
-            try {
-                const fd = new FormData();
-                fd.append("image", file);
-
-                const result = await API.modules.uploadImage(fd);
-
-                if (result.ok && result.file_url) {
-                    const imageInputEl = document.getElementById("moduleImageInput");
-                    const preview = document.getElementById("moduleImagePreview");
-
-                    if (imageInputEl) imageInputEl.value = result.file_url;
-                    if (preview) preview.src = buildModuleImageUrl(result.file_url);
-                    if (uploadStatus) uploadStatus.textContent = "Uploaded";
-                } else {
-                    if (uploadStatus) uploadStatus.textContent = "Upload failed";
-                    showFormMessage(result.error || "Image upload failed", "error");
-                }
-            } catch (error) {
-                console.error("Image upload error:", error);
-                if (uploadStatus) uploadStatus.textContent = "Upload failed";
-                showFormMessage("Image upload failed", "error");
+            if (pendingModuleImageObjectUrl) {
+                URL.revokeObjectURL(pendingModuleImageObjectUrl);
+                pendingModuleImageObjectUrl = null;
             }
+
+            pendingModuleImageFile = file;
+            pendingModuleImageObjectUrl = URL.createObjectURL(file);
+
+            const preview = document.getElementById("moduleImagePreview");
+            if (preview) preview.src = pendingModuleImageObjectUrl;
+            if (uploadStatus) uploadStatus.textContent = "Image selected. It will upload when you save.";
         });
     }
 }
@@ -777,13 +777,19 @@ async function handleModuleSubmit(event) {
     const code = document.getElementById("moduleCodeInput")?.value?.trim();
     const name = document.getElementById("moduleNameInput")?.value?.trim();
     const description = document.getElementById("moduleDescriptionInput")?.value?.trim();
-    const imageUrl = document.getElementById("moduleImageInput")?.value?.trim();
+    const imageInputEl = document.getElementById("moduleImageInput");
+    let imageUrl = imageInputEl?.value?.trim();
     const assignedLecturerId = document.getElementById("assignedLecturerInput")?.value?.trim();
     const isActive = document.getElementById("moduleIsActiveInput")?.checked;
     const submitBtn = document.getElementById("submitModuleBtn");
+    const uploadStatus = document.getElementById("moduleImageUploadStatus");
 
     if (!code || !name) {
         showFormMessage("Module code and module name are required.", "error");
+        return;
+    }
+    if (moduleImageUploadInProgress) {
+        showFormMessage("Please wait until the image upload is complete before saving.", "error");
         return;
     }
 
@@ -793,6 +799,34 @@ async function handleModuleSubmit(event) {
             <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
             Saving...
         `;
+
+        if (pendingModuleImageFile) {
+            moduleImageUploadInProgress = true;
+            if (uploadStatus) uploadStatus.textContent = "Uploading image...";
+
+            const fd = new FormData();
+            fd.append("image", pendingModuleImageFile);
+
+            const uploadResult = await API.modules.uploadImage(fd);
+
+            if (!uploadResult?.ok || !uploadResult?.file_url) {
+                moduleImageUploadInProgress = false;
+                if (uploadStatus) uploadStatus.textContent = "Upload failed";
+                showFormMessage(uploadResult?.error || "Image upload failed", "error");
+                return;
+            }
+
+            imageUrl = String(uploadResult.file_url).trim();
+            if (imageInputEl) imageInputEl.value = imageUrl;
+            if (uploadStatus) uploadStatus.textContent = "Uploaded";
+
+            if (pendingModuleImageObjectUrl) {
+                URL.revokeObjectURL(pendingModuleImageObjectUrl);
+                pendingModuleImageObjectUrl = null;
+            }
+            pendingModuleImageFile = null;
+            moduleImageUploadInProgress = false;
+        }
 
     const payload = {
         module_code: code.toUpperCase(),
@@ -831,6 +865,7 @@ async function handleModuleSubmit(event) {
         console.error("Save module error:", error);
         showFormMessage("Something went wrong while saving the module.", "error");
     } finally {
+        moduleImageUploadInProgress = false;
         submitBtn.disabled = false;
         submitBtn.innerHTML = currentMode === "edit"
             ? `<span class="material-symbols-outlined text-[18px]">save</span>Save Changes`

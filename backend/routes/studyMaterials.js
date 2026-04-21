@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = [
+const allowedMimeTypes = new Set([
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -45,7 +45,20 @@ const allowedMimeTypes = [
   "image/png",
   "video/mp4",
   "video/webm",
-];
+]);
+
+const allowedExtensions = new Set([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".ppt",
+  ".pptx",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".mp4",
+  ".webm",
+]);
 
 const upload = multer({
   storage,
@@ -53,7 +66,11 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    const mimeAllowed = allowedMimeTypes.has(String(file.mimetype || "").toLowerCase());
+    const extensionAllowed = allowedExtensions.has(extension);
+
+    if (mimeAllowed || extensionAllowed) {
       cb(null, true);
     } else {
       cb(
@@ -72,12 +89,12 @@ function normalizeTypeName(name) {
   return String(name || "").trim().toLowerCase();
 }
 
-function isFileBasedType(typeName) {
-  return ["pdf", "video", "document", "other"].includes(typeName);
-}
-
 function isLinkBasedType(typeName) {
   return ["youtube", "external link"].includes(typeName);
+}
+
+function isFileBasedType(typeName) {
+  return !isLinkBasedType(typeName);
 }
 
 function getYouTubeVideoId(urlValue) {
@@ -146,6 +163,10 @@ function cleanText(value) {
   if (value === undefined || value === null) return null;
   const trimmed = String(value).trim();
   return trimmed === "" ? null : trimmed;
+}
+
+function isValidPositiveInt(value) {
+  return Number.isInteger(value) && value > 0;
 }
 
 async function getMaterialTypeById(materialTypeId) {
@@ -291,7 +312,15 @@ router.get("/", authenticateToken, async (req, res) => {
 // --------------------------------------------------
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
-    const material = await getStudentSharedMaterialById(Number(req.params.id));
+    const studentMaterialId = Number(req.params.id);
+    if (!isValidPositiveInt(studentMaterialId)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid material id",
+      });
+    }
+
+    const material = await getStudentSharedMaterialById(studentMaterialId);
 
     if (!material || material.is_active === 0 || material.is_active === false) {
       return res.status(404).json({
@@ -358,6 +387,13 @@ router.post(
       const numericMaterialTypeId = Number(material_type_id);
       const uploadedByStudentId = Number(req.user.id);
 
+      if (!isValidPositiveInt(numericModuleId) || !isValidPositiveInt(numericMaterialTypeId)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid module or material type",
+        });
+      }
+
       const module = await getModuleById(numericModuleId);
       if (!module) {
         return res.status(400).json({
@@ -379,17 +415,7 @@ router.post(
       let file_url = null;
       let finalExternalUrl = null;
 
-      if (isFileBasedType(materialTypeName)) {
-        if (!req.file) {
-          return res.status(400).json({
-            ok: false,
-            error: `A file is required for material type '${materialType.name}'`,
-          });
-        }
-
-        file_url = `/uploads/student-materials/${req.file.filename}`;
-        finalExternalUrl = null;
-      } else if (isLinkBasedType(materialTypeName)) {
+      if (isLinkBasedType(materialTypeName)) {
         if (!external_url || !String(external_url).trim()) {
           return res.status(400).json({
             ok: false,
@@ -400,10 +426,15 @@ router.post(
         file_url = null;
         finalExternalUrl = String(external_url).trim();
       } else {
-        return res.status(400).json({
-          ok: false,
-          error: "Unsupported material type",
-        });
+        if (!req.file) {
+          return res.status(400).json({
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
+          });
+        }
+
+        file_url = `/uploads/student-materials/${req.file.filename}`;
+        finalExternalUrl = null;
       }
 
       const [result] = await promisePool.query(
@@ -475,6 +506,12 @@ router.put(
   async (req, res) => {
     try {
       const studentMaterialId = Number(req.params.id);
+      if (!isValidPositiveInt(studentMaterialId)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid material id",
+        });
+      }
 
       const [existingRows] = await promisePool.query(
         `SELECT * FROM student_study_materials WHERE student_material_id = ? LIMIT 1`,
@@ -516,6 +553,13 @@ router.put(
           ? Number(material_type_id)
           : Number(existing.material_type_id);
 
+      if (!isValidPositiveInt(finalModuleId) || !isValidPositiveInt(finalMaterialTypeId)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid module or material type",
+        });
+      }
+
       const finalTitle =
         title !== undefined && String(title).trim()
           ? String(title).trim()
@@ -554,15 +598,7 @@ router.put(
         file_url = `/uploads/student-materials/${req.file.filename}`;
       }
 
-      if (isFileBasedType(materialTypeName)) {
-        if (!file_url) {
-          return res.status(400).json({
-            ok: false,
-            error: `A file is required for material type '${materialType.name}'`,
-          });
-        }
-        finalExternalUrl = null;
-      } else if (isLinkBasedType(materialTypeName)) {
+      if (isLinkBasedType(materialTypeName)) {
         if (!finalExternalUrl) {
           return res.status(400).json({
             ok: false,
@@ -571,10 +607,13 @@ router.put(
         }
         file_url = null;
       } else {
-        return res.status(400).json({
-          ok: false,
-          error: "Unsupported material type",
-        });
+        if (!file_url) {
+          return res.status(400).json({
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
+          });
+        }
+        finalExternalUrl = null;
       }
 
       await promisePool.query(
@@ -632,6 +671,12 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     }
 
     const studentMaterialId = Number(req.params.id);
+    if (!isValidPositiveInt(studentMaterialId)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid material id",
+      });
+    }
 
     const [existingRows] = await promisePool.query(
       `SELECT * FROM student_study_materials WHERE student_material_id = ? LIMIT 1`,

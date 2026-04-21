@@ -1,3 +1,5 @@
+//manual admin seeding/reset script
+
 const bcrypt = require("bcrypt");
 const mysql = require("mysql2");
 require("dotenv").config();

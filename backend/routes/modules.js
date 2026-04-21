@@ -31,15 +31,27 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
-    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".jfif", ".bmp", ".avif"]);
+    const allowedMimes = new Set([
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/pjpeg",
+      "image/webp",
+      "image/gif",
+      "image/bmp",
+      "image/avif",
+    ]);
 
-    if (allowed.includes(ext)) {
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    const mime = String(file.mimetype || "").toLowerCase();
+
+    if (allowedExtensions.has(ext) || allowedMimes.has(mime)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid image type"));
+      cb(new Error("Invalid image type. Allowed: PNG, JPG, JPEG, WEBP, GIF, JFIF, BMP, AVIF."));
     }
   }
 });
@@ -654,7 +666,29 @@ router.post(
   "/image",
   authenticateToken,
   authorizeRole("admin"),
-  upload.single("image"),
+  (req, res, next) => {
+    upload.single("image")(req, res, (err) => {
+      if (!err) return next();
+
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            ok: false,
+            error: "Image is too large. Maximum allowed size is 10MB.",
+          });
+        }
+        return res.status(400).json({
+          ok: false,
+          error: err.message || "Image upload failed",
+        });
+      }
+
+      return res.status(400).json({
+        ok: false,
+        error: err.message || "Image upload failed",
+      });
+    });
+  },
   async (req, res) => {
     try {
       if (!req.file) {

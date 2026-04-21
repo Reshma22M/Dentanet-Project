@@ -34,13 +34,31 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = [
+const allowedMimeTypes = new Set([
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
   "video/mp4",
   "video/webm",
-];
+]);
+
+const allowedExtensions = new Set([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".ppt",
+  ".pptx",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".mp4",
+  ".webm",
+]);
 
 const upload = multer({
   storage,
@@ -48,12 +66,16 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    const mimeAllowed = allowedMimeTypes.has(String(file.mimetype || "").toLowerCase());
+    const extensionAllowed = allowedExtensions.has(extension);
+
+    if (mimeAllowed || extensionAllowed) {
       cb(null, true);
     } else {
       cb(
         new Error(
-          "Invalid file type. Only PDF, DOC, DOCX, MP4, WEBM allowed."
+          "Invalid file type. Allowed: PDF, DOC, DOCX, PPT, PPTX, JPG, JPEG, PNG, MP4, WEBM."
         )
       );
     }
@@ -67,12 +89,12 @@ function normalizeTypeName(name) {
   return String(name || "").trim().toLowerCase();
 }
 
-function isFileBasedType(typeName) {
-  return ["pdf", "video", "document", "other"].includes(typeName);
-}
-
 function isLinkBasedType(typeName) {
   return ["youtube", "external link"].includes(typeName);
+}
+
+function isFileBasedType(typeName) {
+  return !isLinkBasedType(typeName);
 }
 
 function getYouTubeVideoId(urlValue) {
@@ -360,17 +382,7 @@ router.post(
       let file_url = null;
       let finalExternalUrl = null;
 
-      if (isFileBasedType(materialTypeName)) {
-        if (!req.file) {
-          return res.status(400).json({
-            ok: false,
-            error: `A file is required for material type '${materialType.name}'`,
-          });
-        }
-
-        file_url = `/uploads/materials/${req.file.filename}`;
-        finalExternalUrl = null;
-      } else if (isLinkBasedType(materialTypeName)) {
+      if (isLinkBasedType(materialTypeName)) {
         if (!external_url || !String(external_url).trim()) {
           return res.status(400).json({
             ok: false,
@@ -381,10 +393,15 @@ router.post(
         file_url = null;
         finalExternalUrl = String(external_url).trim();
       } else {
-        return res.status(400).json({
-          ok: false,
-          error: "Unsupported material type",
-        });
+        if (!req.file) {
+          return res.status(400).json({
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
+          });
+        }
+
+        file_url = `/uploads/materials/${req.file.filename}`;
+        finalExternalUrl = null;
       }
 
       const [result] = await promisePool.query(
@@ -553,15 +570,7 @@ router.put(
         file_url = `/uploads/materials/${req.file.filename}`;
       }
 
-      if (isFileBasedType(materialTypeName)) {
-        if (!file_url) {
-          return res.status(400).json({
-            ok: false,
-            error: `A file is required for material type '${materialType.name}'`,
-          });
-        }
-        finalExternalUrl = null;
-      } else if (isLinkBasedType(materialTypeName)) {
+      if (isLinkBasedType(materialTypeName)) {
         if (!finalExternalUrl) {
           return res.status(400).json({
             ok: false,
@@ -570,10 +579,13 @@ router.put(
         }
         file_url = null;
       } else {
-        return res.status(400).json({
-          ok: false,
-          error: "Unsupported material type",
-        });
+        if (!file_url) {
+          return res.status(400).json({
+            ok: false,
+            error: `A file is required for material type '${materialType.name}'`,
+          });
+        }
+        finalExternalUrl = null;
       }
 
       await promisePool.query(

@@ -299,11 +299,20 @@ function getModuleIdFromQuery() {
       return date.toLocaleDateString();
     }
 
+    function resolveStudentMaterialId(material) {
+      const preferred = Number(material?.student_material_id);
+      if (Number.isInteger(preferred) && preferred > 0) return preferred;
+      const legacy = Number(material?.material_id);
+      if (Number.isInteger(legacy) && legacy > 0) return legacy;
+      return null;
+    }
+
     function createMaterialCard(material) {
       const icon = getMaterialIcon(material);
       const link = getMaterialUrl(material);
       const thumbnail = getMaterialThumbnailUrl(material);
       const isOwnMaterial = currentStudentId && Number(material.uploaded_by_student_id) === Number(currentStudentId);
+      const studentMaterialId = resolveStudentMaterialId(material);
       const previewSection = thumbnail
         ? `
           <img
@@ -345,10 +354,10 @@ function getModuleIdFromQuery() {
                 >
                   Open Material
                 </a>
-                ${isOwnMaterial ? `
+                ${isOwnMaterial && studentMaterialId ? `
                   <button
                     type="button"
-                    onclick="editSharedMaterial(${Number(material.student_material_id)})"
+                    onclick="editSharedMaterial(${studentMaterialId})"
                     class="inline-flex items-center justify-center p-1 rounded-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     title="Edit"
                   >
@@ -356,7 +365,7 @@ function getModuleIdFromQuery() {
                   </button>
                   <button
                     type="button"
-                    onclick="deleteSharedMaterial(${Number(material.student_material_id)})"
+                    onclick="deleteSharedMaterial(${studentMaterialId})"
                     class="inline-flex items-center justify-center p-1 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     title="Delete"
                   >
@@ -371,7 +380,13 @@ function getModuleIdFromQuery() {
     }
 
     async function editSharedMaterial(materialId) {
-      const material = allMaterials.find((item) => Number(item.student_material_id) === Number(materialId));
+      const numericId = Number(materialId);
+      if (!Number.isInteger(numericId) || numericId <= 0) {
+        showPageStatus("Invalid material id. Please refresh and try again.");
+        return;
+      }
+
+      const material = allMaterials.find((item) => resolveStudentMaterialId(item) === numericId);
       if (!material) {
         showPageStatus("Material not found.");
         return;
@@ -385,7 +400,13 @@ function getModuleIdFromQuery() {
     }
 
     async function deleteSharedMaterial(materialId) {
-      const material = allMaterials.find((item) => Number(item.student_material_id) === Number(materialId));
+      const numericId = Number(materialId);
+      if (!Number.isInteger(numericId) || numericId <= 0) {
+        showPageStatus("Invalid material id. Please refresh and try again.");
+        return;
+      }
+
+      const material = allMaterials.find((item) => resolveStudentMaterialId(item) === numericId);
       if (!material) {
         showPageStatus("Material not found.");
         return;
@@ -408,7 +429,7 @@ function getModuleIdFromQuery() {
       if (!confirmed) return;
 
       try {
-        const result = await API.studyMaterials.delete(materialId);
+        const result = await API.studyMaterials.delete(numericId);
         if (!result.ok) {
           showPageStatus(result.error || "Failed to delete material.");
           return;
@@ -508,7 +529,13 @@ function getModuleIdFromQuery() {
 
       try {
         const result = await API.materialTypes.getAll();
-        const types = Array.isArray(result?.materialTypes) ? result.materialTypes : [];
+        if (!result.ok) {
+          showPageStatus(result.error || "Failed to load material types");
+          return;
+        }
+        const types = Array.isArray(result)
+          ? result
+          : (Array.isArray(result?.materialTypes) ? result.materialTypes : []);
 
         allTypes = types;
 
@@ -549,6 +576,10 @@ function getModuleIdFromQuery() {
           selectedTypeId || null
         );
 
+        if (!studentResult.ok) {
+          throw new Error(studentResult.error || "Failed to load materials");
+        }
+
         const studentMats = (studentResult.ok && Array.isArray(studentResult.materials))
           ? studentResult.materials.map(m => ({ ...m, _source: "student" }))
           : [];
@@ -577,6 +608,8 @@ function getModuleIdFromQuery() {
       const submitBtn = document.getElementById("shareSubmitBtn");
       const typeSelect = document.getElementById("shareType");
       const modSelect = document.getElementById("shareModule");
+      const editMaterialId = resolveStudentMaterialId(editMaterial);
+      const isEditMode = !!editMaterialId;
 
       if (alertBox) alertBox.classList.add("hidden");
 
@@ -595,7 +628,7 @@ function getModuleIdFromQuery() {
         });
       }
 
-      if (editMaterial) {
+      if (isEditMode) {
         shareEditState = editMaterial;
         if (modalTitle) modalTitle.textContent = "Edit Shared Material";
         if (modalSubtitle) modalSubtitle.textContent = "Update details and save changes.";
@@ -607,7 +640,6 @@ function getModuleIdFromQuery() {
         document.getElementById("shareFile").value = "";
         modSelect.value = String(editMaterial.module_id || "");
         typeSelect.value = String(editMaterial.material_type_id || "");
-        typeSelect.disabled = true;
       } else {
         shareEditState = null;
         if (modalTitle) modalTitle.textContent = "Share a Study Material";
@@ -624,7 +656,6 @@ function getModuleIdFromQuery() {
           modSelect.value = "";
         }
         typeSelect.value = "";
-        typeSelect.disabled = false;
       }
 
       updateShareFieldVisibility();
@@ -638,10 +669,8 @@ function getModuleIdFromQuery() {
       const modalTitle = document.getElementById("shareModalTitle");
       const modalSubtitle = document.getElementById("shareModalSubtitle");
       const submitBtn = document.getElementById("shareSubmitBtn");
-      const typeSelect = document.getElementById("shareType");
 
       shareEditState = null;
-      if (typeSelect) typeSelect.disabled = false;
       if (modalTitle) modalTitle.textContent = "Share a Study Material";
       if (modalSubtitle) modalSubtitle.textContent = "Upload a file or share a link with your classmates.";
       if (submitBtn) submitBtn.textContent = "Upload";
@@ -694,9 +723,17 @@ function getModuleIdFromQuery() {
       const urlInput = document.getElementById("shareUrl");
       const btn = document.getElementById("shareSubmitBtn");
       const isEditMode = !!shareEditState;
+      const previousTypeName = String(shareEditState?.material_type_name || "").toLowerCase().trim();
+      const wasLinkType = LINK_TYPES.includes(previousTypeName);
+      const editId = isEditMode ? resolveStudentMaterialId(shareEditState) : null;
 
       if (!title || !moduleId || !materialTypeId) {
         showShareAlert("Title, module and type are required.", "error");
+        return;
+      }
+
+      if (isEditMode && !editId) {
+        showShareAlert("Invalid material id for update. Please refresh and try again.", "error");
         return;
       }
 
@@ -722,11 +759,16 @@ function getModuleIdFromQuery() {
             btn.disabled = false;
             btn.textContent = "Upload";
             return;
+          } else if (wasLinkType && !shareEditState?.file_url) {
+            showShareAlert("Please select a file when changing from a link type to a file type.", "error");
+            btn.disabled = false;
+            btn.textContent = "Update";
+            return;
           }
         }
 
         const result = isEditMode
-          ? await API.studyMaterials.update(shareEditState.student_material_id, formData)
+          ? await API.studyMaterials.update(editId, formData)
           : await API.studyMaterials.upload(formData);
         if (!result.ok) throw new Error(result.error || (isEditMode ? "Update failed" : "Upload failed"));
 
@@ -784,7 +826,7 @@ if (currentModuleId) {
       });
 
       // Share modal events
-      document.getElementById("shareMaterialBtn").addEventListener("click", openShareModal);
+      document.getElementById("shareMaterialBtn").addEventListener("click", () => openShareModal(null));
       document.getElementById("shareCancelBtn").addEventListener("click", closeShareModal);
       document.getElementById("shareSubmitBtn").addEventListener("click", submitShare);
       document.getElementById("shareType").addEventListener("change", updateShareFieldVisibility);

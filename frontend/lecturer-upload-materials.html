@@ -344,6 +344,13 @@
         </div>
 
         <div>
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Material Type</label>
+          <select id="editMaterialTypeId" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none">
+            <option value="">Select Type</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
           <input id="editMaterialTitle" type="text" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:border-primary focus:outline-none" />
         </div>
@@ -380,6 +387,7 @@
   <script>
     let selectedFile = null;
     let materialTypeMap = {};
+    let materialTypesById = {};
     let backendBaseUrl = "";
     let materialsCache = [];
     let currentLecturerId = null;
@@ -465,6 +473,10 @@
       return value === "youtube" || value === "external link";
     }
 
+    function getMaterialTypeNameById(typeId) {
+      return String(materialTypesById[String(typeId)] || "").toLowerCase();
+    }
+
     function populateEditModuleOptions(selectedModuleId) {
       const select = document.getElementById("editMaterialModuleId");
       if (!select) return;
@@ -487,8 +499,31 @@
       }
     }
 
+    function populateEditTypeOptions(selectedTypeId) {
+      const select = document.getElementById("editMaterialTypeId");
+      if (!select) return;
+
+      const sourceSelect = document.getElementById("filterMaterialType");
+      select.innerHTML = '<option value="">Select Type</option>';
+
+      if (sourceSelect) {
+        Array.from(sourceSelect.options)
+          .filter((opt) => String(opt.value || "").trim() !== "")
+          .forEach((opt) => {
+            const option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.textContent;
+            if (String(opt.value) === String(selectedTypeId)) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+      }
+    }
+
     function updateEditMaterialFieldVisibility() {
-      const typeName = String(editMaterialState?.material_type_name || "").toLowerCase();
+      const selectedTypeId = document.getElementById("editMaterialTypeId")?.value || editMaterialState?.material_type_id;
+      const typeName = getMaterialTypeNameById(selectedTypeId) || String(editMaterialState?.material_type_name || "").toLowerCase();
       const isLink = isLinkTypeName(typeName);
       const urlGroup = document.getElementById("editMaterialUrlGroup");
       const fileGroup = document.getElementById("editMaterialFileGroup");
@@ -518,6 +553,7 @@
 
       editMaterialState = material;
       populateEditModuleOptions(material.module_id);
+      populateEditTypeOptions(material.material_type_id);
       document.getElementById("editMaterialTitle").value = material.title || "";
       document.getElementById("editMaterialExternalUrl").value = material.external_url || "";
       document.getElementById("editMaterialFile").value = "";
@@ -532,24 +568,29 @@
       if (!editMaterialState) return;
 
       const moduleId = document.getElementById("editMaterialModuleId").value;
+      const materialTypeId = document.getElementById("editMaterialTypeId").value || editMaterialState.material_type_id;
       const title = document.getElementById("editMaterialTitle").value.trim();
       const externalUrl = document.getElementById("editMaterialExternalUrl").value.trim();
       const replacementFile = document.getElementById("editMaterialFile").files[0] || null;
-      const typeName = String(editMaterialState.material_type_name || "").toLowerCase();
+      const typeName = getMaterialTypeNameById(materialTypeId) || String(editMaterialState.material_type_name || "").toLowerCase();
       const isLink = isLinkTypeName(typeName);
 
-      if (!moduleId || !title) {
-        showStatus("Module and title are required.", "error");
+      if (!moduleId || !materialTypeId || !title) {
+        showStatus("Module, material type, and title are required.", "error");
         return;
       }
       if (isLink && !externalUrl) {
         showStatus("External URL is required for this material type.", "error");
         return;
       }
+      if (!isLink && !replacementFile && !editMaterialState.file_url) {
+        showStatus("Please upload a file for this material type.", "error");
+        return;
+      }
 
       const formData = new FormData();
       formData.append("module_id", moduleId);
-      formData.append("material_type_id", editMaterialState.material_type_id);
+      formData.append("material_type_id", materialTypeId);
       formData.append("title", title);
       if (isLink) {
         formData.append("external_url", externalUrl);
@@ -695,9 +736,14 @@
 
       try {
         const result = await API.materialTypes.getAll();
+        if (!result.ok) {
+          showStatus(result.error || "Failed to load material types", "error");
+          return;
+        }
         const types = Array.isArray(result) ? result : (result.materialTypes || []);
 
         materialTypeMap = {};
+        materialTypesById = {};
         fileTypeSelect.innerHTML = `<option value="">Select Type</option>`;
         filterTypeSelect.innerHTML = `<option value="">All Types</option>`;
 
@@ -705,13 +751,14 @@
           types.forEach(type => {
             const lowerName = String(type.name || "").toLowerCase();
             materialTypeMap[lowerName] = Number(type.material_type_id);
+            materialTypesById[String(type.material_type_id)] = lowerName;
 
             const filterOption = document.createElement("option");
             filterOption.value = type.material_type_id;
             filterOption.textContent = type.name;
             filterTypeSelect.appendChild(filterOption);
 
-            if (["pdf", "video", "document", "other"].includes(lowerName)) {
+            if (!isLinkTypeName(lowerName)) {
               const fileOption = document.createElement("option");
               fileOption.value = type.material_type_id;
               fileOption.textContent = type.name;
@@ -736,6 +783,13 @@
 
       try {
         const result = await API.materials.getAll(filterModuleId || null, filterTypeId || null);
+        if (!result.ok) {
+          loading.classList.add("hidden");
+          list.innerHTML = `<div class="text-sm text-red-500">${escapeHtml(result.error || "Failed to load materials.")}</div>`;
+          showStatus(result.error || "Failed to load materials", "error");
+          return;
+        }
+
         const materials = Array.isArray(result) ? result : (result.materials || []);
         materialsCache = Array.isArray(materials) ? materials : [];
 
@@ -1066,11 +1120,15 @@
       const editModal = document.getElementById("editMaterialModal");
       const editCancelBtn = document.getElementById("editMaterialCancelBtn");
       const editSaveBtn = document.getElementById("editMaterialSaveBtn");
+      const editTypeSelect = document.getElementById("editMaterialTypeId");
       if (editCancelBtn) {
         editCancelBtn.addEventListener("click", closeEditMaterialModal);
       }
       if (editSaveBtn) {
         editSaveBtn.addEventListener("click", submitEditMaterial);
+      }
+      if (editTypeSelect) {
+        editTypeSelect.addEventListener("change", updateEditMaterialFieldVisibility);
       }
       if (editModal) {
         editModal.addEventListener("click", (event) => {
