@@ -3,6 +3,7 @@
     let lastAiReport = null;
     let studentPerformanceChart = null;
     let modulePerformanceChart = null;
+    let gradeDistributionChart = null;
     let aiCriteriaChart = null;
     let aiAgreementChart = null;
     let currentLecturerName = "Lecturer";
@@ -217,6 +218,32 @@
       }
     }
 
+    // Convert numeric mark to a letter bucket used for the grade distribution pie chart.
+    // If your department uses a different scale, only this mapping needs to be updated.
+    function getLetterGradeBucket(score) {
+      const n = toNum(score);
+      if (n >= 75) return "A";
+      if (n >= 65) return "B";
+      if (n >= 55) return "C";
+      if (n >= 45) return "D";
+      return "F";
+    }
+
+    // Build chart-ready arrays (labels + counts) from student average grades.
+    function buildGradeDistribution(students) {
+      const buckets = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+
+      students.forEach((student) => {
+        const key = getLetterGradeBucket(student?.average_grade);
+        buckets[key] += 1;
+      });
+
+      return {
+        labels: Object.keys(buckets),
+        values: Object.values(buckets)
+      };
+    }
+
     function renderBatchCharts(report) {
       if (typeof Chart !== "function") return;
 
@@ -233,13 +260,16 @@
       const moduleLabels = modules.map((m) => m.module_code || m.module_name || "Module");
       const modulePassRateData = modules.map((m) => toNum(m.pass_rate));
       const moduleFailRateData = modules.map((m) => Math.max(0, 100 - toNum(m.pass_rate)));
+      const gradeDistribution = buildGradeDistribution(students);
 
       const studentCtx = document.getElementById("studentPerformanceChart");
       const moduleCtx = document.getElementById("modulePerformanceChart");
-      if (!studentCtx || !moduleCtx) return;
+      const gradeDistributionCtx = document.getElementById("gradeDistributionChart");
+      if (!studentCtx || !moduleCtx || !gradeDistributionCtx) return;
 
       destroyChart(studentPerformanceChart);
       destroyChart(modulePerformanceChart);
+      destroyChart(gradeDistributionChart);
 
       studentPerformanceChart = new Chart(studentCtx, {
         type: "bar",
@@ -331,6 +361,51 @@
               titleColor: "#fff",
               bodyColor: "#e2e8f0",
               padding: 10
+            }
+          }
+        }
+      });
+
+      gradeDistributionChart = new Chart(gradeDistributionCtx, {
+        type: "pie",
+        data: {
+          labels: gradeDistribution.labels,
+          datasets: [{
+            label: "Students",
+            data: gradeDistribution.values,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.85)",
+            backgroundColor: [
+              "rgba(16,185,129,0.85)", // A
+              "rgba(59,130,246,0.85)", // B
+              "rgba(245,158,11,0.85)", // C
+              "rgba(249,115,22,0.85)", // D
+              "rgba(239,68,68,0.85)" // F
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { color: "#64748b" }
+            },
+            tooltip: {
+              backgroundColor: "#0f172a",
+              titleColor: "#fff",
+              bodyColor: "#e2e8f0",
+              padding: 10,
+              callbacks: {
+                // Show both absolute count and percentage for easier interpretation.
+                label: (context) => {
+                  const current = toNum(context.parsed);
+                  const total = gradeDistribution.values.reduce((sum, item) => sum + toNum(item), 0);
+                  const pct = total > 0 ? ((current / total) * 100).toFixed(1) : "0.0";
+                  return `${context.label}: ${current} (${pct}%)`;
+                }
+              }
             }
           }
         }
@@ -774,6 +849,10 @@
             {
               title: "Module Pass/Fail Mix (%)",
               imageData: modulePerformanceChart ? modulePerformanceChart.toBase64Image() : null
+            },
+            {
+              title: "Grade Distribution (A/B/C/D/F)",
+              imageData: gradeDistributionChart ? gradeDistributionChart.toBase64Image() : null
             }
           ],
           headers: ["Student", "Registration", "Batch", "Average", "Best", "Pass", "Fail"],
