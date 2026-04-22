@@ -4,6 +4,7 @@ const API_BASE_URL = (() => {
         localStorage.getItem("DENTANET_API_BASE_URL") ||
         "";
 
+    // Allow manual override when frontend/backends run on different hosts.
     if (override && /^https?:\/\//i.test(override)) {
         return override.replace(/\/$/, "");
     }
@@ -37,6 +38,7 @@ function getAuthHeaders() {
     const token = getAuthToken();
     return {
         "Content-Type": "application/json",
+        // Attach JWT only when available (public endpoints can still work without it).
         ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
 }
@@ -44,6 +46,7 @@ function getAuthHeaders() {
 async function parseResponse(response) {
     let data = {};
     try {
+        // Most backend responses are JSON; fallback keeps callers stable on non-JSON failures.
         data = await response.json();
     } catch (error) {
         data = {};
@@ -70,6 +73,7 @@ function saveAuthData(token, user) {
         localStorage.setItem("token", token);
     }
     if (user) {
+        // Keep a cached user copy so dashboards can render profile context immediately.
         localStorage.setItem("user", JSON.stringify(user));
         if (typeof applyCurrentUserProfileImage === "function") {
             applyCurrentUserProfileImage(user);
@@ -455,6 +459,7 @@ const API = {
                 const token = getAuthToken();
                 const xhr = new XMLHttpRequest();
 
+                // XHR is used here to support upload progress feedback in UI.
                 xhr.open("POST", `${API_BASE_URL}/materials`);
 
                 if (token) {
@@ -575,6 +580,7 @@ const API = {
             const token = getAuthToken();
             const xhr = new XMLHttpRequest();
 
+            // Same upload strategy as lecturer materials for consistent progress behavior.
             xhr.open("POST", `${API_BASE_URL}/study-materials`);
 
             if (token) {
@@ -1043,6 +1049,7 @@ async function requireAuth(expectedRole = null) {
     }
 
     if (expectedRole && result.user.role !== expectedRole) {
+        // Guard role-specific pages (admin/lecturer/student) from direct URL access.
         showErrorNotification("Access denied.");
         window.location.href = "login.html";
         return null;
@@ -1085,7 +1092,7 @@ showWarningNotification("Unable to verify session right now. Please check your c
 
 }
 
-}, 300000); // every 5 minutes
+}, 300000); // Keep long-running pages synced with token validity (every 5 minutes).
 
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof applyCurrentUserProfileImage === "function") {

@@ -1615,6 +1615,7 @@ router.post(
 
         const slotRequest = requestRows[0];
 
+        // Hard guard: request slot type and submitted type must match (prevents cross-flow mixups).
         if (slotRequest.slot_type !== submissionType) {
             return res.status(400).json({
                 ok: false,
@@ -1647,6 +1648,7 @@ router.post(
                 });
             }
 
+            // Exam submissions are time-gated: only after slot end and within the configured window.
             const [examSlotRows] = await promisePool.query(`
                 SELECT
                     ets.slot_date,
@@ -1724,6 +1726,7 @@ router.post(
                 });
             }
 
+            // Practice has same slot-window validation, plus "before exam starts" rule.
             const slotEndDate = toLocalDateTime(
                 slotRequest.booking_date,
                 slotRequest.end_time,
@@ -1825,6 +1828,7 @@ router.post(
 
         const filePaths = [];
 
+        // Persist physical file metadata first so audit/review screens can always load uploads.
         for (const file of files) {
             const relativeFileUrl = `/uploads/submissions/${path.basename(file.path)}`;
             filePaths.push(file.path);
@@ -1848,6 +1852,7 @@ router.post(
 let aiEvaluation = null;
 
 try {
+    // DEd API evaluation is isolated so a model/network failure doesn't crash submission creation.
     const evaluated = await evaluateImages(filePaths);
 
     await promisePool.query(`
@@ -1890,6 +1895,7 @@ try {
 }
 
         if (submissionType === "PRACTICE") {
+            // Practice is auto-published from AI score to give immediate student feedback.
             const passFail = (aiEvaluation && aiEvaluation.api_score >= 10) ? 'PASS' : 'FAIL';
             const finalGrade = aiEvaluation ? aiEvaluation.api_score : 0;
             const finalFeedback = aiEvaluation 
@@ -1921,6 +1927,7 @@ try {
                 relatedEntityId: submissionId
             });
         } else {
+            // Exam stays in lecturer workflow after AI pre-evaluation.
             const [lecturerRows] = await promisePool.query(`
                 SELECT DISTINCT ml.lecturer_id
                 FROM exam_slot_requests esr

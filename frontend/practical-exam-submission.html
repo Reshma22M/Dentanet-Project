@@ -1155,6 +1155,7 @@ async function submitCurrentItem(){
     submitBtn.disabled=true;
     submitBtn.textContent="Submitting...";
 
+    // Submit exactly one logical attempt payload (meta + up to 3 images).
     const formData=new FormData();
 
     formData.append(
@@ -1172,10 +1173,12 @@ async function submitCurrentItem(){
       commentsInput.value
     );
 
+    // Backend expects repeated multipart key name: "images".
     selectedFiles.forEach(file=>{
       formData.append("images",file);
     });
 
+    // Send directly to main Node backend; Node will trigger DEd AI evaluation.
     const response=
       await fetch(
         `${API_BASE}/api/submissions`,
@@ -1194,6 +1197,7 @@ async function submitCurrentItem(){
       ? await response.json()
       : { error: await response.text() };
 
+    // Normalize backend/infra failures into readable UI errors.
     if (!response.ok) {
       if (response.status === 413) {
         throw new Error("Upload request is too large for server settings. Ask admin to increase Nginx upload limit (client_max_body_size).");

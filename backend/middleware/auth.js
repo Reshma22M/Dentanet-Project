@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  // Accept standard "Bearer <token>" format only.
   const token = authHeader && authHeader.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : null;
@@ -15,7 +16,7 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ error: "Invalid or expired token" });
     }
 
-    // Normalize user object so routes can use req.user.id and req.user.role safely
+    // Normalize token payload so all routes can safely rely on req.user.id + req.user.role.
     req.user = {
       ...decoded,
       id:
@@ -35,6 +36,7 @@ const authenticateToken = (req, res, next) => {
       });
     }
 
+    // Pass authenticated user context to the next middleware/route.
     next();
   });
 };
@@ -51,6 +53,7 @@ const authorizeRole = (...roles) => {
       });
     }
 
+    // User has one of the allowed roles for this route.
     next();
   };
 };

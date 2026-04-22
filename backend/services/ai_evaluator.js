@@ -2,6 +2,7 @@ const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
 
+// Keep DEd endpoint configurable so local/dev/prod can point to different AI hosts.
 const DED_API_URL = process.env.DED_API_URL || "http://127.0.0.1:8000/predict/";
 
 /**
@@ -11,6 +12,7 @@ const DED_API_URL = process.env.DED_API_URL || "http://127.0.0.1:8000/predict/";
  */
 async function evaluateSingleImage(filePath) {
   const formData = new FormData();
+  // DEd FastAPI expects one multipart field named "file".
   formData.append("file", fs.createReadStream(filePath));
 
   try {
@@ -35,6 +37,7 @@ async function evaluateSingleImage(filePath) {
   }
 }
 
+// Convert DEd per-criterion labels into numeric scores for averaging across images.
 const SCORE_MAP = {
   Ideal: 5,
   Acceptable: 3,
@@ -65,6 +68,7 @@ async function evaluateImages(filePaths) {
 
   const evaluations = [];
 
+  // Evaluate every uploaded image and keep only successful DEd responses.
   for (const filePath of filePaths) {
     const result = await evaluateSingleImage(filePath);
 
@@ -85,6 +89,7 @@ async function evaluateImages(filePaths) {
   let depthScores = 0;
   let undercutScores = 0;
 
+  // Aggregate both total point score and criterion-level quality trend.
   for (const ev of evaluations) {
     totalPoints += Number(ev.points || 0);
     smoothScores += SCORE_MAP[ev.smooth_outline?.feedback] || 0;
@@ -95,6 +100,7 @@ async function evaluateImages(filePaths) {
 
   const n = evaluations.length;
 
+  // Return one normalized AI result object consumed by submissions route + DB insert.
   return {
     api_status: "SUCCESS",
     api_score: round2(totalPoints / n),

@@ -54,7 +54,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static uploads
+// Expose uploaded assets (submission images, materials, module images) over HTTP.
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // -----------------------------
@@ -70,7 +70,7 @@ pool.getConnection((err, conn) => {
 });
 
 // -----------------------------
-// API Routes
+// API route map (feature-based modules). Keep this centralized for quick traceability.
 // -----------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
